@@ -7,6 +7,8 @@ use App\Http\Controllers\Client\VoucherControler;
 use App\Http\Controllers\Conversion\ConversionController;
 use App\Http\Controllers\HomeClientController;
 use App\Http\Controllers\Purchase\PurchaseController;
+use App\Http\Controllers\Threshold\ThresholdController;
+use App\Http\Controllers\Transactiontype\TransactiontypeController;
 use App\Http\Middleware\EnsureUserIsActivated;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -36,8 +38,6 @@ Route::get('test', function () {
 
 Route::get('auth', [LoginController::class, 'index'])->name('authentification');
 Route::post('auth', [LoginController::class, 'postLogin'])->name('authentification.post');
-Route::get('registration', [RegisterController::class, 'registration'])->name('enregistrement');
-Route::post('registration', [RegisterController::class, 'postRegistration'])->name('enregistrement.post');
 
 //Route::get('logout', [HomeController::class, 'logout'])->name('logout');
 Route::get('password-reset', [ResetPasswordController::class, 'resetPassword'])->name('password.reset');
@@ -60,11 +60,22 @@ Route::middleware([EnsureUserIsActivated::class])->group(function () {
     Route::get('/home/clients/{clientid}', [ClientController::class, 'clientDetails'])->name('clients.index.details');
     Route::get('/home/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
     Route::post('/home/purchases', [PurchaseController::class, 'registerPurchase'])->name('purchases.index.post');
+
+    Route::get('/home/conversions-amount-points', [ConversionController::class, 'indexAmountPoint'])->name('conversions-amount-points.index');
+    Route::post('/home/conversions-amount-points', [ConversionController::class, 'registerConversionAmountPoint'])->name('conversions-amount-points.index.post');
+
+    Route::get('/home/thresholds', [ThresholdController::class, 'indexThreshold'])->name('thresholds.index');
+    Route::post('/home/thresholds', [ThresholdController::class, 'registerThreshold'])->name('thresholds.index.post');
+
     Route::get('/home/conversions', [ConversionController::class, 'index'])->name('conversions.index');
     Route::post('/home/conversions', [ConversionController::class, 'registerConversion'])->name('conversions.index.post');
     Route::get('/home/conversions/list', [ConversionController::class, 'conversionList'])->name('conversions.list');
     Route::post('/home/conversions/set-conversion', [ConversionController::class, 'setConversonToUse'])->name('conversions.set-conversion.post');
 
+    Route::get('/registration', [RegisterController::class, 'registration'])->name('enregistrement');
+    Route::post('/registration', [RegisterController::class, 'postRegistration'])->name('enregistrement.post');
+    Route::get('/transactiontypes', [TransactiontypeController::class, 'transactiontypesView'])->name('transactiontype');
+    Route::post('/transactiontypes', [TransactiontypeController::class, 'createTransactiontypes'])->name('transactiontype.post');
     //conversions.list
     //.index
 });

@@ -68,6 +68,30 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('conversion_amount_points', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->double('min_amount')->nullable(false);
+            $table->double('birthdate_rate')->nullable(false)->default(1.5);
+            $table->boolean('active')->default(true);
+            $table->boolean('is_applicable')->default(true);
+            $table->bigInteger('defined_by')->nullable(false);
+            $table->foreign('defined_by')->references('id')->on('users')->onDelete('cascade');
+            $table->timestamps();
+        });
+
+        Schema::create('thresholds', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->double('classic_threshold')->nullable(false);
+            $table->double('premium_threshold')->nullable(false);
+            $table->double('gold_threshold')->nullable(false);
+            $table->boolean('active')->default(true);
+            $table->boolean('is_applicable')->default(true);
+            $table->bigInteger('defined_by')->nullable(false);
+            $table->foreign('defined_by')->references('id')->on('users')->onDelete('cascade');
+            $table->timestamps();
+        });
+
+
         Schema::create('conversions', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->double('amount_to_point_amount')->nullable(false);
@@ -121,5 +145,6 @@ return new class extends Migration
         Schema::dropIfExists('loyaltytransactions');
         Schema::dropIfExists('transactiontypes');
         Schema::dropIfExists('conversions');
+        Schema::dropIfExists('conversion_amount_points');
     }
 };

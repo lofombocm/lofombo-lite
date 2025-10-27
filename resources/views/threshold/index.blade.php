@@ -8,7 +8,7 @@
 
             <div class="col-md-9">
                 <div class="card">
-                    <div class="card-header">{{ 'Enregistrer une conversion' }}</div>
+                    <div class="card-header">{{ 'Enregistrer les seuils de points pour les gategories de bons' }}</div>
                     <div class="card-body">
                         @if (session('status'))
                             <div class="alert alert-success" role="alert">
@@ -16,7 +16,7 @@
                             </div>
                         @endif
 
-                        <form method="POST" action="{{ route('conversions.index.post') }}">
+                        <form method="POST" action="{{ route('thresholds.index.post') }}">
                             @csrf
                             <div><h5>Les champs marques par <b class="" style="color: red;">*</b> sont obligatoires</h5></div>
                             <br>
@@ -29,27 +29,14 @@
                             @enderror
 
                             <div class="row mb-3" >
-                                <label for="amount_to_point_amount" class="col-md-5 col-form-label text-md-end">{{ 'Montan en Point: Montant' }}
+                                <label for="classic_threshold" class="col-md-5 col-form-label text-md-end">{{ 'Seuil Categorie Classique' }}
                                     <b class="" style="color: red;">*</b></label>
 
                                 <div class="col-md-7">
-                                    <input id="amount_to_point_amount" type="number" class="form-control @error('amount_to_point_amount') is-invalid @enderror" name="amount_to_point_amount" value="{{ old('amount_to_point_amount') }}" required autocomplete="amount_to_point_amount" autofocus>
-                                    @error('amount_to_point_amount')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <label for="amount_to_point_point" class="col-md-5 col-form-label text-md-end">{{ 'Montan en Point: Point ' }}
-                                    <b class="" style="color: red;">*</b>
-                                </label>
-
-                                <div class="col-md-7">
-                                    <input id="amount_to_point_point" type="number" class="form-control @error('amount_to_point_point') is-invalid @enderror" name="amount_to_point_point" value="{{ old('amount_to_point_point') }}" required autocomplete="amount_to_point_point" autofocus>
-                                    @error('amount_to_point_point')
+                                    <input id="classic_threshold" type="number" class="form-control @error('classic_threshold') is-invalid @enderror"
+                                           name="classic_threshold" value="{{ old('classic_threshold') }}" required autocomplete="classic_threshold" autofocus
+                                           placeholder="Montant Minimal pour obtenir un bon de type classique">
+                                    @error('classic_threshold')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
                                     </span>
@@ -58,12 +45,14 @@
                             </div>
 
                             <div class="row mb-3" >
-                                <label for="point_to_amount_point" class="col-md-5 col-form-label text-md-end">{{ 'Point en Montant: Point' }}
+                                <label for="premium_threshold" class="col-md-5 col-form-label text-md-end">{{ 'Seuil Categorie Premium' }}
                                     <b class="" style="color: red;">*</b></label>
 
                                 <div class="col-md-7">
-                                    <input id="point_to_amount_point" type="number" class="form-control @error('point_to_amount_point') is-invalid @enderror" name="point_to_amount_point" value="{{ old('point_to_amount_point') }}" required autocomplete="point_to_amount_point" autofocus>
-                                    @error('point_to_amount_point')
+                                    <input id="premium_threshold" type="number" class="form-control @error('premium_threshold') is-invalid @enderror"
+                                           name="premium_threshold" value="{{ old('premium_threshold') }}" required autocomplete="premium_threshold" autofocus
+                                           placeholder="Montant Minimal pour obtenir un bon de type Premium">
+                                    @error('premium_threshold')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
                                     </span>
@@ -71,29 +60,15 @@
                                 </div>
                             </div>
 
-                            <div class="row mb-3">
-                                <label for="point_to_amount_amount" class="col-md-5 col-form-label text-md-end">{{ 'Point en Montant: Montant ' }}
-                                    <b class="" style="color: red;">*</b>
-                                </label>
+                            <div class="row mb-3" >
+                                <label for="gold_threshold" class="col-md-5 col-form-label text-md-end">{{ 'Seuil Categorie Gold' }}
+                                    <b class="" style="color: red;">*</b></label>
 
                                 <div class="col-md-7">
-                                    <input id="point_to_amount_amount" type="number" class="form-control @error('point_to_amount_amount') is-invalid @enderror" name="point_to_amount_amount" value="{{ old('point_to_amount_amount') }}" required autocomplete="point_to_amount_amount" autofocus>
-                                    @error('point_to_amount_amount')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <label for="birthdate_rate" class="col-md-5 col-form-label text-md-end">{{ 'Coefficient de bonification d\'Anniversaire' }}
-                                    <b class="" style="color: red;">*</b>
-                                </label>
-
-                                <div class="col-md-7">
-                                    <input id="birthdate_rate" type="number" class="form-control @error('birthdate_rate') is-invalid @enderror" name="birthdate_rate" value="{{ old('birthdate_rate') }}" required autocomplete="birthdate_rate" autofocus>
-                                    @error('birthdate_rate')
+                                    <input id="gold_threshold" type="number" class="form-control @error('gold_threshold') is-invalid @enderror"
+                                           name="gold_threshold" value="{{ old('gold_threshold') }}" required autocomplete="gold_threshold" autofocus
+                                           placeholder="Montant Minimal pour obtenir un bon de type Gold">
+                                    @error('gold_threshold')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
                                     </span>
@@ -133,13 +108,9 @@
                                     } else {
                                         input.setAttribute('value', 'off');
                                     }
-
                                     var isapplicableinput = document.getElementById(isapplicable);
                                     isapplicableinput.setAttribute('value', input.value);
-                                    //alert(input.value);
-
                                 }
-                                //
                             </script>
                         </form>
                     </div>

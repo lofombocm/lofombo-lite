@@ -15,13 +15,32 @@
                 @endif
 
                 @if(!(\Illuminate\Support\Facades\Auth::user() == null) && \Illuminate\Support\Facades\Auth::user()->is_admin)
+
+                    <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('conversions-amount-points.index')}}">
+                        {{ 'Enregistrer une conversion ' }} <strong>{{ 'Montant Point' }}</strong>
+                    </a>
+
                     <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('conversions.index')}}">
                         {{ 'Enregistrer une conversion de point' }}
                     </a>
 
-                        <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('conversions.list')}}">
-                            {{ ' Definir La Conversion de point a Appliquer' }}
-                        </a>
+
+
+                    <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('conversions.list')}}">
+                        {{ 'Definir La Conversion de point a Appliquer' }}
+                    </a>
+
+                    <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('enregistrement')}}">
+                        {{ 'Enregistrer un utilisateur' }}
+                    </a>
+
+                    <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('transactiontype')}}">
+                        {{ 'Enregistrer un type de transaction' }}
+                    </a>
+
+                    <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('thresholds.index')}}">
+                        {{ 'Enregistrer les seuils de points pour les bons' }}
+                    </a>
 
                 @endif
 

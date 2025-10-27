@@ -9,11 +9,12 @@
 
                     <div class="card-body">
 
-                        <a href="{{ route('authentification.client') }}" class="btn btn-primary">Etes-vous client? Cliquez ici</a>
-
+                        <a href="{{ route('authentification.client') }}" class="btn btn-primary">Etes-vous client?
+                            Cliquez ici</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
 @endsection

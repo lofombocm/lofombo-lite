@@ -42,7 +42,7 @@ class RegisterController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('guest');
+        //$this->middleware('guest');
     }
 
     /**
@@ -73,7 +73,7 @@ class RegisterController extends Controller
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'active' => true,
-            'is_admin' => (env('ADMIN_NAME') == $data['name'])
+            'is_admin' => (env('ADMIN_NAME') == $data['name']) || ($data['is_admin'] == 'on')
         ]);
     }
 
@@ -97,18 +97,35 @@ class RegisterController extends Controller
     public function postRegistration(Request $request): RedirectResponse
     {
 
-        $request->validate([
+        /*$request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'max:20', 'confirmed'],
+            'is_admin' => ['required', 'string'],
+        ])*/
+
+        //return $request;
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255|min:2',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|max:20|confirmed',
+            'is_admin' => 'required|string|in:on,off'
         ]);
+
+        if($validator->fails()){
+            session()->flash('error', $validator->errors()->first());
+            session()->flash('request', json_encode($request->all()));
+            return back()->withErrors(['error' => $validator->errors()->first()]);
+        }
 
         $user = $this->create($request->all());
 
-        Auth::login($user);
-        session()->flash('status', 'Bien! Vous vous etes enregistre avec succes.');
+        //Auth::login($user);
+        $msg = 'Bien! l\'utilisateur ' . $request->get('name') . ' a ete enregistre avec succes.';
+        session()->flash('status', $msg);
 
-        return redirect("/home");//->withSuccess('status', 'Great! You have Successfully Registered.');
+        return back()->with('status', $msg);//->withSuccess('status', 'Great! You have Successfully Registered.');
     }
 
 }

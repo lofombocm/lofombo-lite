@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Purchase;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Conversion;
+use App\Models\ConversionAmountPoint;
 use App\Models\LineItem;
 use App\Models\Loyaltyaccount;
 use App\Models\Loyaltytransaction;
 use App\Models\Product;
 use App\Models\Purchase;
+use App\Models\Transactiontype;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -32,28 +34,29 @@ class PurchaseController extends Controller
         $validator = Validator::make($request->all(), [
             'clientid' => 'required|string|max:255|min:2|exists:clients,telephone',
             'amount' => 'required|numeric|min:1',
-            'numitem' => 'required|numeric|min:1',
-            'productname0' => 'required|string|max:255|min:2',
-            'unitprice0' => 'required|numeric|min:1',
-            'quantity0' => 'required|numeric|min:1',
+            //'numitem' => 'required|numeric|min:1',
+            //'productname0' => 'required|string|max:255|min:2',
+            //'unitprice0' => 'required|numeric|min:1',
+            //'quantity0' => 'required|numeric|min:1',
+            'transactiontypeid' => 'required|string|uuid:4',
         ]);
         if($validator->fails()){
             return back()->withErrors(['error' => $validator->errors()->first()]);
         }
 
-        $numitem = intval($request->get('numitem'));
+        //$numitem = intval($request->get('numitem'));
 
-        $productname0 = trim($request->get('productname0'));
-        $unitprice0 = floatval(trim($request->get('unitprice0')));
-        $quantity0 = intval(trim($request->get('quantity0')));
+        //$productname0 = trim($request->get('productname0'));
+        //$unitprice0 = floatval(trim($request->get('unitprice0')));
+        //$quantity0 = intval(trim($request->get('quantity0')));
 
-        $lineitem = LineItem::createLineItem($productname0, $quantity0, $unitprice0, $unitprice0 * $quantity0);
-        $items = [$lineitem];
-        $sum = $lineitem->total;
-        $purchaseDetails = 'Achat de produits: ';
-        $noms = [$productname0];
+        //$lineitem = LineItem::createLineItem($productname0, $quantity0, $unitprice0, $unitprice0 * $quantity0);
+        //$items = [$lineitem];
+        //$sum = $lineitem->total;
+        $purchaseDetails = 'Achat d\'un montant de: ' . $request->get('amount');
+        //$noms = [$productname0];
         //$itemArray = [];
-        for($i = 1; $i < $numitem; $i++){
+        /*for($i = 1; $i < $numitem; $i++){
             $productname = trim($request->get('productname' . "$i"));
             $unitprice = floatval(trim($request->get('unitprice' . "$i")));
             $quantity = intval(trim($request->get('quantity' . "$i")));
@@ -62,15 +65,15 @@ class PurchaseController extends Controller
             array_push($items, LineItem::createLineItem($productname, $quantity, $unitprice, $total));
             //array_push($itemArray, ['name' => $productname, 'quantity' => $quantity, 'price' => $unitprice, 'total' => $total]);
             array_push($noms, $productname);
-        }
+        }*/
 
         $now = Carbon::now();
 
-        $purchaseDetails .= join(', ', $noms) . '. Pour un montant total de: ' . $sum . '. Enregistre le: ' . $now;
+        //$purchaseDetails .= join(', ', $noms) . '. Pour un montant total de: ' . $sum . '. Enregistre le: ' . $now;
         $amount = floatval(trim($request->get('amount')));
-        if (!($sum === $amount)){
+        /*if (!($sum === $amount)){
             return back()->withErrors(['error' => 'Achat invalide: Le total des des differents produits est differents du montant de l \'achat.']);
-        }
+        }*/
 
         $client = Client::where('telephone', $request->get('clientid'))->first();
         if(!$client){
@@ -79,35 +82,51 @@ class PurchaseController extends Controller
 
         $loyaltyaccount = Loyaltyaccount::where('holderid', $client->id)->first();
 
-        $conversion = Conversion::where('is_applicable', true)->first();
+        $conversionAmountPoint = ConversionAmountPoint::where('is_applicable', true)->first();
+
+        $transactiontype = Transactiontype::where('id', $request->get('transactiontypeid'))->first();
+        if(!$transactiontype){
+            return back()->withErrors(['error' => 'Aucun type de transaction avec l\'ID  \'' . $request->get('transactiontypeid') . '\'.']);
+        }
 
         DB::beginTransaction();
 
         $purchase = null;
         try {
-            $products = [];
+            //$products = [];
 
-            foreach($items as $item){
+            /*foreach($items as $item){
                 try {
                     $productid =  Str::uuid()->toString();
-                    $product = Product::Create([
-                        'id' => $productid,
-                        'name' => $item->getName(),
-                        'price' => $item->getPrice(),
-                        'others' => '',
-                    ]);
-                    array_push($products, $product);
+                    $prod = Product::where('name',  $item->name)->first();
+                    if(!$prod){
+                        $product = Product::Create([
+                            'id' => $productid,
+                            'name' => $item->name,
+                            'price' => $item->price,
+                            'others' => '',
+                        ]);
+                        array_push($products, $product);
+                    }
+
                 }catch (\Exception $exception){
                     DB::rollBack();
                     return back()->withErrors(['error' => $exception->getMessage()]);
                 }
-            }
+            }*/
 
             $purchaeId = Str::uuid()->toString();
-            $purchase = new Purchase(
-                $purchaeId, $client->id, $amount, $request->get('receiptnumber'), json_encode($items)
+            /*$purchase = new Purchase(
+                $purchaeId, $client->id, $amount, $request->get('receiptnumber'), json_encode([])
             );
-            $purchase = $purchase->sauvegarder();
+            $purchase = $purchase->save();*/
+            $purchase = Purchase::create([
+                'id' => $purchaeId,
+                'client_id' => $client->id,
+                'amount' => $amount,
+                'receiptnumber' => $request->get('receiptnumber'),
+                'products' => json_encode([])
+            ]);
 
             /*$h = fopen('testo.txt', 'w+');
             fprintf($h, '%s', json_encode($loyaltyaccount) . '\n\n' . json_encode($conversion));
@@ -123,7 +142,7 @@ class PurchaseController extends Controller
 
             $realAmount = $purchase->amount;
 
-            $birthdate_rate = ceil($conversion->birthdate_rate);
+            $birthdate_rate = $conversionAmountPoint->birthdate_rate;
             $isApplicableBirthdate = false;
 
             if ($client->birthdate){
@@ -146,7 +165,14 @@ class PurchaseController extends Controller
                 }
             }
 
-           $point = $rate * ceil(($realAmount * $conversion->amount_to_point_point) / $conversion->amount_to_point_amount);
+           $point = ceil($rate * intdiv($realAmount, $conversionAmountPoint->min_amount));
+
+            $totalPoint = $loyaltyaccount->point_balance + $point;
+
+            if ($totalPoint > $conversionAmountPoint->min_amount){}
+
+            ///TODO After create conversion point Montant
+
             $amount_from_converted_point = ($point *  $conversion -> point_to_amount_amount)/$conversion -> point_to_amount_point;
             /*
              $lastConversion = Conversion::where('is_applicable', true)->orderBy('created_at', 'desc')->first();
@@ -164,7 +190,7 @@ class PurchaseController extends Controller
                     'point' => $point,
                     'amount_from_converted_point' => $amount_from_converted_point,
                     'current_point' => $loyaltyaccount->point_balance,
-                    'transactiontypeid' => env('TRANSACTIONTYPEID_PURCHASE'),
+                    'transactiontypeid' => $request->get('transactiontypeid'), //env('TRANSACTIONTYPEID_PURCHASE'),
                     'transactiondetail' => $purchaseDetails,
                     'clienttransactionid' => $client->id,
                     'state' => 'SUCCESS',

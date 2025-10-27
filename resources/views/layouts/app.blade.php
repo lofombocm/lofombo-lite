@@ -1,3 +1,4 @@
+@php use App\Http\Controllers\Auth\RegisterController;use App\Models\User;use Illuminate\Support\Facades\Request;use \Illuminate\Support\Facades\Auth; @endphp
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -16,6 +17,22 @@
     @vite(['resources/sass/app.scss', 'resources/js/app.js'/*, 'resources/js/myScript.js'*/])
 </head>
 <body>
+
+<?php
+    if (count(User::all()) === 0) {
+        $registerController = new RegisterController();
+        $request = Request::create('/registration', 'POST');
+        $request->merge([
+            'name' => env('ADMIN_NAME'),
+            'email' => env('ADMIN_EMAIL'),
+            'password' => env('ADMIN_PWD'),
+            'password_confirmation' =>env('ADMIN_PWD'),
+            'is_admin' => 'on'
+        ]);
+        $response = $registerController->postRegistration($request);
+    }
+
+?>
     <div id="app">
         <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
             <div class="container">
@@ -43,32 +60,37 @@
                             @endif
 
                             @if (Route::has('enregistrement'))
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('enregistrement') }}">{{ __('Register') }}</a>
-                                </li>
+                                @if(count(User::all()) === 0)
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{{ route('enregistrement') }}">{{ __('Register') }}</a>
+                                    </li>
+                                @endif
                             @endif
                         @else
-                            <li class="nav-item dropdown">
-                                <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                    {{ Auth::user()->name }}
-                                </a>
 
-                                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                    <a class="dropdown-item" href="{{ route('deconnexion') }}"
-                                       onclick="event.preventDefault();
-                                                     document.getElementById('deconnexion-form').submit();">
-                                       Deconnexion
+                            @if(Auth::check())
+                                <li class="nav-item dropdown">
+                                    <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
+                                        {{ Auth::user()->name }}
                                     </a>
 
-                                    <a class="dropdown-item" href="{{ url('password-reset')}}">
-                                        Modifier mot de passe
-                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                        <a class="dropdown-item" href="{{ route('deconnexion') }}"
+                                           onclick="event.preventDefault();
+                                                     document.getElementById('deconnexion-form').submit();" id="deconnexion-link">
+                                            Deconnexion
+                                        </a>
 
-                                    <form id="deconnexion-form" action="{{ route('deconnexion') }}" method="POST" class="d-none">
-                                        @csrf
-                                    </form>
-                                </div>
-                            </li>
+                                        <a class="dropdown-item" href="{{ url('password-reset')}}">
+                                            Modifier mot de passe
+                                        </a>
+
+                                        <form id="deconnexion-form" action="{{ route('deconnexion') }}" method="POST" class="d-none">
+                                            @csrf
+                                        </form>
+                                    </div>
+                                </li>
+                            @endif
                         @endguest
                     </ul>
                 </div>
@@ -79,5 +101,26 @@
             @yield('content')
         </main>
     </div>
+
+<?php
+if (count(User::all()) === 1) {
+?>
+    <script type="text/javascript">
+        //deconnexion-link
+        /*const link = document.getElementById('deconnexion-link');
+        if (link) {
+            const clickEvent = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: window
+            });
+            link.dispatchEvent(clickEvent);
+        }*/
+    </script>
+
+<?php
+}
+?>
+
 </body>
 </html>
