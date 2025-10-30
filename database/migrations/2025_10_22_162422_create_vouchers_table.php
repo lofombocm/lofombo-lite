@@ -22,7 +22,9 @@ return new class extends Migration
             $table->double('amount')->nullable(false)->default(0);
             $table->string('enterprise')->nullable(false);
             $table->dateTime('expirationdate')->nullable(false);
-            $table->boolean('active')->nullable(false)->default(true);
+            $table->boolean('active')->nullable(false)->default(false);
+            $table->bigInteger('activated_by')->nullable(false);
+            $table->foreign('activated_by')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
     }

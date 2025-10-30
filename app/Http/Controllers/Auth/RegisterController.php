@@ -113,6 +113,8 @@ class RegisterController extends Controller
             'is_admin' => 'required|string|in:on,off'
         ]);
 
+        //session()->flash('error', $request->get('is_admin'));
+        //return back()->withErrors(['error' => $request->get('is_admin')]);
         if($validator->fails()){
             session()->flash('error', $validator->errors()->first());
             session()->flash('request', json_encode($request->all()));

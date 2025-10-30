@@ -1,19 +1,19 @@
-@extends('layouts.app')
+@extends('layouts.app-client')
 
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
-        @include('layouts.menu')
+        @include('layouts.client-menu')
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">{{ __('Reset Password') }}</div>
 
                 <div class="card-body">
-                    <form method="POST" action="{{ route('password.reset.post') }}">
+                    <form method="POST" action="{{ route('password.reset.client.post') }}">
                         @csrf
 
                         {{--<input type="hidden" name="token" value="{{ csrf_token() }}">--}}
-                        <input type="hidden" name="email" value="{{ Auth::user()->email }}">
+                        <input type="hidden" name="telephone" value="{{ Auth::guard('client')->user()->telephone }}">
 
                         {{--<div class="row mb-3">
                             <label for="email" class="col-md-4 col-form-label text-md-end">{{ __('Email Address') }}</label>
@@ -30,7 +30,7 @@
                         </div>--}}
 
                         <div class="row mb-3">
-                            <label for="current-pwd" class="col-md-4 col-form-label text-md-end">{{ 'Mot de passe courant'}}</label>
+                            <label for="Rename…" class="col-md-4 col-form-label text-md-end">{{ 'Mot de passe courant'}}</label>
 
                             <div class="col-md-6">
                                 <input id="current-pwd" type="password" class="form-control @error('currentpassword') is-invalid @enderror" name="currentpassword" required autocomplete="currentpassword">
@@ -47,7 +47,7 @@
                             <label for="password" class="col-md-4 col-form-label text-md-end">{{ __('Password') }}</label>
 
                             <div class="col-md-6">
-                                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="password">
+                                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password">
 
                                 @error('password')
                                     <span class="invalid-feedback" role="alert">
@@ -68,7 +68,7 @@
                         <div class="row mb-0">
                             <div class="col-md-6 offset-md-4">
                                 <button type="submit" class="btn btn-primary">
-                                    {{ __('Reset Password') }}
+                                    {{ 'Changer le mot de passe' }}
                                 </button>
                             </div>
                         </div>

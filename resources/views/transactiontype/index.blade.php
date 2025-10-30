@@ -68,11 +68,11 @@
                                     <div class="row" id="credite_ou_debite">
                                         <div class="alert alert-light col-md-6">
                                             <label for="credit">Credite le compte</label> &nbsp; &nbsp;
-                                            <input type="radio" id="credit" name="signe" value="1" />
+                                            <input type="radio" id="credit" name="signe" value="1" style="height: 20px; width: 20px;"/>
                                         </div>
                                         <div class="alert alert-light col-md-6">
                                             <label for="debit">Debite le compte</label> &nbsp; &nbsp;
-                                            <input type="radio" id="debit" name="signe" value="-1" />
+                                            <input type="radio" id="debit" name="signe" value="-1"  style="height: 20px; width: 20px;"/>
                                         </div>
                                     </div>
                                 </div>

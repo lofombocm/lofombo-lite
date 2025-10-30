@@ -54,6 +54,13 @@
                                                             </span>
                                                         @endif
                                                         </span>
+                                                        <br>
+                                                        <span class="badge bg-light position-absolute top|start-*" style="position: relative; right: 0; margin-top: 5px;">
+                                                            <?php
+                                                                $loyaltyaccount = \App\Models\Loyaltyaccount::where('holderid', $c->id)->first();
+                                                            ?>
+                                                            <strong style="color: #6f42c1;">Solde point de fidelite: {{$loyaltyaccount->point_balance}}</strong>
+                                                        </span>
 
                                                     </h5>
                                                 </a>

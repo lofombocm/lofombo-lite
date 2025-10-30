@@ -36,7 +36,6 @@ return new class extends Migration
             $table->foreign('holderid')->references('id')->on('clients')->onDelete('cascade');
             $table->double('amount_balance')->nullable(false)->default(0); // montant accumule des   differents achats
             $table->bigInteger('point_balance')->nullable(false)->default(0); // point accumule obtenu de la conversion montant point suivant la conversion defini
-            $table->double('amount_from_converted_point')->nullable()->default(0); // montant cumule obtenu de la conversion des points. Qui sera le montant du bon d'achat
             $table->bigInteger('current_point')->nullable()->default(0); // point courant avant la prochaine modification
             $table->string('photo')->nullable();
             $table->bigInteger('issuer')->nullable(false);
@@ -68,10 +67,33 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('rewards', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('name')->nullable(false);
+            $table->string('nature')->nullable(false);
+            $table->double('value')->nullable(false);
+            $table->boolean('active')->default(true);
+            $table->bigInteger('registered_by')->nullable(false);
+            $table->foreign('registered_by')->references('id')->on('users')->onDelete('cascade');
+            $table->timestamps();
+        });
+
         Schema::create('conversion_amount_points', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->double('min_amount')->nullable(false);
             $table->double('birthdate_rate')->nullable(false)->default(1.5);
+            $table->boolean('active')->default(true);
+            $table->boolean('is_applicable')->default(true);
+            $table->bigInteger('defined_by')->nullable(false);
+            $table->foreign('defined_by')->references('id')->on('users')->onDelete('cascade');
+            $table->timestamps();
+        });
+
+        Schema::create('conversion_point_rewards', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->integer('min_point')->nullable(false);
+            $table->uuid('reward')->nullable(false);
+            $table->foreign('reward')->references('id')->on('rewards')->onDelete('cascade');
             $table->boolean('active')->default(true);
             $table->boolean('is_applicable')->default(true);
             $table->bigInteger('defined_by')->nullable(false);
@@ -92,20 +114,6 @@ return new class extends Migration
         });
 
 
-        Schema::create('conversions', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->double('amount_to_point_amount')->nullable(false);
-            $table->double('amount_to_point_point')->nullable(false);
-            $table->double('point_to_amount_point')->nullable(false);
-            $table->double('point_to_amount_amount')->nullable(false);
-            $table->double('birthdate_rate')->nullable(false)->default(1.5);
-            $table->boolean('active')->default(true);
-            $table->boolean('is_applicable')->default(true);
-            $table->bigInteger('defined_by')->nullable(false);
-            $table->foreign('defined_by')->references('id')->on('users')->onDelete('cascade');
-            $table->timestamps();
-        });
-
 
         Schema::create('loyaltytransactions', function (Blueprint $table) {
             $table->uuid('id')->primary();
@@ -113,21 +121,21 @@ return new class extends Migration
             $table->uuid('loyaltyaccountid')->nullable(false);
             $table->foreign('loyaltyaccountid')->references('id')->on('loyaltyaccounts')->onDelete('cascade');
             $table->uuid('conversionid')->nullable(false);
-            $table->foreign('conversionid')->references('id')->on('conversions')->onDelete('cascade');
+            //$table->foreign('conversionid')->references('id')->on('conversion_amount_points')->onDelete('cascade');
             $table->bigInteger('sellerid')->nullable(false);
             $table->foreign('sellerid')->references('id')->on('users')->onDelete('cascade');
             $table->uuid('purchaseid')->nullable(false);
             //$table->foreign('purchaseid')->references('id')->on('purchases')->onDelete('cascade');
             $table->double('amount')->nullable(false)->default(0);
             $table->bigInteger('point')->nullable(false)->default(0);
-            $table->double('amount_from_converted_point')->nullable(false)->default(0);
-            $table->bigInteger('current_point')->nullable(false)->default(0);
+            //$table->double('amount_from_converted_point')->nullable(false)->default(0);
+            $table->bigInteger('old_point')->nullable(false)->default(0);
             $table->uuid('transactiontypeid')->nullable(false);
             $table->foreign('transactiontypeid')->references('id')->on('transactiontypes')->onDelete('cascade');
             $table->string('transactiondetail')->nullable();
             $table->string('clienttransactionid')->nullable();
-            $table->string('state')->nullable();
-            $table->string('returnresult')->nullable();
+            //$table->string('state')->nullable();
+            //$table->string('returnresult')->nullable();
             $table->timestamps();
         });
 
@@ -146,5 +154,10 @@ return new class extends Migration
         Schema::dropIfExists('transactiontypes');
         Schema::dropIfExists('conversions');
         Schema::dropIfExists('conversion_amount_points');
+        Schema::dropIfExists('rewards');
+        Schema::dropIfExists('conversion_point_rewards');
+        Schema::dropIfExists('thresholds');
+
+
     }
 };

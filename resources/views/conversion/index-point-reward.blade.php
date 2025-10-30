@@ -8,7 +8,7 @@
 
             <div class="col-md-9">
                 <div class="card">
-                    <div class="card-header">{{ 'Enregistrer une conversion Montant-Point' }}</div>
+                    <div class="card-header">{{ 'Enregistrer une conversion Point-Recompense' }}</div>
                     <div class="card-body">
                         @if (session('status'))
                             <div class="alert alert-success" role="alert">
@@ -16,7 +16,7 @@
                             </div>
                         @endif
 
-                        <form method="POST" action="{{ route('conversions-amount-points.index.post') }}">
+                        <form method="POST" action="{{ route('conversions-point-rewards.index.post') }}">
                             @csrf
                             <div><h5>Les champs marques par <b class="" style="color: red;">*</b> sont obligatoires</h5></div>
                             <br>
@@ -29,14 +29,14 @@
                             @enderror
 
                             <div class="row mb-3" >
-                                <label for="min_amount" class="col-md-5 col-form-label text-md-end">{{ 'Montant minimal' }}
+                                <label for="min_point" class="col-md-5 col-form-label text-md-end">{{ 'Nombre de point minimal' }}
                                     <b class="" style="color: red;">*</b></label>
 
                                 <div class="col-md-7">
-                                    <input id="min_amount" type="number" step="0.01" class="form-control @error('min_amount') is-invalid @enderror"
-                                           name="min_amount" value="{{ old('min_amount') }}" required autocomplete="min_amount" autofocus
-                                    placeholder="Quel montant donne droit a un point?">
-                                    @error('min_amount')
+                                    <input id="min_point" type="number" class="form-control @error('min_point') is-invalid @enderror"
+                                           name="min_point" value="{{ old('min_point') }}" required autocomplete="min_point" autofocus
+                                           placeholder="Combien de point faut-il avoir au moins?">
+                                    @error('min_point')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
                                     </span>
@@ -45,15 +45,19 @@
                             </div>
 
                             <div class="row mb-3">
-                                <label for="birthdate_rate" class="col-md-5 col-form-label text-md-end">{{ 'Coefficient de bonification d\'Anniversaire' }}
+                                <label for="reward" class="col-md-5 col-form-label text-md-end">{{ 'Coefficient de bonification d\'Anniversaire' }}
                                     <b class="" style="color: red;">*</b>
                                 </label>
 
                                 <div class="col-md-7">
-                                    <input id="birthdate_rate" type="number" step="0.01" class="form-control @error('birthdate_rate') is-invalid @enderror" name="birthdate_rate"
-                                           value="{{ old('birthdate_rate') }}" required autocomplete="birthdate_rate" autofocus
-                                           placeholder="{{ 'Bonification en point sur tous les achats  du client effectues son jour d\'anniversaire' }}">
-                                    @error('birthdate_rate')
+                                    <select id="reward"  class="form-control @error('reward') is-invalid @enderror" name="reward"
+                                           required >
+                                        <option value="">{{ '-- Choisir ici --' }}</option>
+                                        @foreach(\App\Models\Reward::all() as $reward)
+                                            <option value="{{$reward->id}}">{{ $reward->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('reward')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
                                     </span>

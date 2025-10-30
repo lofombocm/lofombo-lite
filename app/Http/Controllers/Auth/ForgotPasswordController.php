@@ -102,7 +102,7 @@ class ForgotPasswordController extends Controller
         }
 
         $user = User::where('email', $password_recovery_request->email)->update(['password' => Hash::make($request->password)]);
-        return redirect('/login')->with('message', 'Votre mot de passe a ete redefini avec succes!');
+        return redirect('/auth')->with('message', 'Votre mot de passe a ete redefini avec succes!');
     }
 
 }

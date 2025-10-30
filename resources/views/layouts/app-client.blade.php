@@ -1,3 +1,4 @@
+@php use Illuminate\Support\Facades\Auth; @endphp
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -42,10 +43,19 @@
                                 </li>
                             @endif--}}
                        {{-- @else--}}
+
                         @if(Auth::guard('client')->user() != null)
+                                <?php
+
+                                $client = Auth::guard('client')->user();
+                                $loyaltyaccount = \App\Models\Loyaltyaccount::where('holderid', $client->id)->first();
+
+                                ?>
                             <li class="nav-item dropdown">
                                 <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                    {{ Auth::guard('client')->user()->name }}
+                                   <strong>Solde: {{$loyaltyaccount->point_balance}} points ({{$loyaltyaccount->amount_balance}} {{$loyaltyaccount->currency_name}})
+                                       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                   </strong> <strong>{{ Auth::guard('client')->user()->name }}</strong>
                                 </a>
 
                                 <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">

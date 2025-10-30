@@ -61,11 +61,11 @@
                                     {{ __('Login') }}
                                 </button>
 
-                               {{-- @if (Route::has('password.forgot'))
-                                    <a class="btn btn-link" href="{{ route('password.forgot') }}">
+                               @if (Route::has('client.password.forgot'))
+                                    <a class="btn btn-link" href="{{ route('client.password.forgot') }}">
                                         {{ __('Forgot Your Password?') }}
                                     </a>
-                                @endif--}}
+                                @endif
                             </div>
                         </div>
                     </form>

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Loyaltytransaction;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -56,5 +56,10 @@ class HomeController extends Controller
         Auth::logout();
         //return Redirect('login');
         return redirect()->route('authentification');
+    }
+
+    public function showLoyaltyTransactions()
+    {
+        return view('tx-list'/*, ['tx' => LoyaltyTransaction::all()]*/);
     }
 }

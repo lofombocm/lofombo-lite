@@ -3,11 +3,17 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessSendEMailPwdForgotJob;
 use App\Models\Client;
+use App\Models\User;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class LoginClientController extends Controller
@@ -91,6 +97,76 @@ class LoginClientController extends Controller
         return back()->withErrors([
             'error' => 'The provided credentials do not match our records.',
         ]);
+    }
+
+
+    public function forgotPassword(): View
+    {
+        //$thiken = $this->route('token');
+        return view('auth.passwords.email-client');
+    }
+
+
+    public function postForgotPassword(Request $request){
+        //return json_encode($request);
+        $request->validate([
+            'telephone' => 'required|string|exists:clients,telephone',
+            'email' => 'required|email|max:255',
+        ]);
+
+
+
+        $client = Client::where('telephone', $request->get('telephone'))->first();
+        if(!$client){
+            return back()->withInput()->with('error', 'No client with this email');
+        }
+
+        $id = Str::uuid()->toString();
+        $currentTimestamp = Carbon::now();
+        $expire_at = $currentTimestamp->addMinutes(intval(env('PASSWORD_RECOVER_REQUEST_DURATION')));
+        DB::table('password_recovery_requests')->insert(['id' => $id, 'email' => $request->get('email'), 'created_at' => $currentTimestamp, 'expire_at' => $expire_at]);
+
+        $link = env('HOST_WEB_CLIENT_DOMAIN').'/client-password-forgot-form/'. $id ;
+        $data = ['email' => $request->get('email'), 'name' => $client->name, 'passwordRecoveringUrl' => $link];
+
+        //Mail::to($user->email)->send(new MailForPassordForgot($data));
+        ProcessSendEMailPwdForgotJob::dispatch($data);
+
+        $client->email = $request->get('email');
+        $client->save();
+
+        return back()->with('message', 'Vous recevrez un email a l\'adresse ' . $request->get('email') . ' contenant le lien vous permettant de creer un nouveau mot de passe.');
+    }
+
+
+    public function forgotPasswordForm($requestId): View
+    {
+        //$thiken = $this->route('token');
+        return view('auth.passwords.client-recover-password', ['requestId' => $requestId]);
+    }
+
+
+    public function postForgotPasswordForm(Request $request){
+        $request->validate([
+            'password' => ['required', 'string', 'min:8', 'max:20', 'confirmed'],
+        ]);
+        $password_recovery_request = DB::table('password_recovery_requests')
+            ->where([
+                'id' => $request->requestid,
+            ])->first();
+
+        if(!$password_recovery_request){
+            return back()->withInput()->with('error', 'Aucune demande de redeinir le mot de passe');
+        }
+
+        $now = Carbon::now();
+        $expire_at = Carbon::parse($password_recovery_request->expire_at);
+        if ($expire_at->isBefore($now)) {
+            return back()->withInput()->with('error', 'Votre demande a expire le: ' . $expire_at);
+        }
+
+        $client = Client::where('email', $password_recovery_request->email)->update(['password' => Hash::make($request->get('password'))]);
+        return redirect('/auth/client')->with('message', 'Votre mot de passe a ete redefini avec succes!');
     }
 
 }
