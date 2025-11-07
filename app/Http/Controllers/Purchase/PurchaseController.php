@@ -5,10 +5,15 @@ namespace App\Http\Controllers\Purchase;
 use App\Http\Controllers\Controller;
 use App\Jobs\ProcessSendEMailVoucherAvailableJob;
 use App\Models\Client;
+use App\Models\Config;
 use App\Models\ConversionAmountPoint;
+use App\Models\LineItem;
 use App\Models\Loyaltyaccount;
 use App\Models\Loyaltytransaction;
+use App\Models\Notification;
+use App\Models\Product;
 use App\Models\Purchase;
+use App\Models\Reward;
 use App\Models\Threshold;
 use App\Models\Transactiontype;
 use Illuminate\Http\Request;
@@ -31,12 +36,12 @@ class PurchaseController extends Controller
         return view('purchase.index');
     }
 
-    public function registerPurchase(Request $request){
+    public function registerPurchaseBackup(Request $request){
 
         $validator = Validator::make($request->all(), [
             'clientid' => 'required|string|max:255|min:2|exists:clients,telephone',
             'amount' => 'required|numeric|min:1',
-            'transactiontypeid' => 'required|string|uuid:4',
+            'transactiontypeid' => 'required|string|min:2|max:255',
         ]);
 
         if($validator->fails()){
@@ -208,36 +213,32 @@ class PurchaseController extends Controller
     }
 
 
-    public function registerPurchaseBackup(Request $request){
+    public function registerPurchase(Request $request){
         //return json_encode($request->all());
         //session()->flash('error', $request->get('clientid'));
         //return back()->withErrors(['error' => $request->get('clientid')]);
         $validator = Validator::make($request->all(), [
             'clientid' => 'required|string|max:255|min:2|exists:clients,telephone',
             'amount' => 'required|numeric|min:1',
-            //'numitem' => 'required|numeric|min:1',
-            //'productname0' => 'required|string|max:255|min:2',
-            //'unitprice0' => 'required|numeric|min:1',
-            //'quantity0' => 'required|numeric|min:1',
-            'transactiontypeid' => 'required|string|uuid:4',
+            'transactiontype' => 'required|string|min:2|max:255',
         ]);
         if($validator->fails()){
             return back()->withErrors(['error' => $validator->errors()->first()]);
         }
 
-        //$numitem = intval($request->get('numitem'));
+        $numitem = intval($request->get('numitem'));
 
         //$productname0 = trim($request->get('productname0'));
         //$unitprice0 = floatval(trim($request->get('unitprice0')));
         //$quantity0 = intval(trim($request->get('quantity0')));
 
         //$lineitem = LineItem::createLineItem($productname0, $quantity0, $unitprice0, $unitprice0 * $quantity0);
-        //$items = [$lineitem];
-        //$sum = $lineitem->total;
+        $items = [];
+        $sum = 0;//$lineitem->total;
         $purchaseDetails = 'Achat d\'un montant de: ' . $request->get('amount');
-        //$noms = [$productname0];
+        $noms = [];
         //$itemArray = [];
-        /*for($i = 1; $i < $numitem; $i++){
+        for($i = 0; $i < $numitem; $i++){
             $productname = trim($request->get('productname' . "$i"));
             $unitprice = floatval(trim($request->get('unitprice' . "$i")));
             $quantity = intval(trim($request->get('quantity' . "$i")));
@@ -246,34 +247,77 @@ class PurchaseController extends Controller
             array_push($items, LineItem::createLineItem($productname, $quantity, $unitprice, $total));
             //array_push($itemArray, ['name' => $productname, 'quantity' => $quantity, 'price' => $unitprice, 'total' => $total]);
             array_push($noms, $productname);
-        }*/
-
+        }
+        //dd($sum);
         $now = Carbon::now();
 
-        //$purchaseDetails .= join(', ', $noms) . '. Pour un montant total de: ' . $sum . '. Enregistre le: ' . $now;
-        $amount = floatval(trim($request->get('amount')));
-        /*if (!($sum === $amount)){
-            return back()->withErrors(['error' => 'Achat invalide: Le total des des differents produits est differents du montant de l \'achat.']);
-        }*/
+        $purchaseDetails .= ' des produits : ' . join(', ', $noms) . '. Pour un montant total de: ' . $sum . '. Enregistre le: ' . $now;
+        $amount = doubleval(trim($request->get('amount')));
+        if ($numitem > 0){
+            //dd(['numitem' => $numitem, 'items' => $items, 'amount' => $amount, 'sum' => $sum]);
+            if (!($sum === $amount)){
+                return back()->withErrors(['error' => 'Achat invalide: Le total des  differents produits est differents du montant de l \'achat.']);
+            }
+        }
 
-        $client = Client::where('telephone', $request->get('clientid'))->first();
-        if(!$client){
+
+        $theclient = Client::where('telephone', $request->get('clientid'))->where('active', true)->first();
+        if(!$theclient){
             return back()->withErrors(['error' => 'Aucun client avec le numero ' . $request->get('clientid') . ' n\'existe pas dans le systeme']);
         }
 
-        session()->flash('error', $request->get('clientid'));
-        return back()->withErrors(['error' => $request->get('clientid')]);
+       /* session()->flash('error', $request->get('clientid'));
+        return back()->withErrors(['error' => $request->get('clientid')]);*/
 
-        $loyaltyaccount = Loyaltyaccount::where('holderid', $client->id)->first();
+        $loyaltyaccount = Loyaltyaccount::where('holderid', $theclient->id)->where('active', true)->first();
 
-        $conversionAmountPoint = ConversionAmountPoint::where('is_applicable', true)->first();
+        $config = Config::where('is_applicable', true)->first();
 
-        $threshold = Threshold::where('is_applicable', true)->first();
+        //$threshold = Threshold::where('is_applicable', true)->first();
 
-        $transactiontype = Transactiontype::where('id', $request->get('transactiontypeid'))->first();
+        $transactiontype = $request->get('transactiontype'); //Transactiontype::where('id', $request->get('transactiontype'))->first();
+
+        $clientId = $theclient->id;
+        $clientBithDate = $theclient->birthdate;
+        $clientEmail = $theclient->email;
+        $clientName = $theclient->name;
+
+        //$loyaltyaccount = Loyaltyaccount::where('holderid', $theclient->id)->where('active', true)->first();
+        $loyaltyPointBalance = $loyaltyaccount->point_balance;
+        $loyaltyId = $loyaltyaccount->id;
+        $loyaltyAmountBalance = $loyaltyaccount->amount_balance;
+        //$loyaltyAccontBalance = $loyaltyaccount->point_balance;
+
+        //$conversionAmountPoint = ConversionAmountPoint::where('is_applicable', true)->first();
+        $birthdate_rate = $config->birthdate_bonus_rate;
+        $amount_per_point = $config->amount_per_point;
+        //$conversionAmountPointId = $conversionAmountPoint->id;
+
+        $levels = json_decode($config->levels); //Threshold::where('is_applicable', true)->first();
+        //$thresholdGold = $threshold->gold_threshold;
+        //$thresholdPremium = $threshold->premium_threshold;
+        //$thresholdClassic = $threshold->classic_threshold;
+
+        /*$transactiontype = Transactiontype::where('id', $request->get('transactiontypeid'))->where('active', true)->first();
         if(!$transactiontype){
             return back()->withErrors(['error' => 'Aucun type de transaction avec l\'ID  \'' . $request->get('transactiontypeid') . '\'.']);
-        }
+        }*/
+
+        /*
+             $fp = fopen('signe.txt', 'w');
+            fwrite($fp, $signe);
+            fclose($fp);
+         */
+
+        $purchaseId = Str::uuid()->toString();
+
+        /*$purchaseData = [
+            'id' => $purchaseId,
+            'clientid' =>$clientId,
+            'amount' => $amount,
+            'receiptnumber' => $request->get('receiptnumber'),
+            'products' => json_encode([])
+        ];*/
 
         DB::beginTransaction();
 
@@ -281,11 +325,9 @@ class PurchaseController extends Controller
         //return back()->withErrors(['error' => 'ID: ' . $client->id]);
         $purchase = null;
         try {
-            $signe = intval($transactiontype->sign);
+            $products = [];
 
-            //$products = [];
-
-            /*foreach($items as $item){
+            foreach($items as $item){
                 try {
                     $productid =  Str::uuid()->toString();
                     $prod = Product::where('name',  $item->name)->first();
@@ -294,7 +336,7 @@ class PurchaseController extends Controller
                             'id' => $productid,
                             'name' => $item->name,
                             'price' => $item->price,
-                            'others' => '',
+                            'others' => '' . $item->total,
                         ]);
                         array_push($products, $product);
                     }
@@ -303,40 +345,19 @@ class PurchaseController extends Controller
                     DB::rollBack();
                     return back()->withErrors(['error' => $exception->getMessage()]);
                 }
-            }*/
+            }
 
             $purchaeId = Str::uuid()->toString();
-            /*$purchase = new Purchase(
-                $purchaeId, $client->id, $amount, $request->get('receiptnumber'), json_encode([])
+            $purchase = new Purchase(
+                $purchaeId, $theclient->id, $amount, $request->get('receiptnumber'), json_encode($products)
             );
-            $purchase = $purchase->save();*/
-            $purchase = Purchase::create([
-                'id' => $purchaeId,
-                'client_id' => $client->id,
-                'amount' => $amount,
-                'receiptnumber' => $request->get('receiptnumber'),
-                'products' => json_encode([])
-            ]);
+            $purchase->save();
+            $purchaseAmount = $purchase->amount;
 
-            /*$h = fopen('testo.txt', 'w+');
-            fprintf($h, '%s', json_encode($loyaltyaccount) . '\n\n' . json_encode($conversion));
-            fclose($h);*/
-
-            /*$purchase = Purchase::create([
-                'id' => $purchaeId,
-                'clientid' => $client->id,
-                'amount' => $amount,
-                'receiptnumber' => $request->get('receiptnumber'),
-                'products' => json_encode($items)
-            ]);*/
-
-            $realAmount = $purchase->amount;
-
-            $birthdate_rate = $conversionAmountPoint->birthdate_rate;
             $isApplicableBirthdate = false;
 
-            if ($client->birthdate){
-                $birthdate = Carbon::parse($client->birthdate);
+            if ($clientBithDate) {
+                $birthdate = Carbon::parse($clientBithDate);
                 $birthdateMonth = $birthdate->month;
                 $birthdateDay = $birthdate->day;
                 $maintenant = Carbon::now();
@@ -351,81 +372,133 @@ class PurchaseController extends Controller
             if($isApplicableBirthdate){
                 $rate = $birthdate_rate;
                 if($rate < 1){
-                   $rate = 1;
+                    $rate = 1;
                 }
             }
 
-           $point = ceil($rate * intdiv($realAmount, $conversionAmountPoint->min_amount));
+            //$pointToBeAdded = ($loyaltyAmountBalance === (double)0) ? $loyaltyPointBalance : 0;
+            //$amount_per_point
+            $totalPoint = round($rate * (($purchaseAmount + $loyaltyAmountBalance) / $amount_per_point)); // applique pour ne pas avoir quelqu'un qui a un solde de montant eleve et n'a pas de points
+            $point = round($rate * ($purchaseAmount / $amount_per_point));
 
-            $totalPoint = $loyaltyaccount->point_balance + $signe * $point;
+            //$totalPoint = $loyaltyPointBalance + $signe * $point;
+            $possibleRewards = [];
+            $rewards = Reward::all();
+            foreach ($rewards as $reward){
+                $level = json_decode($reward->level);
+                $rewardPoint = $level->point;
+                if ($totalPoint >= $rewardPoint){
+                    array_push($possibleRewards, $reward);
+                }
+            }
 
-
-
-            if ($totalPoint > $threshold->gold_threshold){
+            $link = env('HOST_WEB_CLIENT_DOMAIN').'/auth/client' ;
+            $message = [$theclient->gender . ' '. $theclient->name. ' Vous avez atteint un niveau de points vous permettant de beneficier de: '];
+            $data = [];
+            if (count($possibleRewards) > 0){
                 /// TODO: Send SMS and email notification to client.
-                $link = env('HOST_WEB_CLIENT_DOMAIN').'/auth/client' ;
-                if ($client->email){
-                    $data = ['email' => $client->email, 'name' => $client->name, 'clientLoginUrl' => $link, 'type' => 'GOLD'];
+                foreach ($possibleRewards as $possibleReward){
+                    $level = json_decode($possibleReward->level);
+                    array_push($message,  '"' . $possibleReward->name . '" pour un bon de niveau "' . $level->name . '" correspondant a ' . $level->point. ' points ');
+                }
+                if ($clientEmail){
+                    $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'msg' => $message];
                     ProcessSendEMailVoucherAvailableJob::dispatch($data);
                 }
-                $data = ['email' => Auth::user()->email, 'name' => $client->name, 'clientLoginUrl' => $link, 'type' => 'GOLD'];
+                $data = ['email' => Auth::user()->email, 'name' => $clientName, 'clientLoginUrl' => $link, 'msg' => $message];
+                ProcessSendEMailVoucherAvailableJob::dispatch($data);
+            }
+
+            /*if ($totalPoint > $thresholdGold){
+                /// TODO: Send SMS and email notification to client.
+                $link = env('HOST_WEB_CLIENT_DOMAIN').'/auth/client' ;
+                if ($clientEmail){
+                    $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'GOLD'];
+                    ProcessSendEMailVoucherAvailableJob::dispatch($data);
+                }
+                $data = ['email' => Auth::user()->email, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'GOLD'];
                 ProcessSendEMailVoucherAvailableJob::dispatch($data);
 
                 /// TODO: Generate voucher.
 
             }
 
-            if ($totalPoint < $threshold->gold_threshold && $totalPoint >= $threshold->premium_threshold){
+            if ($totalPoint < $thresholdGold && $totalPoint >= $thresholdPremium){
                 /// TODO: Send SMS and email notification to client.
                 $link = env('HOST_WEB_CLIENT_DOMAIN').'/auth/client' ;
-                if ($client->email){
-                    $data = ['email' => $client->email, 'name' => $client->name, 'clientLoginUrl' => $link, 'type' => 'PREMIUM'];
+                if ($clientEmail){
+                    $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'PREMIUM'];
                     ProcessSendEMailVoucherAvailableJob::dispatch($data);
                 }
-                $data = ['email' => Auth::user()->email, 'name' => $client->name, 'clientLoginUrl' => $link, 'type' => 'PREMIUM'];
+                $data = ['email' => Auth::user()->email, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'PREMIUM'];
                 ProcessSendEMailVoucherAvailableJob::dispatch($data);
             }
 
-            if ($totalPoint < $threshold->premium_threshold && $totalPoint >= $threshold->classic_threshold){
+            if ($totalPoint < $thresholdPremium && $totalPoint >= $thresholdClassic){
                 /// TODO: Send SMS and email notification to client.
                 $link = env('HOST_WEB_CLIENT_DOMAIN').'/auth/client' ;
-                if ($client->email){
-                    $data = ['email' => $client->email, 'name' => $client->name, 'clientLoginUrl' => $link, 'type' => 'CLASSIC'];
+                if ($clientEmail){
+                    $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'CLASSIC'];
                     ProcessSendEMailVoucherAvailableJob::dispatch($data);
                 }
-                $data = ['email' => Auth::user()->email, 'name' => $client->name, 'clientLoginUrl' => $link, 'type' => 'CLASSIC'];
+                $data = ['email' => Auth::user()->email, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'CLASSIC'];
                 ProcessSendEMailVoucherAvailableJob::dispatch($data);
-            }
+            }*/
 
-            //$amount_from_converted_point = ($point *  $conversion -> point_to_amount_amount)/$conversion -> point_to_amount_point;
-            /*
-             $lastConversion = Conversion::where('is_applicable', true)->orderBy('created_at', 'desc')->first();
-        return ($point *  $lastConversion -> point_to_amount_amount)/$lastConversion -> point_to_amount_point;
-             */
+            $notifid = Str::uuid()->toString();
+            $notifgenerator = Auth::user()->id;
+            $notifsubject = 'Disponibilite de recompenses au travers des bons';
+            $notifsentat = Carbon::now();
+            $notifbody = json_encode($message);
+            $notifdata = json_encode($data);
+            $notifsender = Auth::user()->name;
+            $notifrecipient = $clientId;
+            $notifsenderaddress = Auth::user()->email;
+            $notifrecipientaddress = $theclient->telephone;
+            $notifread = false;
+
+            //dd($notifdata);
+            Notification::create(
+                [
+                    'id' => $notifid,
+                    'generator' => $notifgenerator,
+                    'subject' => $notifsubject,
+                    'sent_at' => $notifsentat,
+                    'body' => $notifbody,
+                    'data' => $notifdata,
+                    'sender' => $notifsender,
+                    'recipient' => $notifrecipient,
+                    'sender_address' => $notifsenderaddress,
+                    'recipient_address' => $notifrecipientaddress,
+                    'read' => $notifread,
+                ]
+            );
+
+
             $transactionid = Str::uuid()->toString();
             Loyaltytransaction::create(
                 [   'id' => $transactionid,
                     'date' => Carbon::now(),
-                    'loyaltyaccountid' => $loyaltyaccount->id,
-                    'conversionid' => $conversionAmountPoint->id,
-                    'sellerid' => Auth::user()->id,
-                    'purchaseid' => $purchaeId,
-                    'amount' => $realAmount,
+                    'loyaltyaccountid' => $loyaltyId,
+                    'configid' => $config->id,
+                    'madeby' => Auth::user()->id,
+                    'reference' => 'ENREGISTREMENT ACHAT',
+                    'amount' => $amount,
                     'point' => $point,
-                    'old_point' => $loyaltyaccount->point_balance,
-                    'transactiontypeid' => $request->get('transactiontypeid'), //env('TRANSACTIONTYPEID_PURCHASE'),
+                    'old_amount' => $loyaltyAmountBalance,
+                    'old_point' => $loyaltyPointBalance,
+                    'transactiontype' => $request->get('transactiontype'), //env('TRANSACTIONTYPEID_PURCHASE'),
                     'transactiondetail' => $purchaseDetails,
-                    'clienttransactionid' => $client->id
+                    'clientid' => $clientId,
+                    'products' => json_encode($products)
                 ]
             );
 
-            //$current_point_new = (int)(($loyaltyaccount->amount_balance + $realAmount) * $conversion->amount_to_point_point) / $conversion->amount_to_point_amount;
-            //$amount_from_converted_point = ($point *  $conversion -> point_to_amount_amount)/$conversion -> point_to_amount_point;
             $loyaltyaccount->update(
                 [
-                    'amount_balance' => $loyaltyaccount->amount_balance + $signe * $realAmount,
-                    'point_balance' => $loyaltyaccount->point_balance + $signe * $point,
-                    'current_point' => $loyaltyaccount->point_balance
+                    'amount_balance' => $loyaltyAmountBalance + $purchaseAmount,
+                    'point_balance' => $totalPoint,
+                    'current_point' => $loyaltyPointBalance
                 ]);
 
             DB::commit();

@@ -88,7 +88,7 @@
                                         <div class="col-md-4">
                                             <label for="day" >Jour</label>
                                             <select class="form-select" id="day" name="day">
-                                                <option>--Choisir ici --</option>
+                                                <option value="">--Choisir ici --</option>
                                                 <option value="01">01</option>
                                                 <option value="02">02</option>
                                                 <option value="03">03</option>
@@ -126,7 +126,7 @@
                                         <div class="col-md-4">
                                             <label for="month" >Mois</label>
                                             <select class="form-select" id="month" name="month">
-                                                <option>--Choisir ici --</option>
+                                                <option value="">--Choisir ici --</option>
                                                 <option value="01">Janvier</option>
                                                 <option value="02">Fevrier</option>
                                                 <option value="03">Mars</option>
@@ -146,7 +146,7 @@
                                         <div class="col-md-4">
                                             <label for="year" >Annee</label>
                                             <select class="form-select" id="year" name="year">
-                                                <option>--Choisir ici --</option>
+                                                <option value="">--Choisir ici --</option>
                                                 @for($i = $thisyear; $i >= 1900; $i--)
                                                     <option value="{{$i}}">{{$i}}</option>
                                                 @endfor

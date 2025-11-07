@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Config;
 use App\Models\User;
 //use Illuminate\Foundation\Auth\SendsPasswordResetEmails;
 use Illuminate\Support\Carbon;
@@ -62,7 +63,19 @@ class ForgotPasswordController extends Controller
 
         $id = Str::uuid()->toString();
         $currentTimestamp = Carbon::now();
-        $expire_at = $currentTimestamp->addMinutes(intval(env('PASSWORD_RECOVER_REQUEST_DURATION')));
+
+        $configs = Config::all();
+        $config = null;
+        if (count($configs) > 0) {
+            $config = $configs->first();
+        }
+
+        $pwdRecoverDuation = intval(env('PASSWORD_RECOVER_REQUEST_DURATION'));
+        if (!($config === null)){
+            $pwdRecoverDuation = $config->password_recovery_request_duration;
+        }
+
+        $expire_at = $currentTimestamp->addMinutes($pwdRecoverDuation);
         DB::table('password_recovery_requests')->insert(['id' => $id, 'email' => $user->email, 'created_at' => $currentTimestamp, 'expire_at' => $expire_at]);
 
         $link = env('HOST_WEB_CLIENT_DOMAIN').'/password-forgot-form/'. $id ;

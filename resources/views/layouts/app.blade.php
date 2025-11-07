@@ -1,4 +1,12 @@
-@php use App\Http\Controllers\Auth\RegisterController;use App\Models\User;use Illuminate\Support\Facades\Request;use \Illuminate\Support\Facades\Auth; @endphp
+@php
+     use App\Http\Controllers\Auth\RegisterController
+    ;use App\Models\User
+    ;use App\Models\Config
+    ;use Illuminate\Support\Facades\Request
+    ;use Illuminate\Support\Facades\Auth
+    ;use App\Models\Notification
+    ;
+@endphp
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -15,9 +23,11 @@
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
 
     <!-- Scripts -->
-    @vite(['resources/sass/app.scss', 'resources/js/app.js'/*, 'resources/js/myScript.js'*/])
+    @vite(['resources/sass/app.scss', 'resources/js/app.js', 'resources/js/myScript.js'])
 </head>
-<body>
+<body style="font-size: initial;">
+
+
 
 <?php
     if (count(User::all()) === 0) {
@@ -33,24 +43,67 @@
         $response = $registerController->postRegistration($request);
     }
 
+    if (Auth::check()){
+        $notifications = Notification::where('sender_address', Auth::user()->email)->where('read', false)->get();
+        $unreadMsgNum = count($notifications);
+    }
+
 ?>
     <div id="app">
         <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
             <div class="container">
                 <a class="navbar-brand" href="{{ url('/') }}">
-                    {{ config('app.name', 'Laravel') }}
+                    @if(count(Config::all()) > 0)
+                        @php
+                            $config = Config::where('is_applicable', true)->first();
+                        @endphp
+                        @if($config != null)
+                            <img src="{{asset('storage/' .$config->enterprise_logo)}}" style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;" height="65" width="65" alt=""> &nbsp; &nbsp;{{ $config->enterprise_name }}
+                        @else
+                        <img src="{{asset('images/logo.png')}}" style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;" height="65" width="65" alt=""> &nbsp; &nbsp;{{ config('app.name', 'Laravel') }}
+                        @endif
+                    @else
+                        <img src="{{asset('images/logo.png')}}" style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;" height="65" width="65" alt=""> &nbsp; &nbsp;{{ config('app.name', 'Laravel') }}
+                    @endif
+
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
+                @if(Auth::check())
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                        <!-- Left Side Of Navbar -->
+                        <ul class="navbar-nav me-auto">
+                        </ul>
+                    </div>
+                @endif
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <!-- Left Side Of Navbar -->
-                    <ul class="navbar-nav me-auto">
+                    @if(Auth::check())
+                        <ul class="navbar-nav me-auto">
+                            <li class="nav-item">
+                                <a class="list-group-item list-group-item-action nav-link"
+                                   href="{{ route('authentification') }}"
+                                   data-bs-toggle="modal" data-bs-target="#notifications-modal"
+                                style="font-size: initial;">
+                                    {{ 'Notifications' }} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                    <span class="badge bg-success position-absolute top|start-*"
+                                          style="
+                                            position: relative;
+                                            right: 0;
+                                            border-radius: 50%;
+                                            line-height: 20px;
+                                            display: inline-block;
+                                            text-align: center;
+                                            margin-top: -10px;"
+                                    >{{$unreadMsgNum}}</span>
+                                </a>
+                            </li>
+                        </ul>
+                    @endif
 
-                    </ul>
-
-                    <!-- Right Side Of Navbar -->
+                    <!-- Right Side Of Navbar notifications-modal -->
                     <ul class="navbar-nav ms-auto">
                         <!-- Authentication Links -->
                         @guest
@@ -84,6 +137,10 @@
 
                                         <a class="dropdown-item" href="{{ url('password-reset')}}">
                                             Modifier mot de passe
+                                        </a>
+
+                                        <a class="dropdown-item" href="{{ route('user.update-parameter.index', Auth::user()->id)}}">
+                                            Modifier mes parametres
                                         </a>
 
                                         <form id="deconnexion-form" action="{{ route('deconnexion') }}" method="POST" class="d-none">

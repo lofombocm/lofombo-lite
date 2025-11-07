@@ -11,5 +11,5 @@ class Reward extends Model
     protected $casts = ['id' => 'string'];
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $fillable = ['id', 'name', 'nature', 'value', 'active', 'registered_by'];
+    protected $fillable = ['id', 'name', 'nature', 'value', 'level', 'active', 'registered_by'];
 }

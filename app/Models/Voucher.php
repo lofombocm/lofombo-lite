@@ -12,5 +12,5 @@ class Voucher extends Model
     public $incrementing = false;
 
     protected $keyType = 'string';
-    protected $fillable = ['id', 'serialnumber', 'clientid', 'level', 'point', 'amount', 'enterprise', 'expirationdate', 'active', 'activated_by', 'reward', 'is_used', 'used_at'];
+    protected $fillable = ['id', 'serialnumber', 'clientid', 'level', 'point', 'amount', 'enterprise', 'expirationdate', 'active', 'activated_by', 'is_used', 'used_at'];
 }

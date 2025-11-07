@@ -3,14 +3,20 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessSendEMailClientCredentialsJob;
+use App\Jobs\ProcessSendEMailVoucherAvailableJob;
 use App\Models\Client;
+use App\Models\Config;
 use App\Models\Conversion;
 use App\Models\Loyaltyaccount;
 use App\Models\Loyaltyewalet;
+use App\Models\Loyaltytransaction;
+use App\Models\Reward;
 use App\Models\Threshold;
 use App\Models\User;
 use App\Models\Voucher;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -53,21 +59,27 @@ class ClientController extends Controller
         ]);
 
         if($validator->fails()){
+            session()->flash('error', $validator->errors()->first());
             return back()->withErrors(['error' => $validator->errors()->first()]);
         }
+
+        $clientEmail = '';
 
         if ($request->filled('email')){
             $validatorEmail = Validator::make($request->all(), [
                 'email' => 'string|email|max:255',
             ]);
             if($validatorEmail->fails()){
+                session()->flash('error', $validatorEmail->errors()->first());
                 return back()->withErrors(['error' => $validatorEmail->errors()->first()]);
             }
+            $clientEmail = $request->get('email');
         }
 
         $secret = null;
         $birthdate = "";
-        if (!$request->filled('day') || !$request->filled('month') || !$request->filled('year')){
+        //dd(['day'=>$request->get('day'),'month'=>$request->get('month'),'year'=>$request->get('year')]);
+        if ($request->get('day') === null || $request->get('month') === null  || $request->get('year') === null) {
             $secret = "12345678";
         }else{
 
@@ -89,6 +101,7 @@ class ClientController extends Controller
                 'gender' => 'string|in:MONSIEUR,MADAME,MADEMOISELLE',
             ]);
             if($validatorGender->fails()){
+                session()->flash('error', $validatorGender->errors()->first());
                 return back()->withErrors(['error' => $validatorGender->errors()->first()]);
             }
         }
@@ -98,6 +111,7 @@ class ClientController extends Controller
                 'quarter' => 'string|max:255',
             ]);
             if($validatorQuarter->fails()){
+                session()->flash('error', $validatorQuarter->errors()->first());
                 return back()->withErrors(['error' => $validatorQuarter->errors()->first()]);
             }
         }
@@ -108,6 +122,7 @@ class ClientController extends Controller
                 'city' => 'string|max:255',
             ]);
             if($validatorCity->fails()){
+                session()->flash('error', $validatorCity->errors()->first());
                 return back()->withErrors(['error' => $validatorCity->errors()->first()]);
             }
         }
@@ -128,27 +143,40 @@ class ClientController extends Controller
             'active' => true
         ];
 
+        $configs = Config::where('is_applicable', true)->get();
+        if (count($configs) === 0) {
+            // = $configs[0]->enterprise_logo;
+            //dd('Yes');
+            $msg = 'Aucune confguration de conversion montant point trouve. Merci de definir au prealable une configuration du systeme';
+            session()->flash('error', $msg);
+            return back()->withErrors(['error' => $msg]);
+        }
+
         DB::beginTransaction();
         try {
-
             $client = $this->create($data);
-
 
             $loyaltyaccountId = Str::uuid()->toString();
             $loyaltyaccountnumber = $this->generateLoyaltyAccountNumber();
             $holder = $client->id;
-            $point_balance = (int)env('INITIAL_POINT_BALANCE');
-            $amount_balance = 0;
+
+
+            $config = $configs[0];
+
+            $point_balance = $config->initial_loyalty_points;
+            $amount_balance = $config->amount_per_point * $point_balance;
             /*$amount_from_converted_point = $this->convertPointToAmount($point_balance);
             if ($amount_from_converted_point == null){
                 DB::rollback();
                 return back()->withErrors(['error' => 'Aucune regle de conversion trouvee']);
             }*/
             //$amount_balance = $amountConverted;
-            $current_point = 0.0;
+            $current_point = 0;
             $photo = '';
             $issuer = Auth::user()->id;
-            $currency_name = env('CURRENCY_NAME');
+            $currency_name = $config->currency_name; //env('CURRENCY_NAME');
+
+
             Loyaltyaccount::create([
                 'id' => $loyaltyaccountId,
                 'loyaltyaccountnumber' => $loyaltyaccountnumber,
@@ -173,6 +201,33 @@ class ClientController extends Controller
                 'issuer' => $issuer,
                 'active' => true,
             ]);
+
+            $transactionid = Str::uuid()->toString();
+
+            Loyaltytransaction::create([
+                'id' => $transactionid,
+                'date' => Carbon::now(),
+                'loyaltyaccountid' => $loyaltyaccountId,
+                'configid' => $config->id,
+                'madeby' => $issuer,
+                'reference' => 'Transaction Initiale donnant les points initiaux au client',
+                'amount' => $amount_balance,
+                'point' => $point_balance,
+                'old_amount' => 0.0,
+                'old_point' => $current_point,
+                'transactiontype' => 'INITIALISATION COMPTE CLIENT',
+                'transactiondetail' => 'Transaction Initiale donnant les points initiaux au client',
+                'clientid' => $client->id,
+                'products' => '[]'
+            ]);
+
+            if (strlen($clientEmail)){
+                /// TODO: Send SMS and email notification to client.
+                $link = env('HOST_WEB_CLIENT_DOMAIN').'/auth/client' ;
+                $data = ['email' => $clientEmail, 'name' => $client->name, 'clientLoginUrl' => $link, 'telephone' => $client->telephone, 'secret' => $secret,
+                    'enterprise' => $config->enterprise_name, 'gender' => $client->gender,];
+                ProcessSendEMailClientCredentialsJob::dispatch($data);
+            }
 
         }catch (\Exception $e){
             DB::rollback();
@@ -205,6 +260,9 @@ class ClientController extends Controller
         if(!($otherClient === null) && $otherClient->id != $clientId){
             return back()->withErrors(['error' => 'Numero de telephone deja utilise par le client ' . $otherClient->name . '.']);
         }
+
+        $client->name = $request->get('name');
+        $client->telephone = $request->get('telephone');
 
         if ($request->filled('email')){
             $validatorEmail = Validator::make($request->all(), [
@@ -278,10 +336,13 @@ class ClientController extends Controller
 
     public function clientDetails($clientId){
         $client = Client::where('id', $clientId)->first();
+        /*if(!$client){
+            return back()->withErrors(['error' => 'Client introuvable']);
+        }*/
         $user = User::where('id', $client->registered_by)->first();
         $loyaltyAccount = Loyaltyaccount::where('holderid', $client->id)->first();
-        $threshold = Threshold::where('is_applicable', true)->where('active', true)->first();
-        return view('client.client-details', ['client' => $client, 'user' => $user, 'loyaltyAccount' => $loyaltyAccount, 'threshold' => $threshold]);
+        $config = Config::where('is_applicable', true)->first();
+        return view('client.client-details', ['client' => $client, 'user' => $user, 'loyaltyAccount' => $loyaltyAccount, 'configuration' => $config]);
     }
 
     public function getVouchers(string $clientId)
@@ -289,8 +350,10 @@ class ClientController extends Controller
         $vouchers = Voucher::where('clientid', $clientId)->orderBy('created_at', 'desc')->get();
         $client = Client::where('id', $clientId)->first();
         $user = Auth::user();
-
-        return view('client.client-vouchers', ['client' => $client, 'user' => $user, 'vouchers' => $vouchers]);
+        $config = Config::where('is_applicable', true)->first();
+        //$rewards = Reward::where('clientid', $clientId)->orderBy('created_at', 'desc')->get();
+        return view('client.client-vouchers', ['client' => $client, 'user' => $user, 'vouchers' => $vouchers,
+            'config' => $config]);
 
     }
 
@@ -344,6 +407,20 @@ class ClientController extends Controller
             return redirect()->back()->with('error', $msg);
         }
 
+        $expirationdate = Carbon::parse($voucher->expirationdate);
+        if ($voucher->is_used) {
+            $msg = 'Le bon avec l\'ID ' . $voucherId . ' est deja utilise. Il a ete utilise le: ' . $expirationdate->format('d/m/Y');
+            session()->flash('error', $msg);
+            return redirect()->back()->with('error', $msg);
+        }
+
+
+        if ($expirationdate->isBefore(Carbon::now())) {
+            $msg = 'Le bon avec l\'ID ' . $voucherId . ' est expire le ' . $expirationdate->format('d/m/Y') . '.';
+            session()->flash('error', $msg);
+            return redirect()->back()->with('error', $msg);
+        }
+
         $voucher->active = true;
         $voucher->save();
         $msg = 'Le bon ' . $voucher->name . ' a ete active avec succes.';
@@ -368,6 +445,20 @@ class ClientController extends Controller
             return redirect()->back()->with('error', $msg);
         }
 
+        $expirationdate = Carbon::parse($voucher->expirationdate);
+        if ($voucher->is_used) {
+            $msg = 'Le bon avec l\'ID ' . $voucherId . ' est deja utilise. Il a ete utilise le: ' . $expirationdate->format('d/m/Y');
+            session()->flash('error', $msg);
+            return redirect()->back()->with('error', $msg);
+        }
+
+
+        if ($expirationdate->isBefore(Carbon::now())) {
+            $msg = 'Le bon avec l\'ID ' . $voucherId . ' est expire le ' . $expirationdate->format('d/m/Y') . '.';
+            session()->flash('error', $msg);
+            return redirect()->back()->with('error', $msg);
+        }
+
         $voucher->active = false;
         $voucher->save();
         $msg = 'Le bon ' . $voucher->name . ' a ete desactive avec succes.';
@@ -377,6 +468,50 @@ class ClientController extends Controller
     }
 
 
+    public function useVoucher(string $clientId, string $voucherId)
+    {
+        $client = Client::where('id', $clientId)->first();
+        if ($client === null) {
+            $msg = 'Le client avec l\'ID ' . $clientId . ' n\'existe pas.';
+            session()->flash('error', $msg);
+            return redirect()->back()->with('error', $msg);
+        }
+
+        $voucher = Voucher::where('id', $voucherId)->first();
+        if ($voucher === null) {
+            $msg = 'Le bon avec l\'ID ' . $voucherId . ' n\'existe pas.';
+            session()->flash('error', $msg);
+            return redirect()->back()->with('error', $msg);
+        }
+
+        if (!$voucher->active) {
+            $msg = 'Le bon avec l\'ID ' . $voucherId . ' n\'est pas actif. Veuillez contacter l\'administrateur pour l\'activer.';
+            session()->flash('error', $msg);
+            return redirect()->back()->with('error', $msg);
+        }
+
+        if ($voucher->is_used) {
+            $msg = 'Le bon avec l\'ID ' . $voucherId . ' est deja utilise. Merci de contacter l\'administration pour l\'activer.';
+            session()->flash('error', $msg);
+            return redirect()->back()->with('error', $msg);
+        }
+
+        $expirationdate = Carbon::parse($voucher->expirationdate);
+
+        if ($expirationdate->isBefore(Carbon::now())) {
+            $msg = 'Le bon avec l\'ID ' . $voucherId . ' est expire le ' . $expirationdate->format('d/m/Y') . '.';
+            session()->flash('error', $msg);
+            return redirect()->back()->with('error', $msg);
+        }
+
+        $voucher->is_used = true;
+        $voucher->used_at = Carbon::now();
+        $voucher->save();
+        $msg = 'Le bon ' . $voucher->name . ' a ete enregistre comme utilise avec succes.';
+
+        session()->flash('status', $msg);
+        return redirect()->back()->with('status', $msg);
+    }
 
 
 

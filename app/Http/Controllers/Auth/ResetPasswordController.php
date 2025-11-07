@@ -78,11 +78,12 @@ class ResetPasswordController extends Controller
             return back()->withInput()->with('error', 'Invalid current password');
         }
 
-        $user = User::where('email', $request->email)->update(['password' => Hash::make($request->password)]);
+        User::where('email', $request->email)->update(['password' => Hash::make($request->password)]);
         //DB::table('password_resets')->where(['email'=> $request->email])->delete();
         Session::flush();
         Auth::logout();
         //return Redirect('login');
+        session()->flash('status', 'Your password has been changed');
         return redirect()->route('authentification')->with('message', 'Votre mot de passe a ete modifie avec succes!');
         //return redirect('/login')->with('message', 'Votre mot de passe a ete modifie avec succes!');
     }

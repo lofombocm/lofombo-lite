@@ -32,7 +32,7 @@ return new class extends Migration
         Schema::create('loyaltyaccounts', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('loyaltyaccountnumber')->unique()->nullable(false)->index();
-            $table->uuid('holderid')->nullable(false);
+            $table->uuid('holderid')->nullable(false)->unique()->index();
             $table->foreign('holderid')->references('id')->on('clients')->onDelete('cascade');
             $table->double('amount_balance')->nullable(false)->default(0); // montant accumule des   differents achats
             $table->bigInteger('point_balance')->nullable(false)->default(0); // point accumule obtenu de la conversion montant point suivant la conversion defini
@@ -57,7 +57,7 @@ return new class extends Migration
         });
 
 
-        Schema::create('transactiontypes', function (Blueprint $table) {
+        /*Schema::create('transactiontypes', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('code')->nullable(false);
             $table->string('name')->nullable(false);
@@ -65,13 +65,14 @@ return new class extends Migration
             $table->integer('signe')->nullable(false)->default(1);
             $table->boolean('active')->default(true);
             $table->timestamps();
-        });
+        });*/
 
         Schema::create('rewards', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name')->nullable(false);
             $table->string('nature')->nullable(false);
             $table->double('value')->nullable(false);
+            $table->json('level')->nullable(false); //level = object ['config' => 'uuid','name' => 'levelName', 'point' => 50]
             $table->boolean('active')->default(true);
             $table->bigInteger('registered_by')->nullable(false);
             $table->foreign('registered_by')->references('id')->on('users')->onDelete('cascade');
@@ -89,7 +90,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('conversion_point_rewards', function (Blueprint $table) {
+        /*Schema::create('conversion_point_rewards', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->integer('min_point')->nullable(false);
             $table->uuid('reward')->nullable(false);
@@ -99,7 +100,7 @@ return new class extends Migration
             $table->bigInteger('defined_by')->nullable(false);
             $table->foreign('defined_by')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
-        });
+        });*/
 
         Schema::create('thresholds', function (Blueprint $table) {
             $table->uuid('id')->primary();
@@ -114,28 +115,50 @@ return new class extends Migration
         });
 
 
+        Schema::create('configs', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->double('initial_loyalty_points')->nullable(false)->default(5);
+            $table->double('amount_per_point')->nullable(false)->default(5000);
+            $table->string('currency_name')->nullable(false)->default('FCFA');
+            $table->json('levels')->nullable(false)->default('[]'); // array of object ['name' => 'levelName', 'point' => 50]
+            /*$table->integer('classic_threshold')->nullable(false)->default(50);
+            $table->integer('premium_threshold')->nullable(false)->default(80);
+            $table->integer('gold_threshold')->nullable(false)->default(120);*/
+            $table->integer('voucher_duration_in_month')->nullable(false)->default(3);
+            $table->integer('password_recovery_request_duration')->nullable(false)->default(1440);
+            $table->string('enterprise_name')->nullable(false)->default('ENTREPRISE TEST');
+            $table->string('enterprise_email')->nullable(false)->default('contact@gmail.com');
+            $table->string('enterprise_phone')->nullable(false)->default('0123456789');
+            $table->string('enterprise_website')->nullable(false)->default(url('/'));
+            $table->string('enterprise_address')->nullable(false)->default('');
+            $table->string('enterprise_logo')->nullable(false)->default(asset('images/logo.jpg'));
+            $table->integer('defined_by')->nullable(false);
+            $table->foreign('defined_by')->references('id')->on('users')->onDelete('cascade');
+            $table->boolean('is_applicable')->nullable(false)->default(true);
+            $table->double('birthdate_bonus_rate')->nullable(false)->default(1);
+            $table->timestamps();
+        });
+
+
 
         Schema::create('loyaltytransactions', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->timestamp('date')->nullable(false);
             $table->uuid('loyaltyaccountid')->nullable(false);
             $table->foreign('loyaltyaccountid')->references('id')->on('loyaltyaccounts')->onDelete('cascade');
-            $table->uuid('conversionid')->nullable(false);
-            //$table->foreign('conversionid')->references('id')->on('conversion_amount_points')->onDelete('cascade');
-            $table->bigInteger('sellerid')->nullable(false);
-            $table->foreign('sellerid')->references('id')->on('users')->onDelete('cascade');
-            $table->uuid('purchaseid')->nullable(false);
-            //$table->foreign('purchaseid')->references('id')->on('purchases')->onDelete('cascade');
+            $table->uuid('configid')->nullable(false); // configuration qui a donne la conversion montant points
+            $table->foreign('configid')->references('id')->on('configs')->onDelete('cascade');
+            $table->string('madeby')->nullable(false); // userid or client id
+            $table->string('reference')->nullable(false); // transaction for what? purchase ID or Voucher ID
             $table->double('amount')->nullable(false)->default(0);
             $table->bigInteger('point')->nullable(false)->default(0);
-            //$table->double('amount_from_converted_point')->nullable(false)->default(0);
+            $table->double('old_amount')->nullable(false)->default(0);
             $table->bigInteger('old_point')->nullable(false)->default(0);
-            $table->uuid('transactiontypeid')->nullable(false);
-            $table->foreign('transactiontypeid')->references('id')->on('transactiontypes')->onDelete('cascade');
+            $table->string('transactiontype')->nullable(false);
             $table->string('transactiondetail')->nullable();
-            $table->string('clienttransactionid')->nullable();
-            //$table->string('state')->nullable();
-            //$table->string('returnresult')->nullable();
+            $table->uuid('clientid')->nullable();
+            $table->foreign('clientid')->references('id')->on('clients')->onDelete('cascade');
+            $table->json('products')->nullable(false)->default('[]');
             $table->timestamps();
         });
 
@@ -151,11 +174,12 @@ return new class extends Migration
         Schema::dropIfExists('loyaltyaccounts');
         Schema::dropIfExists('loyaltyewalets');
         Schema::dropIfExists('loyaltytransactions');
-        Schema::dropIfExists('transactiontypes');
+        Schema::dropIfExists('configs');
+        //Schema::dropIfExists('transactiontypes');
         Schema::dropIfExists('conversions');
         Schema::dropIfExists('conversion_amount_points');
         Schema::dropIfExists('rewards');
-        Schema::dropIfExists('conversion_point_rewards');
+        //Schema::dropIfExists('conversion_point_rewards');
         Schema::dropIfExists('thresholds');
 
 

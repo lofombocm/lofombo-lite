@@ -13,13 +13,18 @@
 
             <div class="col-md-9">
                 <div class="card">
-                    <div class="card-header">{{ 'Les Transactions' }}</div>
+                    <div class="card-header">
+                        <div id="top">
+                            <button class="btn btn-link" onclick="history.back();" style="text-decoration: none; font-size: large;"><<</button>
+                            &nbsp;&nbsp;&nbsp;{{ 'Les Transactions' }}</div>
+
+                    </div>
                     <div class="card-body">
 
                         <div class="list-group list-group-flush alert alert-light">
-                            @foreach(Loyaltytransaction::orderBy('created_at', 'desc')->get() as $tx)
+                            @foreach($txs as $tx)
                                 @php
-                                    $transactiontype = Transactiontype::where('id', $tx->transactiontypeid)->first();
+                                    //$transactiontype = Transactiontype::where('id', $tx->transactiontypeid)->first();
                                 @endphp
                                 <a href="#{{$tx->id}}" class="list-group-item list-group-item-action" id="{{$tx->id}}">
                                     <h6>
@@ -41,7 +46,7 @@
                                     </h6>
 
                                     <h6>
-                                        Type: &nbsp; &nbsp; {{$transactiontype->code}}
+                                        Type: &nbsp; &nbsp; {{$tx->transactiontype}}
                                     </h6>
                                     <h6>
                                         Details: {{ $tx->transactiondetail }}
@@ -52,9 +57,9 @@
 
                     </div>
 
-                    <div class="card-footer">
-                        {{'Footer'}}
-                    </div>
+                    {{--<div class="card-footer">
+                        {{' '}}
+                    </div>--}}
                 </div>
             </div>
         </div>

@@ -16,7 +16,7 @@
                             </div>
                         @endif
 
-                            <form method="POST" action="{{ route('purchases.index.post') }}">
+                            <form method="POST" action="{{ route('purchases.index.post') }}" enctype="multipart/form-data" onsubmit="return onSubmitPurchse();">
                                 @csrf
                                 <div><h5>Les champs marques par <b class="" style="color: red;">*</b> sont obligatoires</h5></div>
                                 <br>
@@ -78,46 +78,56 @@
 
                                         @error('receiptnumber')
                                         <span class="invalid-feedback" role="alert">
-                                            <strong>{{ $message }}</strong>
-                                        </span>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <label for="transactiontypeid" class="col-md-3 col-form-label text-md-end">{{ 'Type de transaction' }}
-                                        <b class="" style="color: red;">*</b></label>
-
-                                    <div class="col-md-9">
-                                            {{--<input list="clientids" id="clientid" name="clientid" class="form-control @error('clientid') is-invalid @enderror"
-                                                   value="{{ old('clientid') }}" required autocomplete="clientid" autofocus />--}}
-                                        <select id="transactiontypeid" class="form-control @error('transactiontypeid') is-invalid @enderror" name="transactiontypeid"  required>
-                                            <option value="">-- Choisissez ici --</option>
-                                            @foreach(\App\Models\Transactiontype::all() as $transactiontype)
-                                                <option value="{{$transactiontype->id}}" >{{$transactiontype->name}}</option>
-                                            @endforeach
-                                        </select>
-
-                                        @error('transactiontypeid')
-                                        <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
                                     </span>
                                         @enderror
                                     </div>
                                 </div>
 
-                                {{--<div class="row mb-3">
-                                    <input type="hidden" id="numitem" name="numitem" value="0">
-                                    <label for="products" class="col-md-3 col-form-label text-md-end">{{ 'Produits'}}</label>
-                                    <div class="col-md-9" id="products">
+                                {{--<div class="row mb-3" >
+                                    <label  class="col-md-3 col-form-label text-md-end">
+                                        <a href="#" onclick="toggleProductContent();" style="text-decoration: none; font-size: initial; color: green;" id="add_level_field">
+                                            <span class="glyphicon glyphicon-plus"><strong>+</strong></span> <span style="font-size: initial;"> produits de l'achat</span>
+                                        </a>
+                                    </label>
+
+                                    <div class="col-md-9">
+                                        <input id="receiptnumber" type="text" class="form-control @error('receiptnumber') is-invalid @enderror" name="receiptnumber" value="{{ old('receiptnumber') }}" autocomplete="receiptnumber">
 
                                     </div>
-                                    <div class="input-group-btn" style="text-align: right;">
-                                        <button class="btn btn-link" type="button"  onclick="addProduct_fields();"> <span class="glyphicon glyphicon-plus" style="font-weight: bold;">Ajouter</span> </button>
+                                </div>--}}
+
+                                <input  id="transactiontype" name="transactiontype" value="ENREGISTREMENT ACHAT" type="hidden"/>
+                                <input id="montant" type="hidden" name="montant" id="montant">
+
+                                <div class="row mb-3" id="product-content" {{--style="display: none;"--}}>
+                                    <input type="hidden" id="numitem" name="numitem" value="0">
+                                    <label for="products" class="col-md-3 col-form-label text-md-end">
+                                        {{ 'Produits'}}
+                                        <br>
+                                        <a href="#" onclick="addProduct_fields();" style="text-decoration: none; font-size: initial; color: green;" id="add_level_field">
+                                            <strong><span class="glyphicon glyphicon-plus">+</span></strong>
+                                        </a>
+                                    </label>
+                                    <div class="col-md-9" >
+                                        <div id="products">
+
+                                        </div>
+                                        <br>
+                                        <strong>
+                                            <span id="general_total" style="display: inline; float: right; margin-right: 30px; font-size: initial">
+                                                Total: 0
+                                            </span>
+                                        </strong>
                                     </div>
+
+                                </div>
+                                    {{--<div class="input-group-btn" style="text-align: right;">
+                                        <button class="btn btn-link" type="button"  > <span class="glyphicon glyphicon-plus" style="font-size: large;">Ajouter</span> </button>
+                                    </div>--}}
 
                                         <script type="text/javascript">
-                                            addProduct_fields();
+                                            //addProduct_fields();
                                             function addProduct_fields() {
                                                 var numItem = parseInt(document.getElementById('numitem').value);
                                                 console.log("Num Item: " + numItem);
@@ -137,20 +147,20 @@
                                                         '</div>' +
                                                         '<div class="col-sm-3 nopadding">' +
                                                             '<div class="form-group">' +
-                                                                '<input type="number" class="form-control" name="unitprice' + index + '" value="" placeholder="Prix Unitaire">'+
+                                                                '<input id="unitprice' +  index + '" type="number" class="form-control" name="unitprice' + index + '" value="" placeholder="Prix Unitaire" onblur="displayTotal();">'+
                                                             '</div>' +
                                                         '</div>' +
                                                         '<div class="col-sm-3 nopadding">' +
                                                             '<div class="form-group">' +
-                                                                '<input type="number" class="form-control" name="quantity' + index + '" value="" placeholder="Quantite" onblur="displayTotal();">' +
+                                                                '<input id="' +  index + '" type="number" class="form-control" name="quantity' + index + '" value="" placeholder="Quantite" onblur="displayTotal();">' +
                                                            '</div>' +
                                                         '</div>' +
                                                         '<div class="col-sm-3 nopadding">' +
                                                             '<div class="form-group">' +
-                                                                '<div class="input-group">' +
-                                                                    '<input type="number" class="form-control"  name="total' + index + '" value="" placeholder="0" disabled >' +
-                                                                    '<div class="input-group-btn">' +
-                                                                        '<button class="btn btn-link" type="button"  name="' + rowid + '" onclick="removeProductLine(this.name);"> <span class="glyphicon glyphicon-plus" style="font-weight: bold; color: darkred;">-</span> </button>' +
+                                                                '<div class="input-group" >' +
+                                                                    '<input type="number" class="form-control col-sm-9"  name="total' + index + '" value="" placeholder="0" disabled > &nbsp;' +
+                                                                    '<div class="input-group-btn col-sm-3">' +
+                                                                        '<a href="#"  title="' + rowid + '" onclick="removeProductLine(this.title);" style="text-decoration: none; font-size: x-large; color: red;"> <span class="glyphicon glyphicon-plus">-</span> </a>' +
                                                                     '</div>' +
                                                                 '</div>' +
                                                             '</div>' +
@@ -188,24 +198,33 @@
                                                var  productElem = document.getElementById('products');
                                                var rows = productElem.getElementsByClassName('row');
                                                 console.log("rows: " + rows.length);
+                                                var general_total = document.getElementById('general_total');
+                                                var generaltotal = 0;
                                                 for (var i = 0; i < rows.length; i++) {
                                                     var inputs = rows[i].getElementsByTagName('input');
                                                     inputs[0].setAttribute("name", 'productname' + i);
-                                                    inputs[1].setAttribute("name", 'unitprice' + i)
+                                                    inputs[1].setAttribute("name", 'unitprice' + i);
                                                     inputs[2].setAttribute("name", 'quantity' + i);
                                                     inputs[3].setAttribute("name", 'total' + i);
-                                                    /*var unitprice = parseFloat(inputs[1].value);
+                                                    var unitprice = parseFloat(inputs[1].value);
                                                     var quantity = parseFloat(inputs[2].value);
-
-                                                    inputs[3].setAttribute("value", unitprice * quantity);*/
-
+                                                    if(!Number.isNaN(unitprice) && !Number.isNaN(quantity)) {
+                                                        inputs[3].setAttribute("value", unitprice * quantity);
+                                                        generaltotal += unitprice * quantity;
+                                                    }
                                                 }
+                                                general_total.innerHTML = "<i id='total_general' title='" +  generaltotal + "'>Total: " + generaltotal + "</i>";
+                                                var montant = document.getElementById('montant');
+                                                montant.setAttribute("value", "" + generaltotal);
                                             }
 
                                             function displayTotal() {
                                                 var  productElem = document.getElementById('products');
+                                                //if(productElem !== null){
                                                 var rows = productElem.getElementsByClassName('row');
                                                 console.log("rows: " + rows.length);
+                                                var general_total = document.getElementById('general_total');
+                                                var generaltotal = 0;
                                                 for (var i = 0; i < rows.length; i++) {
                                                     var inputs = rows[i].getElementsByTagName('input');
 
@@ -213,7 +232,32 @@
                                                     var quantity = parseFloat(inputs[2].value);
                                                     if(!Number.isNaN(unitprice) && !Number.isNaN(quantity)) {
                                                         inputs[3].setAttribute("value", unitprice * quantity);
+                                                        generaltotal += unitprice * quantity;
                                                     }
+                                                }
+                                                general_total.innerHTML = "<i id='total_general' title='" +  generaltotal + "'>Total: " + generaltotal + "</i>";
+                                                var montant = document.getElementById('montant');
+                                                montant.setAttribute("value", "" + generaltotal);
+
+                                            }
+
+                                            function onSubmitPurchse(){
+                                                var amount = parseInt(document.getElementById('amount').value);
+                                                var montant = parseInt(document.getElementById('montant').value);
+                                                var numItem = parseInt(document.getElementById('numitem').value);
+                                                if(amount !== montant && numItem > 0){
+                                                    alert("Le montant des achats est different de la somme des montant des differents produits");
+                                                    return false;
+                                                }
+                                                return true;
+                                            }
+
+                                            function toggleProductContent() {
+                                                var productContainer = document.getElementById('product-content');
+                                                if (productContainer.checkVisibility()) {
+                                                    productContainer.style.display = 'none';
+                                                }else{
+                                                    productContainer.style.display = 'block';
                                                 }
                                             }
                                             /*function remove_product_fields(rid) {
@@ -221,7 +265,7 @@
                                             }*/
                                         </script>
 
-                                </div>--}}
+
 
                                 <div class="row mb-0">
                                     <div class="col-md-6 offset-md-3">
@@ -235,7 +279,7 @@
                     </div>
 
                     <div class="card-footer">
-                        {{'Footer'}}
+                        {{' '}}
                     </div>
                 </div>
             </div>

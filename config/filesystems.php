@@ -59,6 +59,15 @@ return [
             'throw' => false,
             'report' => false,
         ],
+        'sftp' => [
+            'driver' => 'sftp',
+            'host' => env('FILE_SERVER_HOST'),
+            //'port' => env('FILE_SERVER_PORT'),
+            'username' => env('FILE_SERVER_USERNAME'),
+            'password' => env('FILE_SERVER_PASSWORD'),
+            'root' =>  env('FILE_SERVER_STORAGE_PATH'),//'/',
+            'timeout' => 10,
+        ],
 
     ],
 

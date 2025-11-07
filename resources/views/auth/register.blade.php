@@ -9,7 +9,7 @@
                 <div class="card-header">{{ __('Register') }}</div>
 
                 <div class="card-body">
-                    <form method="POST" action="{{ route('enregistrement.post') }}" >
+                    <form method="POST" action="{{ route('invitation.enregistrement.post') }}" >
                         @csrf
 
                         @if (session('status'))

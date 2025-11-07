@@ -1,4 +1,11 @@
-@php use App\Http\Controllers\Reward\RewardController; use App\Models\Voucher; use \App\Models\Transactiontype;use Illuminate\Support\Carbon; @endphp
+@php
+    use App\Http\Controllers\Reward\RewardController
+  ; use App\Models\Reward;use App\Models\Voucher
+  ; use App\Models\Transactiontype
+  ; use Illuminate\Support\Carbon
+  ; use App\Models\Config
+  ;
+@endphp
 @extends('layouts.app')
 
 @section('content')
@@ -32,7 +39,7 @@
                                     Nom: &nbsp; &nbsp; {{$client->name}}
                                     <strong style="display: inline; position: relative; float:right; color: darkred;">
                                         {{ 'Solde: ' }} {{$loyaltyAccount->point_balance}}
-                                        {{'Points  (' . $loyaltyAccount->amount_balance . ' ' . $loyaltyAccount->currency_name . ')'}}
+                                        {{'Points  (' . $loyaltyAccount->amount_balance . ' ' . $configuration->currency_name . ')'}}
                                     </strong>
                                 </h5>
                             </a>
@@ -46,7 +53,11 @@
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
                                     Email: &nbsp;
-                                    &nbsp; {{(isset($client->email) or !empty($client->email)) ? $client->email : "N/D"}}
+                                    @if($client->email == null)
+                                       {{'N/D'}}
+                                    @else
+                                        {{$client->email }}
+                                    @endif
                                 </h5>
                             </a>
 
@@ -55,17 +66,17 @@
                                 <h5>
                                     Date de Naissance: &nbsp;
                                     <?php
-                                      $a = '00';
-                                      $m = '00';
-                                      $j = '00';
-                                      $dateNaissance = '';
-                                      if ((isset($client->birthdate) or !empty($client->birthdate))){
-                                          $ymd = explode('-', $client->birthdate);
-                                          $a = $ymd[0];
-                                          $m = $ymd[1];
-                                          $j = $ymd[2];
-                                          $dateNaissance = $j . '-' . $m . '-' . $a;
-                                      }
+                                    $a = '00';
+                                    $m = '00';
+                                    $j = '00';
+                                    $dateNaissance = '';
+                                    if (strlen($client->birthdate) > 0) {
+                                        $ymd = explode('-', $client->birthdate);
+                                        $a = $ymd[0];
+                                        $m = $ymd[1];
+                                        $j = $ymd[2];
+                                        $dateNaissance = $j . '-' . $m . '-' . $a;
+                                    }
                                     ?>
                                     &nbsp;{{ ($a !== '00' && $m !== '00' && $j !== '00') ? $dateNaissance : "N/D"}}
                                 </h5>
@@ -74,24 +85,37 @@
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
-                                    Civilite: &nbsp;
-                                    &nbsp;{{(isset($client->gender) or !empty($client->gender)) ? $client->gender : "N/D"}}
+                                    Civilite: &nbsp;&nbsp;
+                                    @if($client->gender == null)
+                                        {{'N/D'}}
+                                    @else
+                                        {{$client->gender}}
+                                    @endif
+
                                 </h5>
                             </a>
 
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
-                                    Ville: &nbsp;
-                                    &nbsp;{{(isset($client->city) or !empty($client->city)) ? $client->city : "N/D"}}
+                                    Ville: &nbsp;&nbsp;
+                                    @if($client->city == null)
+                                        {{'N/D'}}
+                                    @else
+                                        {{$client->city}}
+                                    @endif
                                 </h5>
                             </a>
 
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
-                                    Quarter: &nbsp;
-                                    &nbsp;{{(isset($client->quarter) or !empty($client->quarter)) ? $client->quarter : "N/D"}}
+                                    Quarter: &nbsp;&nbsp;
+                                    @if($client->quarter == null)
+                                        {{'N/D'}}
+                                    @else
+                                        {{$client->quarter}}
+                                    @endif
                                 </h5>
                             </a>
 
@@ -106,7 +130,28 @@
                         <div class="alert alert-{{($client->active)?'success':'danger'}}"
                              style="padding-left: 10px; padding-right: 10px;">
                             @if($client->active)
-                                @if($loyaltyAccount->point_balance >= $threshold->classic_threshold)
+                                @php
+                                    $levels = json_decode($configuration->levels);
+                                    $maxLevel = $levels[0];
+                                    $minLevel = $levels[0];
+                                    foreach ($levels as $level){
+                                        if($level->point > $maxLevel->point && $loyaltyAccount->point_balance >= $level->point){
+                                            $maxLevel = $level;
+                                        }
+                                        if($level->point < $minLevel->point){
+                                            $minLevel = $level;
+                                        }
+                                    }
+
+                                    $possibleLevels = [];
+                                    foreach ($levels as $level){
+                                        if ($level->point <= $maxLevel->point && $level->point >= $minLevel->point){
+                                            array_push($possibleLevels, $level);
+                                        }
+                                    }
+
+                                @endphp
+                                @if($loyaltyAccount->point_balance >= $minLevel->point)
                                     <button type="button" class="btn btn-success" data-bs-toggle="modal"
                                             data-bs-target="#generate-voucher-modal">
                                         {{ 'Generer un bon' }}
@@ -118,8 +163,9 @@
                                         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
                                             <div class="modal-content">
                                                     <?php
+                                                        //a8379ab1-3697-4599-aa66-fa383c2e937a
 
-                                                    $bestRewardAndConversion = RewardController::getBestRewards($loyaltyAccount->point_balance);
+                                                    /*$bestRewardAndConversion = RewardController::getBestRewards($loyaltyAccount->point_balance);
                                                     $bestReward = null;
                                                     $conversionUsed = null;
 
@@ -129,7 +175,7 @@
                                                     } else {
                                                         $bestReward = $bestRewardAndConversion['bestreward'];
                                                         $conversionUsed = $bestRewardAndConversion['conversionused'];
-                                                    }
+                                                    }*/
 
                                                     ?>
                                                 <div class="modal-header">
@@ -142,42 +188,46 @@
                                                 </div>
                                                 <div class="alert alert-light">
                                                     <div class="alert alert-info">
-                                                        <ul>
-                                                            <li>
-                                                                <h6>De {{$threshold->classic_threshold}}
-                                                                    a {{$threshold->premium_threshold}} points, vous
-                                                                    gagnez un Bon de type <strong
-                                                                        style="color: #495057;">Classique</strong></h6>
-                                                            </li>
-                                                            <li>
-                                                                <h6>De {{$threshold->premium_threshold}}
-                                                                    a {{$threshold->gold_threshold}} points, vous gagnez
-                                                                    un Bon de type <strong style="color: #198754;">Premium</strong>
-                                                                </h6>
-                                                            </li>
-                                                            <li>
-                                                                <h6>Au dela de {{$threshold->gold_threshold}} points,
-                                                                    vous gagnez un Bon de type <strong
-                                                                        style="color: darkgoldenrod;">Gold</strong></h6>
-                                                            </li>
-                                                        </ul>
+                                                        <ol>
+                                                            @foreach($possibleLevels as $level)
+                                                                <li>
+                                                                    <h6>
+                                                                        Lorsque vous accumuler <strong> {{$level->point}} points</strong>
+                                                                        vous beneficiez d'un bon de type
+                                                                        <strong
+                                                                            style="color: #495057;">{{$level->name}}</strong>
+                                                                    </h6>
+                                                                    @php
+                                                                        $rewards = Reward::all();
+                                                                        $selectedRewards = [];
+                                                                        foreach ($rewards as $reward){
+                                                                            $niveau = json_decode($reward->level);
+                                                                            if ($niveau->name === $level->name && $niveau->point === $level->point){
+                                                                                array_push($selectedRewards, $reward);
+                                                                            }
+                                                                        }
+                                                                    @endphp
+                                                                    @if(count($selectedRewards) > 0)
+                                                                        <h6>
+                                                                            Vous pouvez beneficier de :
+                                                                        </h6>
+                                                                        <ul>
+                                                                            @foreach($selectedRewards as $theReward)
+                                                                                <li>
+                                                                                    {{$theReward->name}}
+                                                                                </li>
+                                                                            @endforeach
+                                                                        </ul>
+                                                                    @endif
+                                                                </li>
+                                                            @endforeach
+                                                        </ol>
                                                     </div>
                                                 </div>
 
-                                                @if(!($bestReward === null))
-                                                        <?php
-                                                        $type = '';
-                                                        $points = $conversionUsed->min_point;
-                                                        if ($loyaltyAccount->point_balance >= $threshold->gold_threshold) {
-                                                            $type = 'GOLD';
-                                                        } else if ($loyaltyAccount->point_balance >= $threshold->premium_threshold) {
-                                                            $type = 'PREMIUM';
-                                                        } else {
-                                                            $type = 'CLASSIC';
-                                                        }
+                                                {{--@if(!($bestReward === null))--}}
 
-                                                        ?>
-                                                    <div class="alert alert-light" style="margin-top: -20px;">
+                                                    {{--<div class="alert alert-light" style="margin-top: -20px;">
                                                         <div class="alert alert-primary">
                                                             <h5>
                                                                 vous pouvez generer un bon de type
@@ -188,7 +238,7 @@
                                                                 <strong>{{$bestReward->value}}</strong>
                                                             </h5>
                                                         </div>
-                                                    </div>
+                                                    </div>--}}
                                                     <form method="POST" action="{{route('vouchers.post')}}"
                                                           onsubmit="return true;">
                                                         <div class="modal-body">
@@ -204,47 +254,47 @@
 
                                                             @csrf
 
-                                                            <div class="row mb-3">
-                                                                @if(count(Transactiontype::where('code', 'TRANSACTIONTYPE_GEN_VOUCHER')->where('signe', -1)->where('active', true)->get()) === 1)
-                                                                        <?php
-                                                                        $transactiontype = Transactiontype::where('code', 'TRANSACTIONTYPE_GEN_VOUCHER')->where('signe', -1)->where('active', true)->first();
-                                                                        ?>
-                                                                    <input type="hidden" name="transactiontypeid"
-                                                                           value="{{$transactiontype->id}}">
-                                                                    {{--<label for="transactiontype" class="col-md-4 col-form-label text-md-end">{{ 'Type de transaction' }}</label>
+                                                            @if(count($possibleLevels) >= 1)
+                                                                <div class="row mb-3">
+                                                                    {{--<input type="hidden" name="transactiontypeid"
+                                                                           value="{{$transactiontype->id}}">--}}
+                                                                    <label for="level" class="col-md-4 col-form-label text-md-end">{{ 'Niveau du bon' }}</label>
                                                                     <div class="col-md-6">
-                                                                        <select id="transactiontype" class="form-control form-select form-select-lg @error('transactiontype') is-invalid @enderror" name="transactiontype" >
+                                                                        <select id="level"
+                                                                                class="form-control form-select form-select-lg @error('level') is-invalid @enderror"
+                                                                                name="level" >
                                                                             <option value="">Choisissez ici</option>
-                                                                            <option value="GOLD">GOLD</option>
-                                                                            <option value="PREMIUM">PREMIUM</option>
-                                                                            <option value="CLASSIC">CLASSIC</option>
+                                                                            @foreach($possibleLevels as $level)
+                                                                                <option value="{{json_encode($level)}}">{{$level->name}}</option>
+                                                                            @endforeach
                                                                         </select>
-
                                                                         @error('level')
                                                                         <span class="invalid-feedback" role="alert">
                                                                              <strong>{{ $message }}</strong>
                                                                          </span>
                                                                         @enderror
-                                                                    </div>--}}
-                                                                @endif
+                                                                    </div>
 
-
-                                                                <input type="hidden" name="rewardid" id="rewardid"
-                                                                       value="{{$bestReward->id}}">
+                                                                    <input type="hidden" name="clientid" id="clientid"
+                                                                           value="{{$client->id}}">
+                                                                    <input  id="transactiontype" name="transactiontype" value="GENERATION DE BON" type="hidden"/>
+                                                                    {{--<input type="hidden" name="rewardid" id="rewardid"
+                                                                           value="{{$bestReward->id}}">
+                                                                    <input type="hidden" name="conversionpointrewardid"
+                                                                           id="conversion_point_reward"
+                                                                           value="{{$conversionUsed->id}}">
+                                                                    <input type="hidden" name="thresholdid"
+                                                                           value="{{$threshold->id}}">
+                                                                    <input type="hidden" name="level" value="{{$type}}">--}}
+                                                                </div>
+                                                            @else
+                                                                <input type="hidden" name="level" id="level" value="{{json_encode($possibleLevels[0])}}">
                                                                 <input type="hidden" name="clientid" id="clientid"
                                                                        value="{{$client->id}}">
-                                                                <input type="hidden" name="conversionpointrewardid"
-                                                                       id="conversion_point_reward"
-                                                                       value="{{$conversionUsed->id}}">
-                                                                <input type="hidden" name="thresholdid"
-                                                                       value="{{$threshold->id}}">
-                                                                <input type="hidden" name="level" value="{{$type}}">
-                                                                {{--<input type="hidden" name="points" value="{{$points}}">--}}
-                                                                {{--<input type="hidden" name="clientid" id="clientid" value="{{$client->id}}">--}}
+                                                                <input  id="transactiontype" name="transactiontype" value="GENERATION DE BON" type="hidden"/>
+                                                            @endif
 
 
-                                                                {{-- --}}
-                                                            </div>
 
                                                             {{--<div class="row mb-3">
                                                                 <label for="montant" class="col-md-4 col-form-label text-md-end">{{ 'Montant'}}</label>
@@ -274,14 +324,17 @@
                                                         </div>
                                                     </form>
 
-                                                @else
+                                                {{--@else
                                                     <div>Aucune meilleur recompense trouvee</div>
-                                                @endif
+                                                @endif--}}
 
 
                                             </div>
                                         </div>
                                     </div>
+                                @else
+                                    <div>Bien que vos points ne vous permettent pas encore de
+                                        beneficier d'un bon, nous vous encourageons a plus d'effort <br></div><br>
                                 @endif
                                 <button type="button" class="btn btn-danger" data-bs-toggle="modal"
                                         data-bs-target="#confirm-deactivate-client-modal">
@@ -734,7 +787,7 @@
                                 </div>
 
                                 @if(count(Voucher::all()) !== 0)
-                                    <a  class="btn btn-warning" href="{{url('/client/' . $client->id . '/vouchers')}}">
+                                    <a class="btn btn-warning" href="{{url('/client/' . $client->id . '/vouchers')}}">
                                         {{ 'voir les bons' }}
                                     </a>
                                 @endif
@@ -786,16 +839,21 @@
 
                             @endif
 
-                            <form id="generate-voucher-form" action="{{ route('vouchers.post') }}" method="POST"
+                                <a class="btn btn-link" style="float: right;"
+                                   href="{{ route('home.loyaltytransactions.client', $client->id)}}">
+                                    {{ 'Liste des transactions' }}
+                                </a>
+
+                            {{--<form id="generate-voucher-form" action="{{ route('vouchers.post') }}" method="POST"
                                   class="d-none">
                                 @csrf
-                            </form>
+                            </form>--}}
                         </div>
 
                     </div>
 
                     <div class="card-footer">
-                        {{'Footer'}}
+                        {{' '}}
                     </div>
                 </div>
             </div>

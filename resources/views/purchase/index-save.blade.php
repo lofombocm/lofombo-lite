@@ -78,8 +78,8 @@
 
                                         @error('receiptnumber')
                                         <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
+                                            <strong>{{ $message }}</strong>
+                                        </span>
                                         @enderror
                                     </div>
                                 </div>
@@ -106,7 +106,7 @@
                                     </div>
                                 </div>
 
-                                <div class="row mb-3">
+                                {{--<div class="row mb-3">
                                     <input type="hidden" id="numitem" name="numitem" value="0">
                                     <label for="products" class="col-md-3 col-form-label text-md-end">{{ 'Produits'}}</label>
                                     <div class="col-md-9" id="products">
@@ -221,7 +221,7 @@
                                             }*/
                                         </script>
 
-                                </div>
+                                </div>--}}
 
                                 <div class="row mb-0">
                                     <div class="col-md-6 offset-md-3">
@@ -235,7 +235,7 @@
                     </div>
 
                     <div class="card-footer">
-                        {{'Footer'}}
+                        {{' '}}
                     </div>
                 </div>
             </div>

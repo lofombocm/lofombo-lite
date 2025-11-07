@@ -30,7 +30,7 @@ class MailForVoucherReach extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Bon de type ' . $this->data['type'] . ' disponible',
+            subject: 'Recompense disponible autravers des bons. ',
         );
     }
 

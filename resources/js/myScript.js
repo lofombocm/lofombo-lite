@@ -3,3 +3,9 @@
 /*$(document).ready(function() {
     $('.myautocomplete').select2();
 });*/
+
+function myFunction() {
+    alert("Hello World!");
+}
+
+

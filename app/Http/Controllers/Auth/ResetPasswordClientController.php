@@ -45,16 +45,17 @@ class ResetPasswordClientController extends Controller
             return back()->withInput()->with('error', 'Invalid token!');
         }*/
 
-        $credentials = ['telephone' => $request->telephone, 'password' => $request->currentpassword ];//$request->only('email', 'current-password');
+        $credentials = ['telephone' => $request->get('telephone'), 'password' => $request->get('currentpassword') ];//$request->only('email', 'current-password');
         if (!Auth::guard('client')->attempt($credentials)) {
             return back()->withInput()->with('error', 'Invalid current password');
         }
 
-        $client = Client::where('telephone', $request->get('telephone'))->update(['password' => Hash::make($request->get('password'))]);
+        Client::where('telephone', $request->get('telephone'))->update(['password' => Hash::make($request->get('password'))]);
         //DB::table('password_resets')->where(['email'=> $request->email])->delete();
         Session::flush();
         Auth::guard('client')->logout();
         //return Redirect('login');
+        session()->flash('status', 'Your password has been changed');
         return redirect()->route('authentification.client')->with('message', 'Votre mot de passe a ete modifie avec succes!');
         //return redirect('/login')->with('message', 'Votre mot de passe a ete modifie avec succes!');
     }

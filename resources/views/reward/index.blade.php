@@ -1,3 +1,4 @@
+@php use App\Models\Config; @endphp
 @extends('layouts.app')
 
 @section('content')
@@ -15,6 +16,12 @@
                                 {{ session('status') }}
                             </div>
                         @endif
+
+                            @if (session('error'))
+                                <div class="alert alert-danger" role="alert">
+                                    {{ session('error') }}
+                                </div>
+                            @endif
 
                         <form method="POST" action="{{ route('rewards.index.post') }}">
                             @csrf
@@ -54,6 +61,7 @@
                                         <option value="">{{'-- Choisir ici --'}}</option>
                                         <option value="{{ 'MATERIAL' }}">{{ 'Materiel' }}</option>
                                         <option value="{{ 'FINANCIAL' }}">{{'Financiere'}}</option>
+                                        <option value="{{ 'SERVICE' }}">{{'Service'}}</option>
                                     </select>
                                     @error('nature')
                                     <span class="invalid-feedback" role="alert">
@@ -79,6 +87,29 @@
                                 </div>
                             </div>
 
+                            <div class="row mb-3" >
+                                <label for="level" class="col-md-5 col-form-label text-md-end">{{ 'Niveau du bon' }}
+                                    <b class="" style="color: red;">*</b></label>
+                                <div class="col-md-7">
+                                    @php
+                                        $config = Config::where('is_applicable', true)->first();
+                                        $levels = json_decode($config->levels, true);
+                                    @endphp
+                                    <select id="level" type="text" class="form-control @error('level') is-invalid @enderror"
+                                            name="level"  required >
+                                        <option >{{'-- Choisir ici --'}}</option>
+                                        @foreach($levels as $level)
+                                            <option value="{{$level['name']}}">{{$level['name']}}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('level')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                    @enderror
+                                </div>
+                            </div>
+
                             <div class="row mb-0">
                                 <div class="col-md-6 offset-md-5">
                                     <button type="submit" class="btn btn-primary">
@@ -89,7 +120,7 @@
                         </form>
                     </div>
                     <div class="card-footer">
-                        {{'Footer'}}
+                        {{' '}}
                     </div>
                 </div>
             </div>

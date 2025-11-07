@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Models\Config;
 use App\Models\Conversion;
 use App\Models\ConversionPointReward;
 use App\Models\Loyaltyaccount;
@@ -44,11 +45,12 @@ class VoucherControler extends Controller
         return redirect()->back()->with('error', json_encode($request->all()));*/
 
         $validator = Validator::make($request->all(), [
-            'clientid' => 'required|uuid|exists:clients,id',
+            'clientid' => 'required|uuid|exists:clients,id',/*
             'rewardid' => 'required|uuid|exists:rewards,id',
             'conversionpointrewardid' => 'required|uuid|exists:conversion_point_rewards,id',
-            'thresholdid' => 'required|uuid|exists:thresholds,id',
-            'level' => 'required|string|in:CLASSIC,PREMIUM,GOLD',
+            'thresholdid' => 'required|uuid|exists:thresholds,id',*/
+            'level' => 'required|string',
+            'transactiontype' => 'required|string|min:2|max:255',
         ]);
 
         if($validator->fails()){
@@ -59,26 +61,36 @@ class VoucherControler extends Controller
         $client = Client::where('id', $request->get('clientid'))->where('active', true)->first();
         if ($client === null) {
             session()->flash('error', 'Client desactive');
+            return redirect()->back()->with('error', 'Client desactive');
         }
 
+        $level = json_decode($request->get('level'));
+        $configid = $level->config;
+        $config = Config::where('id', $configid)->first();
+        if ($config === null) {
+            session()->flash('error', 'Niveau non configure');
+            return redirect()->back()->with('error', 'Niveau non configure');
+        }
 
-        $reward = Reward::where('id', $request->get('rewardid'))->first();
-        $conversionpointreward = Conversionpointreward::where('id', $request->get('conversionpointrewardid'))->first();
-        $threshold = Threshold::where('id', $request->get('thresholdid'))->first();
+        //$reward = Reward::where('id', $request->get('rewardid'))->first();
+        //$conversionpointreward = Conversionpointreward::where('id', $request->get('conversionpointrewardid'))->first();
+        //$threshold = Threshold::where('id', $request->get('thresholdid'))->first();
         $loyaltyAccount = Loyaltyaccount::where('holderid', $client->id)->first();
-        $points = $conversionpointreward->min_point;
-        $amount = $reward->value;
-
-
-
+        $points = $level->point; //$conversionpointreward->min_point;
+        $amount = $points * $config->amount_per_point;//$reward->value;
 
         $voucherid = Str::uuid()->toString();
         $serialnumber = $this->generateVoucherSerialNumber();
+
         $clientid  = $client->id;
-        $level     = $request->get('level');
-        $enterprise = env('ENTERPRISE');
+        $niveau     = $level->name;
+        $enterprise = $config->enterprise_name;//env('ENTERPRISE');
         //VOUCHER_EXPIRATION_DATE_IN_MONTH
-        $nummonth = intval(env('VOUCHER_EXPIRATION_DATE_IN_MONTH'));
+
+        $nummonth = $config->voucher_duration_in_month;//intval(env('VOUCHER_EXPIRATION_DATE_IN_MONTH'));
+        /*if (!($config === null)){
+            $nummonth = $config->voucher_duration_in_month;
+        }*/
         $expirationdate = Carbon::now()->addMinutes($nummonth * 1440 * 30);
 
         DB::beginTransaction();
@@ -90,57 +102,50 @@ class VoucherControler extends Controller
                 'id' => $voucherid,
                 'serialnumber' => $serialnumber,
                 'clientid' => $clientid,
-                'level' => $level,
+                'level' => $niveau,
                 'point' => $points,
                 'amount' => $amount,
                 'enterprise' => $enterprise,
                 'expirationdate' => $expirationdate,
                 'active' => false,
                 'activated_by' => (Auth::check())? Auth::user()->id : $client->registered_by,
-                'reward' => $reward->id,
             ];
 
             $voucher = Voucher::create($data);
 
+           /* $transactionDetails = 'Generation de bon identifie par: \'' . $voucherid . '\'. Numero de serie: \'' . $serialnumber.
+                '\'. Niveau: ' . $niveau . ' Nombre de points: ' . $points . ', Montant: ' . $amount .
+                '. Pour le client: ' . $client->name . '.';*/
+
             $transactionDetails = 'Generation de bon identifie par: \'' . $voucherid . '\'. Numero de serie: \'' . $serialnumber.
-                '\'. Niveau: ' . $request->get('level') . ' Nombre de points: ' . $points . ', Montant: ' . $amount .
-                ', Recompense: ' . $reward->name. '. Pour Client: ' . $client->name . '.';
+                '\'. Niveau: ' . $niveau . ' Nombre de points: ' . $points . '. Pour le client: ' . $client->name . '.';
+
             $transactionid = Str::uuid()->toString();
 
-            $validator1 = Validator::make($request->all(), [
-                'transactiontypeid' => 'required|uuid|exists:transactiontypes,id',
-            ]);
-
-            $transactiontype = null;
-            if($validator1->fails()){
-               $transactiontype = Transactiontype::where('signe', -1)->first();
-            }else{
-                $transactiontype = Transactiontype::where('id', $request->get('transactiontypeid'))->first();
-            }
+            $loyaltyAmountBalance = $loyaltyAccount->amount_balance;
+            $loyaltyPointBalance = $loyaltyAccount->point_balance;
 
             Loyaltytransaction::create(
                 [   'id' => $transactionid,
                     'date' => Carbon::now(),
                     'loyaltyaccountid' => $loyaltyAccount->id,
-                    'conversionid' => $conversionpointreward->id,
-                    'sellerid' => (Auth::check()) ? Auth::user()->id : $client->registered_by,
-                    'purchaseid' => $reward->id,
+                    'configid' => $config->id,
+                    'madeby' => Auth::check() ? '' . Auth::user()->id : (Auth::guard('client')->check() ? Auth::guard('client')->user()->id : 'UNKNOWN'),
+                    'reference' => 'GENERATION DE BON',
                     'amount' => $amount,
                     'point' => $points,
-                    'amount_from_converted_point' => $amount,
-                    'old_point' => $loyaltyAccount->point_balance,
-                    'transactiontypeid' => $transactiontype->id, //env('TRANSACTIONTYPEID_GEN_VOUCHER'),
+                    'old_amount' => $loyaltyAmountBalance,
+                    'old_point' => $loyaltyPointBalance,
+                    'transactiontype' => $request->get('transactiontype'), //env('TRANSACTIONTYPEID_PURCHASE'),
                     'transactiondetail' => $transactionDetails,
-                    'clienttransactionid' => $client->id
+                    'clientid' => $clientid,
+                    'products' => json_encode([$voucher])
                 ]
             );
 
-            $signe = $transactiontype->signe;
-            $newAmount = $loyaltyAccount->amount_balance + $signe * $amount;
-
             $loyaltyAccount->update([
-                    'amount_balance' => ($newAmount < 0) ? 0 : $newAmount,
-                    'point_balance' => $loyaltyAccount->point_balance + $signe * $points,
+                    'amount_balance' =>  $loyaltyAccount->amount_balance - $amount,
+                    'point_balance' => $loyaltyAccount->point_balance - $points,
                     'current_point' => $loyaltyAccount->point_balance
                 ]);
 
@@ -154,7 +159,6 @@ class VoucherControler extends Controller
 
         session()->flash('status', 'Bon genere avec succes.');
         return redirect()->back()->with('status', 'Bon genere avec succes.');
-
     }
 
     public function generateVoucherSerialNumber():string

@@ -40,20 +40,27 @@
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header">
-                        <h1>{{ 'Disponibilite de bon de type ' . $data['type'] }} <br></h1>
-                    {{ 'Mme/M. ' . $data['name'] }}
+                        <h3>{{ 'Disponibilite de recompenses au travers des bons' }} <br></h3>
                     </div>
 
                     <div class="card-body">
-                        <p>
-                            L'entreprise  <strong>{{env('ENTERPRISE')}} </strong> vous informe que vous disposez des
-                            points vous permettant de generer un  bon d'achat de type {{$data['type']}}.<br>
+                        <h4>{{$data['msg'][0]}}</h4>
+                        @php $i = 0; @endphp
+                        <ul>
+                            @foreach($data['msg'] as $msg)
+                                @if($i > 0)
+                                    <li>{{$msg}}</li>
+                                @endif
+                                @php $i = $i + 1; @endphp
+                            @endforeach
+                        </ul>
 
-                        </p>
                         <p>
                             Pour le faire vous devez vous connecter en cliquant sur le lien:
                             <a href="{{$data['clientLoginUrl']}}" class="btn btn-primary" >{{'Cliquez ici pour vous connecter.'}}</a>
                         </p>
+
+                        <h5>Merci pour votre fidelite.</h5>
                     </div>
                 </div>
             </div>
