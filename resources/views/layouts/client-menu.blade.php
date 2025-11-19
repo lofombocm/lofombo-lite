@@ -7,7 +7,7 @@
 @endphp
 <div class="col-md-3">
     <div class="card">
-        <div class="card-header">{{ 'Menu' }}</div>
+        <div class="card-header"><h5>{{ 'Menu' }}</h5></div>
         <div class="card-body">
             <div class="list-group list-group-flush">
                 @if(Auth::guard('client')->check() && Auth::guard('client')->user()->active)
@@ -37,20 +37,25 @@
                     @endphp
 
                     @if(Auth::guard('client')->check())
-                        <a class="list-group-item list-group-item-action" href="{{ route('rewards.list.view') }}">
-                            {{ 'Recompenses' }}
-                        </a>
                         <a class="list-group-item list-group-item-action" href="{{ route('home.client') }}">
-                            {{ 'Dashboard' }}
+                            <h6><img src="{{asset('images/icons8-dashboard-25.png')}}" alt=""> &nbsp;{{ 'Tableau de bord' }}</h6>
+                        </a>
+
+                        <a class="list-group-item list-group-item-action btn btn-link"  href="{{route('home.loyaltytransactions.client.search.all', Auth::guard('client')->user()->id)}}"
+                           id="lien-pour-transaction-enregistres">
+                            <h6><img src="{{asset('images/icons8-transaction-25.png')}}" alt=""> &nbsp;{{ 'Transactions' }}</h6>
+                        </a>
+                        <a class="list-group-item list-group-item-action" href="{{ route('rewards.list.view') }}">
+                            <h6><img src="{{asset('images/icons8-reward-25.png')}}" alt=""> &nbsp;{{ 'Recompenses' }}</h6>
                         </a>
                     @endif
 
                     @if($loyaltyAccount->point_balance >= $minLevel->point)
                         <a class="list-group-item list-group-item-action" href="#"
                            data-bs-toggle="modal" data-bs-target="#generate-voucher-modal">
-                            {{ 'Generer un bon' }}
+                            <h6><img src="{{asset('images/icons8-loyalty-card-25.png')}}" alt=""> &nbsp;{{ 'Generer un bon' }}
                             <span class="badge bg-primary position-absolute top|start-*"
-                                  style="position: relative; right: 0;">{{$loyaltyAccount->point_balance}}</span>
+                                  style="position: relative; right: 0; padding-top: 7px;">{{$loyaltyAccount->point_balance}}</span></h6>
                         </a>
 
                         <!-- Modal -->

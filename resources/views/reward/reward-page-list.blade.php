@@ -1,3 +1,4 @@
+@php use Illuminate\Support\Facades\Auth; @endphp
 @extends('layouts.app')
 
 @section('content')
@@ -8,7 +9,7 @@
 
             <div class="col-md-9">
                 <div class="card">
-                    <div class="card-header">{{ __('Dashboard') }}</div>
+                    <div class="card-header"><h5>{{ 'Dashboard' }}</h5></div>
                     <div class="card-body">
                         @if (session('error'))
                             <div class="alert alert-danger" role="alert">
@@ -31,10 +32,11 @@
                                     <h5>{{ session('status') }}</h5>
                                 </div>
                             @endif--}}
-                            <div class="col-md-7">
+                            <div class="col-md-12">
                                 <div class="card">
-                                    <div class="card-header">
-                                        <h4 style="display: inline; float: left;">{{ 'Recompenses' }}</h4>
+                                    <div class="">
+                                        <br>
+                                        <h5 style="display: inline; float: left; margin-left: 20px;">{{ 'Recompenses' }}</h5>
                                         {{--<h5 style="display: inline; float: right;">
                                             @if(count(Config::where('is_applicable', true)->get()) > 0)
                                                 <a href="{{ route('clients.index')}}" style="text-decoration: none; font-size: x-large; color: green;" id="add_level_field"
@@ -44,8 +46,10 @@
                                                 </a>
                                             @endif
                                         </h5>--}}
-                                        <h5 style="display: inline; float: right;">
+                                        <h5 style="display: inline; float: right; margin-right: 10px;">
+                                            <?php  /*dd(Auth::check()); */ ?>
                                             @if(Auth::check() && Auth::user()->is_admin)
+
                                                 <a href="{{ route('rewards.index')}}" style="text-decoration: none; font-size: x-large; color: green;" id="add_level_field"
                                                    title="Recompenses">
                                                     <strong><span class="glyphicon glyphicon-plus">+</span></strong>
@@ -66,18 +70,18 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-5">
+                            {{--<div class="col-md-5">
                                 <div class="card">
                                     <div class="card-header"><h4>{{ 'Last Transaction' }}</h4></div>
                                 </div>
-                            </div>
+                            </div>--}}
                         </div>
 
                     </div>
 
-                    <div class="card-footer">
+                   {{-- <div class="card-footer">
                         {{' '}}
-                    </div>
+                    </div>--}}
                 </div>
             </div>
         </div>

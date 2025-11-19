@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\Notification;
 use App\Models\Reward;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -51,4 +53,63 @@ class NotificationController extends Controller
         session()->flash('status', $msg);
         return back()->with('status', $msg);
     }
+
+    public function showNotifs(int $userid)
+    {
+        $user = Auth::user();
+        $utilsateur = User::where('id', $userid)->first();
+        if ($utilsateur == null) {
+            session()->flash('error', 'Quelque chose s\'est mal deroule.');
+            return back()->with(['error' => 'Quelque chose s\'est mal deroule.']);
+        }
+
+        if ($user->id !== $utilsateur->id) {
+            session()->flash('error', 'Quelque chose s\'est mal deroule.');
+            return back()->with(['error' => 'Quelque chose s\'est mal deroule.']);
+        }
+
+
+        $notifications = Notification::where('sender_address', Auth::user()->email)->orWhere('recipient_address', Auth::user()->email)->where('read', false)->orderBy('created_at', 'desc')->get();
+        $unreadMsgNum = count($notifications);
+
+        return view('notification.index', ['notifications' => $notifications, 'unreadMsgNum' => $unreadMsgNum]);
+
+    }
+
+
+    public function showClientNotifs(String  $clientid)
+    {
+        $client = Auth::guard('client')->user();
+        $customer = Client::where('id', $clientid)->first();
+        if ($customer == null) {
+            session()->flash('error', 'Quelque chose s\'est mal deroule.');
+            return back()->with(['error' => 'Quelque chose s\'est mal deroule.']);
+        }
+
+        if ($client->id !== $customer->id) {
+            session()->flash('error', 'Quelque chose s\'est mal deroule.');
+            return back()->with(['error' => 'Quelque chose s\'est mal deroule.']);
+        }
+
+        $notifications0 = Notification:: where('recipient_address', Auth::guard('client')->user()->telephone)->where('read', false)->orderBy('created_at', 'desc')->get();
+        $notifications = [];
+        foreach ($notifications0 as $notification){
+            array_push($notifications, $notification);
+        }
+
+        if(Auth::guard('client')->user()->email != null){
+            $notifications1 = Notification::
+            where('recipient_address', Auth::guard('client')->user()->email)->orWhere('recipient_address', Auth::guard('client')->user()->email)->where('read', false)->orderBy('created_at', 'desc')->get();
+            foreach ($notifications1 as $notification){
+                array_push($notifications, $notification);
+            }
+        }
+
+        return view('notification.index-client', ['notifications' => $notifications, 'unreadMsgNum' => count($notifications)]);
+
+    }
+
+
+
+
 }

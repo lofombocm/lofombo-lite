@@ -25,8 +25,13 @@ return new class extends Migration
             $table->boolean('active')->nullable(false)->default(false);
             $table->bigInteger('activated_by');
             $table->foreign('activated_by')->references('id')->on('users')->onDelete('cascade');
+            $table->timestamp('activated_at')->nullable();
+            $table->timestamp('deactivated_at')->nullable();
             $table->boolean('is_used')->nullable(false)->default(false);
+            $table->string('code_used')->nullable()->index();
             $table->timestamp('used_at')->nullable();
+            $table->uuid('reward_id')->index()->nullable();
+            $table->foreign('reward_id')->references('id')->on('rewards')->onDelete('cascade');
             $table->timestamps();
         });
     }

@@ -1,20 +1,16 @@
 <?php
 
-use App\Models\Loyaltyaccount;
+use App\Http\Controllers\Reward\RewardController;
+use App\Http\Middleware\EnsureApiUserIsAdministrator;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/user', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
 
 
-
-Route::get('/api/loyaltyaccount/{clientid}', function ($clientid) {
-    $accounts = Loyaltyaccount::where('holderid', $clientid)->get();
-    return response(array('success' => 1, 'faillure' => 0, 'response' => $accounts), 200);
+Route::middleware([EnsureApiUserIsAdministrator::class])->group(function () {
+    Route::get('/test', [RewardController::class, 'test']);
+    Route::post('/rewards', [RewardController::class, 'registerRewardApi']);
 });
-
-
-
-
-
-
-
-

@@ -5,11 +5,16 @@ export default defineConfig({
     plugins: [
         laravel({
             input: [
-                'resources/sass/app.scss',
+                'resources/scss/app.scss',
                 'resources/js/app.js',
                 'resources/js/myScript.js',
             ],
             refresh: true,
         }),
     ],
+    resolve: {
+        alias: {
+            '~bootstrap': path.resolve(__dirname, 'node_modules/bootstrap')
+        }
+    }
 });

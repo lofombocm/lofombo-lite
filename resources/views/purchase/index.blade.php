@@ -16,7 +16,10 @@
                             </div>
                         @endif
 
-                            <form method="POST" action="{{ route('purchases.index.post') }}" enctype="multipart/form-data" onsubmit="return onSubmitPurchse();">
+                            <span  id="produits" style="display: none; height: 0; width: 0;">{{json_encode(\App\Models\Product::all())}}</span>
+                            <form method="POST"
+                                  action="{{ route('purchases.index.post') }}"
+                                  enctype="multipart/form-data" onsubmit="return onSubmitPurchse();">
                                 @csrf
                                 <div><h5>Les champs marques par <b class="" style="color: red;">*</b> sont obligatoires</h5></div>
                                 <br>
@@ -27,24 +30,24 @@
                                         <strong>{{ $message }}</strong>
                                     </span> <br/>
                                 @enderror
-
                                 <div class="row mb-3">
-                                    <label for="clientid" class="col-md-3 col-form-label text-md-end">{{ 'Client' }}
+                                    <label for="client_id" class="col-md-3 col-form-label text-md-end">{{ 'Client' }}
                                         <b class="" style="color: red;">*</b></label>
 
                                     <div class="col-md-9">
-
                                         <div class="input-group">
-                                            <input list="clientids" id="clientid" name="clientid" class="form-control @error('clientid') is-invalid @enderror"
-                                                   value="{{ old('clientid') }}" required autocomplete="clientid" autofocus />
-                                            <datalist id="clientids" class="@error('clientid') is-invalid @enderror" name="clientid" >
-                                                @foreach(\App\Models\Client::all() as $client)
-                                                    <option value="{{$client->telephone}}" label="{{$client->name}}" data-value="{{$client->name}}">{{$client->name}}</option>
+                                            <input id="clientid" type="hidden"  name="clientid" value="">
+                                            <input list="clientids" id="client_id" name="client_id" class="form-control @error('client_id') is-invalid @enderror"
+                                                   value="{{ old('client_id') }}" required autocomplete="client_id" autofocus
+                                                   onchange="setClientId(this.value);"/>
+                                            <datalist id="clientids" class="@error('clientids') is-invalid @enderror" >
+                                                @foreach(\App\Models\Client::where('active', true)->get() as $client)
+                                                    <option value="{{$client->name}} (Tel: {{$client->telephone}})" label="" data-value="{{$client->name}}">{{$client->telephone}}</option>
                                                 @endforeach
                                             </datalist>
                                         </div>
 
-                                        @error('clientid')
+                                        @error('client_id')
                                         <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
                                     </span>
@@ -71,10 +74,11 @@
                                 <div class="row mb-3">
                                     <label for="receiptnumber" class="col-md-3 col-form-label text-md-end">
                                         {{ 'Numero du recu' }}
+                                        <b class="" style="color: red;">*</b>
                                     </label>
 
                                     <div class="col-md-9">
-                                        <input id="receiptnumber" type="text" class="form-control @error('receiptnumber') is-invalid @enderror" name="receiptnumber" value="{{ old('receiptnumber') }}" autocomplete="receiptnumber">
+                                        <input id="receiptnumber" type="text" class="form-control @error('receiptnumber') is-invalid @enderror" name="receiptnumber" value="{{ old('receiptnumber') }}" required autocomplete="receiptnumber">
 
                                         @error('receiptnumber')
                                         <span class="invalid-feedback" role="alert">
@@ -127,6 +131,22 @@
                                     </div>--}}
 
                                         <script type="text/javascript">
+                                            function setClientId(nameAndTel){
+                                                //var regExp = /([A-Z]|[a-z]|[0-9])+(\s([A-Z]|[a-z]|[0-9])+)*(\s+\(Tel\:\s[0-9]{9,15}\))/g;
+                                                var regExp2 = /[0-9]{9,15}/g;
+                                                var clientid = document.getElementById("clientid");
+                                                //var test = "Nguetsop Ngoufack Edwige Laure (Tel: 691179154)";
+                                                var matches = nameAndTel.match(regExp2);
+                                                if(matches === null){
+                                                    console.log("No Clientid");
+                                                }else{
+                                                    console.log(matches);
+                                                    console.log(matches[0]);
+                                                    clientid.setAttribute('value', matches[0]);
+                                                }
+
+                                            }
+
                                             //addProduct_fields();
                                             function addProduct_fields() {
                                                 var numItem = parseInt(document.getElementById('numitem').value);
@@ -142,7 +162,7 @@
                                                     '<div class="row" id="product' + index + '" style="margin-bottom: 7px;">' +
                                                         '<div class="col-sm-3 nopadding">' +
                                                             '<div class="form-group">' +
-                                                                '<input type="text" class="form-control" name="productname' + index + '" value="" placeholder="Nom du produit">' +
+                                                                '<input type="text" class="form-control" name="productname' + index + '" value="" placeholder="Nom du produit" onblur="filterProducts(this);">' +
                                                             '</div>' +
                                                         '</div>' +
                                                         '<div class="col-sm-3 nopadding">' +
@@ -168,12 +188,32 @@
                                                     '</div>';
                                                     //'<div class="col-sm-3 nopadding"><div class="form-group"> <input type="text" class="form-control" id="productname" name="productname" value="" placeholder="Non du produit"></div></div><div class="col-sm-3 nopadding"><div class="form-group"> <input type="number" class="form-control" id="unitprice" name="unitprice" value="" placeholder="Prix unitaire"></div></div><div class="col-sm-3 nopadding"><div class="form-group"> <input type="number" class="form-control" id="quantity" name="quantity" value="" placeholder="Quantite"></div></div><div class="col-sm-3 nopadding"><div class="form-group"><div class="input-group"> <div class="input-group-btn"> <button class="btn btn-danger" type="button" onclick="remove_product_fields('+ room +');"> <span class="glyphicon glyphicon-minus" aria-hidden="true"></span> </button></div></div></div></div><div class="clear"></div>';
 
+
                                                 products.appendChild(divtest)
 
                                                 var newNumItem = numItem + 1;
                                                 console.log("new Num Item: " + newNumItem);
                                                 document.getElementById('numitem').setAttribute("value", "" + newNumItem);
 
+                                            }
+
+                                            function filterProducts(inputNamei){
+                                                var index = inputNamei.name.substring("productname".length);
+                                                var inputPriceId = "unitprice" + index;
+                                                var inputPrice = document.getElementById(inputPriceId);
+                                                var productsJsonString = document.getElementById('produits').innerHTML;
+                                                var produits =  JSON.parse(productsJsonString);
+                                                var nomProduit = inputNamei.value;
+                                                console.log(produits);
+                                                console.log(inputPriceId);
+                                                console.log(nomProduit);
+                                                for(var i = 0; i < produits.length; i++){
+                                                    if(nomProduit.toUpperCase() === produits[i].name){
+                                                        console.log(produits[i].price);
+                                                        inputPrice.setAttribute("value", produits[i].price);
+                                                        break;
+                                                    }
+                                                }
                                             }
 
                                             function removeProductLine(product) {
@@ -269,18 +309,143 @@
 
                                 <div class="row mb-0">
                                     <div class="col-md-6 offset-md-3">
-                                        <button type="submit" class="btn btn-primary">
+
+                                        <a {{--type="submit"--}} class="btn btn-primary" href="#" onclick="loadModal();"
+                                           data-bs-toggle="modal"
+                                           data-bs-target="#confirm-register-purchase-modal">
                                             {{ 'Enregistrer' }}
-                                        </button>
+                                        </a>
+
+                                        {{--<button id="open-confirm-purchase-modal" class="btn btn-primary" data-bs-toggle="modal"
+                                                data-bs-target="#confirm-register-purchase-modal"
+                                                style="display: none;">
+                                            {{ 'Enregistrer' }}
+                                        </button>--}}
+
+                                        <div class="modal fade" id="confirm-register-purchase-modal" data-bs-backdrop="static"
+                                             data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+                                             aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h1 class="modal-title fs-5" id="staticBackdropLabel">
+                                                            {{'Confirmez-vous l\'enregistrement de l\'achat?'}}
+                                                            {{--<strong
+                                                                style="color: darkred;">{{$client->name}}</strong>--}}
+                                                        </h1>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                                aria-label="Close"></button>
+                                                    </div>
+                                                   {{-- <form method="POST" action="{{url('/client/' . $client->id . '/activate')}}"
+                                                          onsubmit="return true;">--}}
+                                                        <div class="modal-body">
+                                                            <div class="list-group list-group-flush alert alert-info"
+                                                                  id="form-list-group">
+                                                                <a href="#" class="list-group-item list-group-item-action"
+                                                                   style="margin-left: 15px; width: 98%;" id="name-displayer">
+                                                                    {{--<h5>
+                                                                        Telephone: &nbsp; &nbsp; {{$client->telephone}}
+                                                                    </h5>--}}
+                                                                </a>
+                                                                <a href="#" class="list-group-item list-group-item-action"
+                                                                   style="margin-left: 15px; width: 98%;" id="telephone-displayer">
+
+                                                                </a>
+                                                                <a href="#" class="list-group-item list-group-item-action"
+                                                                   style="margin-left: 15px; width: 98%;" id="amount-displayer">
+
+                                                                </a>
+                                                                <a href="#" class="list-group-item list-group-item-action"
+                                                                   style="margin-left: 15px; width: 98%;" id="receiptnumber-displayer">
+
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-danger"
+                                                                    data-bs-dismiss="modal">Annuler
+                                                            </button>
+                                                            <button type="submit" class="btn btn-success">
+                                                                {{'Confirmer l\'achat'}}
+                                                            </button>
+                                                        </div>
+                                                    {{--</form>--}}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <script type="text/javascript">
+                                            function openConfirmModal(){
+                                               var modalOpenner = document.getElementById('open-confirm-purchase-modal');
+                                               var client = document.getElementById('clientid');
+                                               var amount = document.getElementById('amount');
+                                               var transactiontype = document.getElementById('transactiontype');
+                                               var receiptnumber = document.getElementById('receiptnumber');
+                                               if(
+                                                   client.value.length > 0 &&
+                                                   amount.value.length > 0 &&
+                                                   transactiontype.value.length > 0 &&
+                                                   receiptnumber.value.length > 0) {
+                                                   modalOpenner.click();
+                                               }else{
+                                                   alert('Merci de completer le formulaire.');
+                                               }
+                                            }
+
+                                            function loadModal(){
+                                                //clientids
+                                                var clientid = document.getElementById('clientid');
+                                                var client_id = document.getElementById('client_id');
+                                                var telephone = clientid.value;
+                                                var nameTel = client_id.value;
+                                                var datalist = document.getElementById('clientids');
+                                                var datalistOptions = datalist.options;
+                                                var selectedOption = null;
+
+                                                for(var i = 0; i < datalistOptions.length; i++){
+                                                    //console.log(datalistOptions[i]);
+                                                    var regExp2 = /[0-9]{9,15}/g;
+                                                    var matches = datalistOptions[i].value.match(regExp2);
+                                                    //if(matches !== null){
+                                                    console.log(datalistOptions[i].value + ' ?= ' + nameTel);
+                                                    if(datalistOptions[i].value === nameTel){
+                                                        selectedOption = datalistOptions[i];
+                                                    }
+                                                    //}
+                                                }
+                                                var name = '';
+                                                if(selectedOption == null){
+                                                    name = '';
+                                                }else{
+                                                    name = selectedOption.getAttribute('data-value');
+                                                }
+
+                                                var amount = document.getElementById('amount').value;
+                                                var receiptnumber = document.getElementById('receiptnumber').value;
+                                                document.getElementById('name-displayer').innerHTML =
+                                                    '<h5>Client: ' + name + '</h5>';
+                                                document.getElementById('telephone-displayer').innerHTML =
+                                                    '<h5>Telephone: ' + telephone + '</h5>';
+                                                document.getElementById('amount-displayer').innerHTML =
+                                                    '<h5>Montant: ' + amount + '</h5>';
+                                                document.getElementById('receiptnumber-displayer').innerHTML =
+                                                    '<h5>No. Recu: ' + receiptnumber + '</h5>';
+
+                                                /*console.log('datalistOptions.length: ' + datalistOptions.length);
+                                                console.log('Name: ' + name + ', Telephone: ' + telephone + ', Amount: ' + amount
+                                                 + ', Receiptnumber: ' + receiptnumber);*/
+                                            }
+                                        </script>
                                     </div>
                                 </div>
+
+
                             </form>
 
                     </div>
 
-                    <div class="card-footer">
+                    {{--<div class="card-footer">
                         {{' '}}
-                    </div>
+                    </div>--}}
                 </div>
             </div>
         </div>

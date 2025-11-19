@@ -130,7 +130,7 @@
                                                 <div class="col-md-4">
                                                     <label for="day">Jour</label>
                                                     <select class="form-select" id="day" name="day">
-                                                        <option>--Choisir ici --</option>
+                                                        <option value=""> --Choisir ici--</option>
                                                         <option
                                                             value="01" {{($day !== '00' ?  ($day === '01' ? 'selected' : ''): '')}}>
                                                             01
@@ -261,7 +261,7 @@
                                                 <div class="col-md-4">
                                                     <label for="month">Mois</label>
                                                     <select class="form-select" id="month" name="month">
-                                                        <option>--Choisir ici --</option>
+                                                        <option value="">--Choisir ici --</option>
                                                         <option
                                                             value="01" {{($month !== '00' ?  ($month === '01' ? 'selected' : ''): '')}}>
                                                             Janvier
@@ -317,7 +317,7 @@
                                                 <div class="col-md-4">
                                                     <label for="year">Annee</label>
                                                     <select class="form-select" id="year" name="year">
-                                                        <option>--Choisir ici --</option>
+                                                        <option value="">--Choisir ici --</option>
                                                         @for($i = $thisyear; $i >= 1900; $i--)
                                                             <option
                                                                 value="{{$i}}" {{($year !== '00' ?  ($year === (''. $i) ? 'selected' : ''): '')}}>{{$i}}</option>
@@ -331,8 +331,8 @@
 
                                             @error('birthdate')
                                             <span class="invalid-feedback" role="alert">
-                                                                        <strong>{{ $message }}</strong>
-                                                                    </span>
+                                                <strong>{{ $message }}</strong>
+                                            </span>
                                             @enderror
                                         </div>
                                     </div>
@@ -380,8 +380,8 @@
 
                                             @error('city')
                                             <span class="invalid-feedback" role="alert">
-                                                                        <strong>{{ $message }}</strong>
-                                                                    </span>
+                                                <strong>{{ $message }}</strong>
+                                            </span>
                                             @enderror
                                         </div>
                                     </div>

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class RewardController extends Controller
 {
@@ -27,17 +28,20 @@ class RewardController extends Controller
         return view('reward.reward-page-list', ['rewards' => Reward::all()]);
     }
 
-
-
-    public function registerReward(Request $request)
+    public function rewardValidator(Request $request): \Illuminate\Validation\Validator
     {
-        $validator = Validator::make($request->all(), [
+        return Validator::make($request->all(), [
             'name'               => 'required|string|max:255',
             'nature'               => 'required|string|in:MATERIAL,FINANCIAL,SERVICE',
             'level'                => 'required|string|max:255',
             'value'                  => 'required|numeric|min:1',
-           // 'is_applicable'                   => 'required|string|in:on,off'
         ]);
+    }
+
+
+    public function registerReward(Request $request)
+    {
+        $validator = $this->rewardValidator($request);
 
         if($validator->fails()){
             session()->flash('error', $validator->errors()->first());
@@ -76,6 +80,104 @@ class RewardController extends Controller
 
         return back()->with('status', 'Recompense enregistree avec succes!');//->with('status', ['message' => 'Great! You have Successfully Registered the conversion.', 'conversion' => $conversion]);
     }
+
+    public function registerRewardApi(Request $request)
+    {
+
+        $validator = $this->rewardValidator($request);
+
+        if($validator->fails()){
+            return
+                response()->json(
+                    [
+                        'error' => 1,
+                        'success'=>0,
+                        'errorMessage' => $validator->errors()->first(),
+                        'successMessage' =>'',
+                        'result' => $validator->errors()
+                    ], Response::HTTP_OK);
+        }
+        $config = Config::where('is_applicable', true)->first();
+
+        if ($config == null) {
+            return
+                response()->json(
+                    [
+                        'error' => 1,
+                        'success'=>0,
+                        'errorMessage' => 'Config not found',
+                        'successMessage' =>'',
+                        'result' => 'Config not found'
+                    ], Response::HTTP_OK);
+        }
+
+        $levels = json_decode($config->levels, true);
+
+        $theLevel = null;
+        foreach ($levels as $level) {
+            if (strtoupper($level['name']) === strtoupper($request->input('level'))) {
+                $theLevel = $level;
+                break;
+            }
+        }
+        if ($theLevel === null) {
+            return
+                response()->json(
+                    [
+                        'error' => 1,
+                        'success'=>0,
+                        'errorMessage' => 'Niveau de recompense inexistant',
+                        'successMessage' =>'',
+                        'result' => 'Niveau de recompense inexistant'
+                    ], Response::HTTP_OK);
+            //session()->flash('error', 'Niveau de recompense inexistant');
+            //return back()->withErrors(['error' => $validator->errors()->first()]);
+        }
+
+        $reward = Reward::create([
+            'id' => Str::uuid()->toString(),
+            'name' => $request->get('name'),
+            'nature' => $request->get('nature'),
+            'value' => $request->get('value'),
+            'level' =>json_encode($theLevel,JSON_UNESCAPED_UNICODE),
+            'active' => true,
+            'registered_by' => intval($request->get('userid')),
+        ]);
+
+        return
+            response()->json(
+                [
+                    'error' => 0,
+                    'success'=>1,
+                    'errorMessage' => '',
+                    'successMessage' =>'Recompense creee avec succes!',
+                    'result' => $reward
+                ], Response::HTTP_OK);
+
+        //session()->flash('status', 'Recompense enregistree avec succes!');
+
+        //return back()->with('status', 'Recompense enregistree avec succes!');//->with('status', ['message' => 'Great! You have Successfully Registered the conversion.', 'conversion' => $conversion]);
+    }
+
+    // Testing API
+    public function test(Request $request)
+    {
+        return
+            response()->json(
+                [
+                    'error' => 0,
+                    'success'=>1,
+                    'errorMessage' => '',
+                    'successMessage' =>'Test OK!',
+                    'result' => $request->get('userid')
+                ], Response::HTTP_OK);
+    }
+
+    /**
+     * @param Request $request
+     * @param string $rewardId
+     * @return \Illuminate\Http\RedirectResponse
+     */
 
     public function activateOrDeactivateReward(Request $request, string $rewardId)
     {

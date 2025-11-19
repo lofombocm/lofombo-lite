@@ -147,7 +147,7 @@ class LoginClientController extends Controller
 
         DB::table('password_recovery_requests')->insert(['id' => $id, 'email' => $request->get('email'), 'created_at' => $currentTimestamp, 'expire_at' => $expire_at]);
 
-        $link = env('HOST_WEB_CLIENT_DOMAIN').'/client-password-forgot-form/'. $id ;
+        $link = url('').'/client-password-forgot-form/'. $id ;
         $data = ['email' => $request->get('email'), 'name' => $client->name, 'passwordRecoveringUrl' => $link];
 
         //Mail::to($user->email)->send(new MailForPassordForgot($data));

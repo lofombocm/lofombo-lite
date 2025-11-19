@@ -36,6 +36,11 @@ class PurchaseController extends Controller
         return view('purchase.index');
     }
 
+    public function showProductsToUser()
+    {
+        return view('purchase.purchases-products');
+    }
+
     public function registerPurchaseBackup(Request $request){
 
         $validator = Validator::make($request->all(), [
@@ -113,7 +118,7 @@ class PurchaseController extends Controller
 
             $isApplicableBirthdate = false;
 
-            if ($clientBithDate) {
+            if ($clientBithDate != null) {
                 $birthdate = Carbon::parse($clientBithDate);
                 $birthdateMonth = $birthdate->month;
                 $birthdateDay = $birthdate->day;
@@ -134,14 +139,14 @@ class PurchaseController extends Controller
             }
 
             $pointToBeAdded = ($loyaltyAmountBalance === (double)0) ? $loyaltyPointBalance : 0;
-            $totalPoint = ceil($rate * intdiv($purchaseAmount + $loyaltyAmountBalance, $minAmount)) + $pointToBeAdded; // applique pour ne pas avoir quelqu'un qui a un solde de montant eleve et n'a pas de points
-            $point = round($rate * intdiv($purchaseAmount, $minAmount));
+            $totalPoint = floor($rate * intdiv($purchaseAmount + $loyaltyAmountBalance, $minAmount)) + $pointToBeAdded; // applique pour ne pas avoir quelqu'un qui a un solde de montant eleve et n'a pas de points
+            $point = floor($rate * intdiv($purchaseAmount, $minAmount));
 
             //$totalPoint = $loyaltyPointBalance + $signe * $point;
 
             if ($totalPoint > $thresholdGold){
                 /// TODO: Send SMS and email notification to client.
-                $link = env('HOST_WEB_CLIENT_DOMAIN').'/auth/client' ;
+                $link = url('').'/auth/client' ;
                 if ($clientEmail){
                     $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'GOLD'];
                     ProcessSendEMailVoucherAvailableJob::dispatch($data);
@@ -155,7 +160,7 @@ class PurchaseController extends Controller
 
             if ($totalPoint < $thresholdGold && $totalPoint >= $thresholdPremium){
                 /// TODO: Send SMS and email notification to client.
-                $link = env('HOST_WEB_CLIENT_DOMAIN').'/auth/client' ;
+                $link = url('').'/auth/client' ;
                 if ($clientEmail){
                     $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'PREMIUM'];
                     ProcessSendEMailVoucherAvailableJob::dispatch($data);
@@ -166,7 +171,7 @@ class PurchaseController extends Controller
 
             if ($totalPoint < $thresholdPremium && $totalPoint >= $thresholdClassic){
                 /// TODO: Send SMS and email notification to client.
-                $link = env('HOST_WEB_CLIENT_DOMAIN').'/auth/client' ;
+                $link = url('').'/auth/client' ;
                 if ($clientEmail){
                     $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'CLASSIC'];
                     ProcessSendEMailVoucherAvailableJob::dispatch($data);
@@ -217,10 +222,12 @@ class PurchaseController extends Controller
         //return json_encode($request->all());
         //session()->flash('error', $request->get('clientid'));
         //return back()->withErrors(['error' => $request->get('clientid')]);
+        //dd($request->all());
         $validator = Validator::make($request->all(), [
             'clientid' => 'required|string|max:255|min:2|exists:clients,telephone',
             'amount' => 'required|numeric|min:1',
             'transactiontype' => 'required|string|min:2|max:255',
+            'receiptnumber' => 'required|string|max:255|min:2|unique:purchases,receiptnumber',
         ]);
         if($validator->fails()){
             return back()->withErrors(['error' => $validator->errors()->first()]);
@@ -330,11 +337,11 @@ class PurchaseController extends Controller
             foreach($items as $item){
                 try {
                     $productid =  Str::uuid()->toString();
-                    $prod = Product::where('name',  $item->name)->first();
+                    $prod = Product::where('name',  strtoupper($item->name))->first();
                     if(!$prod){
                         $product = Product::Create([
                             'id' => $productid,
-                            'name' => $item->name,
+                            'name' => strtoupper($item->name),
                             'price' => $item->price,
                             'others' => '' . $item->total,
                         ]);
@@ -356,7 +363,8 @@ class PurchaseController extends Controller
 
             $isApplicableBirthdate = false;
 
-            if ($clientBithDate) {
+
+            if ($clientBithDate != null) {
                 $birthdate = Carbon::parse($clientBithDate);
                 $birthdateMonth = $birthdate->month;
                 $birthdateDay = $birthdate->day;
@@ -369,7 +377,7 @@ class PurchaseController extends Controller
                 }
             }
             $rate = 1;
-            if($isApplicableBirthdate){
+            if($isApplicableBirthdate === true){
                 $rate = $birthdate_rate;
                 if($rate < 1){
                     $rate = 1;
@@ -378,102 +386,9 @@ class PurchaseController extends Controller
 
             //$pointToBeAdded = ($loyaltyAmountBalance === (double)0) ? $loyaltyPointBalance : 0;
             //$amount_per_point
-            $totalPoint = round($rate * (($purchaseAmount + $loyaltyAmountBalance) / $amount_per_point)); // applique pour ne pas avoir quelqu'un qui a un solde de montant eleve et n'a pas de points
-            $point = round($rate * ($purchaseAmount / $amount_per_point));
-
-            //$totalPoint = $loyaltyPointBalance + $signe * $point;
-            $possibleRewards = [];
-            $rewards = Reward::all();
-            foreach ($rewards as $reward){
-                $level = json_decode($reward->level);
-                $rewardPoint = $level->point;
-                if ($totalPoint >= $rewardPoint){
-                    array_push($possibleRewards, $reward);
-                }
-            }
-
-            $link = env('HOST_WEB_CLIENT_DOMAIN').'/auth/client' ;
-            $message = [$theclient->gender . ' '. $theclient->name. ' Vous avez atteint un niveau de points vous permettant de beneficier de: '];
-            $data = [];
-            if (count($possibleRewards) > 0){
-                /// TODO: Send SMS and email notification to client.
-                foreach ($possibleRewards as $possibleReward){
-                    $level = json_decode($possibleReward->level);
-                    array_push($message,  '"' . $possibleReward->name . '" pour un bon de niveau "' . $level->name . '" correspondant a ' . $level->point. ' points ');
-                }
-                if ($clientEmail){
-                    $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'msg' => $message];
-                    ProcessSendEMailVoucherAvailableJob::dispatch($data);
-                }
-                $data = ['email' => Auth::user()->email, 'name' => $clientName, 'clientLoginUrl' => $link, 'msg' => $message];
-                ProcessSendEMailVoucherAvailableJob::dispatch($data);
-            }
-
-            /*if ($totalPoint > $thresholdGold){
-                /// TODO: Send SMS and email notification to client.
-                $link = env('HOST_WEB_CLIENT_DOMAIN').'/auth/client' ;
-                if ($clientEmail){
-                    $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'GOLD'];
-                    ProcessSendEMailVoucherAvailableJob::dispatch($data);
-                }
-                $data = ['email' => Auth::user()->email, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'GOLD'];
-                ProcessSendEMailVoucherAvailableJob::dispatch($data);
-
-                /// TODO: Generate voucher.
-
-            }
-
-            if ($totalPoint < $thresholdGold && $totalPoint >= $thresholdPremium){
-                /// TODO: Send SMS and email notification to client.
-                $link = env('HOST_WEB_CLIENT_DOMAIN').'/auth/client' ;
-                if ($clientEmail){
-                    $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'PREMIUM'];
-                    ProcessSendEMailVoucherAvailableJob::dispatch($data);
-                }
-                $data = ['email' => Auth::user()->email, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'PREMIUM'];
-                ProcessSendEMailVoucherAvailableJob::dispatch($data);
-            }
-
-            if ($totalPoint < $thresholdPremium && $totalPoint >= $thresholdClassic){
-                /// TODO: Send SMS and email notification to client.
-                $link = env('HOST_WEB_CLIENT_DOMAIN').'/auth/client' ;
-                if ($clientEmail){
-                    $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'CLASSIC'];
-                    ProcessSendEMailVoucherAvailableJob::dispatch($data);
-                }
-                $data = ['email' => Auth::user()->email, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'CLASSIC'];
-                ProcessSendEMailVoucherAvailableJob::dispatch($data);
-            }*/
-
-            $notifid = Str::uuid()->toString();
-            $notifgenerator = Auth::user()->id;
-            $notifsubject = 'Disponibilite de recompenses au travers des bons';
-            $notifsentat = Carbon::now();
-            $notifbody = json_encode($message);
-            $notifdata = json_encode($data);
-            $notifsender = Auth::user()->name;
-            $notifrecipient = $clientId;
-            $notifsenderaddress = Auth::user()->email;
-            $notifrecipientaddress = $theclient->telephone;
-            $notifread = false;
-
-            //dd($notifdata);
-            Notification::create(
-                [
-                    'id' => $notifid,
-                    'generator' => $notifgenerator,
-                    'subject' => $notifsubject,
-                    'sent_at' => $notifsentat,
-                    'body' => $notifbody,
-                    'data' => $notifdata,
-                    'sender' => $notifsender,
-                    'recipient' => $notifrecipient,
-                    'sender_address' => $notifsenderaddress,
-                    'recipient_address' => $notifrecipientaddress,
-                    'read' => $notifread,
-                ]
-            );
-
+            $totalPoint = floor(($rate * $purchaseAmount + $loyaltyAmountBalance) / $amount_per_point); // applique pour ne pas avoir quelqu'un qui a un solde de montant eleve et n'a pas de points
+            $point = floor($rate * $purchaseAmount / $amount_per_point);
+            $montantTransaction = $rate * $purchaseAmount;
 
             $transactionid = Str::uuid()->toString();
             Loyaltytransaction::create(
@@ -496,10 +411,152 @@ class PurchaseController extends Controller
 
             $loyaltyaccount->update(
                 [
-                    'amount_balance' => $loyaltyAmountBalance + $purchaseAmount,
+                    'amount_balance' => $loyaltyAmountBalance + $montantTransaction,
                     'point_balance' => $totalPoint,
                     'current_point' => $loyaltyPointBalance
                 ]);
+
+
+            $configuration = Config::where('is_applicable', true)->first();
+
+            $levels = json_decode($configuration->levels);
+            $maxLevel = $levels[0];
+            $minLevel = $levels[0];
+            foreach ($levels as $level){
+                if($level->point > $maxLevel->point && $totalPoint >= $level->point){
+                    $maxLevel = $level;
+                }
+                if($level->point < $minLevel->point && $totalPoint >= $level->point){
+                    $minLevel = $level;
+                }
+            }
+
+            $possibleLevels = [];
+            foreach ($levels as $level){
+                if ($level->point <= $maxLevel->point && $level->point >= $minLevel->point){
+                    array_push($possibleLevels, $level);
+                }
+            }
+
+            $possibleRewards = [];
+            $rewards = Reward::where('active', true)->get();
+            foreach ($rewards as $reward){
+                $level = json_decode($reward->level);
+                $rewardPoint = $level->point;
+                if ($totalPoint >= $rewardPoint){
+                    array_push($possibleRewards, $reward);
+                }
+            }
+
+            $link = url('').'/auth/client' ;
+            $message = [$theclient->gender . ' '. $theclient->name. ' Vous avez atteint un niveau de points vous permettant de beneficier des recompenses:'];
+            //$data = [];
+            if ($totalPoint >= $minLevel->point){
+                /// TODO: Send SMS and email notification to client.
+                foreach ($possibleRewards as $possibleReward){
+                    $level = json_decode($possibleReward->level);
+                    array_push($message,  '"' . $possibleReward->name . '" pour un bon de niveau "' . $level->name . '" correspondant a ' . $level->point. ' points ');
+                }
+                if ($clientEmail){
+                    $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'msg' => $message];
+                    ProcessSendEMailVoucherAvailableJob::dispatch($data);
+
+                    $notifid = Str::uuid()->toString();
+                    $notifgenerator = Auth::user()->id;
+                    $notifsubject = 'Disponibilite de recompenses au travers des bons';
+                    $notifsentat = Carbon::now();
+                    $notifbody = json_encode($message);
+                    $notifdata = json_encode($data);
+                    $notifsender = Auth::user()->name;
+                    $notifrecipient = $clientId;
+                    $notifsenderaddress = Auth::user()->email;
+                    $notifrecipientaddress = $clientEmail;
+                    $notifread = false;
+
+                    //dd($notifdata);
+                    Notification::create(
+                        [
+                            'id' => $notifid,
+                            'generator' => $notifgenerator,
+                            'subject' => $notifsubject,
+                            'sent_at' => $notifsentat,
+                            'body' => $notifbody,
+                            'data' => $notifdata,
+                            'sender' => $notifsender,
+                            'recipient' => $notifrecipient,
+                            'sender_address' => $notifsenderaddress,
+                            'recipient_address' => $notifrecipientaddress,
+                            'read' => $notifread,
+                        ]
+                    );
+
+                }
+                $data = ['email' => Auth::user()->email, 'name' => $clientName, 'clientLoginUrl' => $link, 'msg' => $message];
+                ProcessSendEMailVoucherAvailableJob::dispatch($data);
+                $notifid = Str::uuid()->toString();
+                $notifgenerator = Auth::user()->id;
+                $notifsubject = 'Disponibilite de recompenses au travers des bons';
+                $notifsentat = Carbon::now();
+                $notifbody = json_encode($message);
+                $notifdata = json_encode($data);
+                $notifsender = Auth::user()->name;
+                $notifrecipient = $clientId;
+                $notifsenderaddress = Auth::user()->email;
+                $notifrecipientaddress = $theclient->telephone;
+                $notifread = false;
+
+                Notification::create(
+                    [
+                        'id' => $notifid,
+                        'generator' => $notifgenerator,
+                        'subject' => $notifsubject,
+                        'sent_at' => $notifsentat,
+                        'body' => $notifbody,
+                        'data' => $notifdata,
+                        'sender' => $notifsender,
+                        'recipient' => $notifrecipient,
+                        'sender_address' => $notifsenderaddress,
+                        'recipient_address' => $notifrecipientaddress,
+                        'read' => $notifread,
+                    ]
+                );
+            }
+
+            /*if ($totalPoint > $thresholdGold){
+                /// TODO: Send SMS and email notification to client.
+                $link = url('').'/auth/client' ;
+                if ($clientEmail){
+                    $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'GOLD'];
+                    ProcessSendEMailVoucherAvailableJob::dispatch($data);
+                }
+                $data = ['email' => Auth::user()->email, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'GOLD'];
+                ProcessSendEMailVoucherAvailableJob::dispatch($data);
+
+                /// TODO: Generate voucher.
+
+            }
+
+            if ($totalPoint < $thresholdGold && $totalPoint >= $thresholdPremium){
+                /// TODO: Send SMS and email notification to client.
+                $link = url('').'/auth/client' ;
+                if ($clientEmail){
+                    $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'PREMIUM'];
+                    ProcessSendEMailVoucherAvailableJob::dispatch($data);
+                }
+                $data = ['email' => Auth::user()->email, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'PREMIUM'];
+                ProcessSendEMailVoucherAvailableJob::dispatch($data);
+            }
+
+            if ($totalPoint < $thresholdPremium && $totalPoint >= $thresholdClassic){
+                /// TODO: Send SMS and email notification to client.
+                $link = url('').'/auth/client' ;
+                if ($clientEmail){
+                    $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'CLASSIC'];
+                    ProcessSendEMailVoucherAvailableJob::dispatch($data);
+                }
+                $data = ['email' => Auth::user()->email, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'CLASSIC'];
+                ProcessSendEMailVoucherAvailableJob::dispatch($data);
+            }*/
 
             DB::commit();
         }catch (\Exception $exception){
@@ -507,7 +564,7 @@ class PurchaseController extends Controller
             return back()->withErrors(['error' => $exception->getMessage() . '   ' . $exception->getLine()]);
         }
         session()->flash('status', 'Achat enregistre avec succes!');
-        return redirect("/home");//->withSuccess(['status' => 'Achat enregistre avec succes.', 'purchase' => $purchase]);
+        return back()->with('status', 'Achat enregistre avec succes!');//->withSuccess(['status' => 'Achat enregistre avec succes.', 'purchase' => $purchase]);
     }
 }
 

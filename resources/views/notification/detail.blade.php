@@ -45,6 +45,7 @@
                             {{ 'Disponibilite de recompenses au travers des bons' }}
                         </h3><br>
 
+                        <?php /* dd($data);*/  ?>
                         <h5>{{$data['msg'][0]}}</h5><br>
                         @php $i = 0; @endphp
                         <ul>

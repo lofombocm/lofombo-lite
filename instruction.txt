@@ -1,0 +1,1 @@
+ zip -r lofombo.zip .  -x "node_modules/* " -x vendor/ -x .env -x .git/ -x  composer.lock -x package-lock.json

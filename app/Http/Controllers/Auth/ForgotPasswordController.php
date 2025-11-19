@@ -10,6 +10,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
 use App\Jobs\ProcessSendEMailPwdForgotJob;
@@ -49,9 +50,15 @@ class ForgotPasswordController extends Controller
 
     public function postForgotPassword(Request $request){
         //return json_encode($request);
-        $request->validate([
-            'email' => ['required', 'email'/*, 'exists:users'*/],
+        $validator = Validator::make($request->all(),[
+            'email' => 'required|email|exists:users'/*, 'exists:users'*/,
         ]);
+
+        if ($validator->fails()){
+            session()->flash('error', $validator->errors()->first());
+            //session()->flash('request', json_encode($request->all()));
+            return back()->withErrors(['error' => $validator->errors()->first()]);
+        }
 
 
         $user = User::where('email', $request->email)->first();
@@ -78,7 +85,7 @@ class ForgotPasswordController extends Controller
         $expire_at = $currentTimestamp->addMinutes($pwdRecoverDuation);
         DB::table('password_recovery_requests')->insert(['id' => $id, 'email' => $user->email, 'created_at' => $currentTimestamp, 'expire_at' => $expire_at]);
 
-        $link = env('HOST_WEB_CLIENT_DOMAIN').'/password-forgot-form/'. $id ;
+        $link = url('').'/password-forgot-form/'. $id ;
         $data = ['email' => $user->email, 'name' => $user->name, 'passwordRecoveringUrl' => $link];
 
         //Mail::to($user->email)->send(new MailForPassordForgot($data));

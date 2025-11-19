@@ -1,9 +1,6 @@
 @php
-    use App\Http\Controllers\Reward\RewardController
-  ; use App\Models\Reward;use App\Models\Voucher
-  ; use App\Models\Transactiontype
+    use App\Models\Reward;use App\Models\Voucher
   ; use Illuminate\Support\Carbon
-  ; use App\Models\Config
   ;
 @endphp
 @extends('layouts.app')
@@ -39,7 +36,9 @@
                                     Nom: &nbsp; &nbsp; {{$client->name}}
                                     <strong style="display: inline; position: relative; float:right; color: darkred;">
                                         {{ 'Solde: ' }} {{$loyaltyAccount->point_balance}}
-                                        {{'Points  (' . $loyaltyAccount->amount_balance . ' ' . $configuration->currency_name . ')'}}
+                                        @if(\Illuminate\Support\Facades\Auth::user()->is_admin)
+                                            {{'Points  (' . $loyaltyAccount->amount_balance . ' ' . $configuration->currency_name . ')'}}
+                                        @endif
                                     </strong>
                                 </h5>
                             </a>
@@ -70,12 +69,13 @@
                                     $m = '00';
                                     $j = '00';
                                     $dateNaissance = '';
-                                    if (strlen($client->birthdate) > 0) {
+                                    if ($client->birthdate  != null && strlen($client->birthdate) > 0) {
                                         $ymd = explode('-', $client->birthdate);
                                         $a = $ymd[0];
                                         $m = $ymd[1];
                                         $j = $ymd[2];
-                                        $dateNaissance = $j . '-' . $m . '-' . $a;
+                                        $annee = (intval($a) === 1900) ? 'XXXX' : $a;
+                                        $dateNaissance = $j . '-' . $m . '-' . $annee;
                                     }
                                     ?>
                                     &nbsp;{{ ($a !== '00' && $m !== '00' && $j !== '00') ? $dateNaissance : "N/D"}}
@@ -138,7 +138,7 @@
                                         if($level->point > $maxLevel->point && $loyaltyAccount->point_balance >= $level->point){
                                             $maxLevel = $level;
                                         }
-                                        if($level->point < $minLevel->point){
+                                        if($level->point < $minLevel->point && $loyaltyAccount->point_balance >= $level->point){
                                             $minLevel = $level;
                                         }
                                     }
@@ -263,7 +263,7 @@
                                                                         <select id="level"
                                                                                 class="form-control form-select form-select-lg @error('level') is-invalid @enderror"
                                                                                 name="level" >
-                                                                            <option value="">Choisissez ici</option>
+                                                                            <option value=""> Choisissez ici </option>
                                                                             @foreach($possibleLevels as $level)
                                                                                 <option value="{{json_encode($level)}}">{{$level->name}}</option>
                                                                             @endforeach
@@ -389,7 +389,7 @@
                                     {{ 'Modifier Client' }}
                                 </button>
 
-                                <div class="modal fade" id="confirm-update-client-modal" data-bs-backdrop="static"
+                                <div class="modal fade modal-lg" id="confirm-update-client-modal" data-bs-backdrop="static"
                                      data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
                                      aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
@@ -786,7 +786,7 @@
                                     </div>
                                 </div>
 
-                                @if(count(Voucher::all()) !== 0)
+                                @if(count(Voucher::where('clientid', $client->id)->get()) > 0)
                                     <a class="btn btn-warning" href="{{url('/client/' . $client->id . '/vouchers')}}">
                                         {{ 'voir les bons' }}
                                     </a>
@@ -852,9 +852,9 @@
 
                     </div>
 
-                    <div class="card-footer">
+                    {{--<div class="card-footer">
                         {{' '}}
-                    </div>
+                    </div>--}}
                 </div>
             </div>
         </div>

@@ -5,19 +5,24 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Jobs\ProcessSendEMailClientCredentialsJob;
 use App\Jobs\ProcessSendEMailVoucherAvailableJob;
+use App\Jobs\ProcessSendEMailVoucherGeneratedJob;
+use App\Jobs\ProcessSendEMailVoucherUsedJob;
 use App\Models\Client;
 use App\Models\Config;
 use App\Models\Conversion;
 use App\Models\Loyaltyaccount;
 use App\Models\Loyaltyewalet;
 use App\Models\Loyaltytransaction;
+use App\Models\Notification;
 use App\Models\Reward;
 use App\Models\Threshold;
 use App\Models\User;
 use App\Models\Voucher;
+use App\Models\VoucherUsageCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -78,27 +83,36 @@ class ClientController extends Controller
 
         $secret = null;
         $birthdate = "";
-        //dd(['day'=>$request->get('day'),'month'=>$request->get('month'),'year'=>$request->get('year')]);
-        if ($request->get('day') === null || $request->get('month') === null  || $request->get('year') === null) {
+        if (!$request->filled('day') || $request->filled('month') === null) {
             $secret = "12345678";
         }else{
 
+            $year = 1900;
             $validatorBirthdate = Validator::make($request->all(), [
                 'day' => 'string|in:01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31',
                 'month' => 'string|in:01,02,03,04,05,06,07,08,09,10,11,12',
-                'year' => 'integer|between:1900,'.date('Y'),
+                //'year' => 'integer|between:1900,'.date('Y'),
             ]);
             if($validatorBirthdate->fails()){
+                session()->flash('error', $validatorBirthdate->errors()->first());
                 return back()->withErrors(['error' => $validatorBirthdate->errors()->first()]);
             }
-            $birthdate = $request->get('year').'-'.$request->get('month').'-'.$request->get('day');
+            if (!$request->filled('year')){
+                $year = 1900;
+            }else{
+                $year = intval(trim($request->get('year')));
+                if (!($year >= 1900 && $year <= Carbon::now()->year)){
+                    $year = 1900;
+                }
+            }
+            $birthdate = $year . '-'.trim($request->get('month')).'-'.trim($request->get('day'));
             $birthdateFormatedArr = explode('-', $birthdate);
             $secret = $birthdateFormatedArr[2] . $birthdateFormatedArr[1] . $birthdateFormatedArr[0];
         }
 
         if ($request->filled('gender')){
             $validatorGender = Validator::make($request->all(), [
-                'gender' => 'string|in:MONSIEUR,MADAME,MADEMOISELLE',
+                'gender' => 'required|string|in:MONSIEUR,MADAME,MADEMOISELLE',
             ]);
             if($validatorGender->fails()){
                 session()->flash('error', $validatorGender->errors()->first());
@@ -223,10 +237,42 @@ class ClientController extends Controller
 
             if (strlen($clientEmail)){
                 /// TODO: Send SMS and email notification to client.
-                $link = env('HOST_WEB_CLIENT_DOMAIN').'/auth/client' ;
+                $message = ['Enregistrement au systeme de fidelite de ' . $config->enterprise_name . ' de ' . $client->gender. ' ' . $client->name,
+                    'Vous avez ete enregistre avec succes dans le systeme de fidelite de l\'entreprise ' . $config->enterprise_name,
+                    'Vous pouvez acceder au systeme en utilisant les identifiants suivants: ', 'Numero de telephone: ' . $client->telephone,
+                    'Mot de passe: '. $secret];
+                $link = url('').'/auth/client' ;
                 $data = ['email' => $clientEmail, 'name' => $client->name, 'clientLoginUrl' => $link, 'telephone' => $client->telephone, 'secret' => $secret,
-                    'enterprise' => $config->enterprise_name, 'gender' => $client->gender,];
+                    'enterprise' => $config->enterprise_name, 'gender' => $client->gender, 'msg' => $message];
                 ProcessSendEMailClientCredentialsJob::dispatch($data);
+
+                $notifid = Str::uuid()->toString();
+                $notifgenerator = '' . Auth::user()->id . '';
+                $notifsubject = $message[0];
+                $notifsentat = Carbon::now();
+                $notifbody = json_encode($message);
+                $notifdata = json_encode($data);
+                $notifsender = Auth::user()->name;
+                $notifrecipient = $client->name;
+                $notifsenderaddress = Auth::user()->email;
+                $notifrecipientaddress = $clientEmail;
+                $notifread = false;
+
+                Notification::create(
+                    [
+                        'id' => $notifid,
+                        'generator' => $notifgenerator,
+                        'subject' => $notifsubject,
+                        'sent_at' => $notifsentat,
+                        'body' => $notifbody,
+                        'data' => $notifdata,
+                        'sender' => $notifsender,
+                        'recipient' => $notifrecipient,
+                        'sender_address' => $notifsenderaddress,
+                        'recipient_address' => $notifrecipientaddress,
+                        'read' => $notifread,
+                    ]
+                );
             }
 
         }catch (\Exception $e){
@@ -276,19 +322,30 @@ class ClientController extends Controller
 
         $secret = null;
         $birthdate = "";
-        if (!$request->filled('day') || !$request->filled('month') || !$request->filled('year')){
+        if (!$request->filled('day') || !$request->filled('month')){
             //$secret = "12345678";
         }else{
 
             $validatorBirthdate = Validator::make($request->all(), [
                 'day' => 'string|in:01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31',
                 'month' => 'string|in:01,02,03,04,05,06,07,08,09,10,11,12',
-                'year' => 'integer|between:1900,'.date('Y'),
+                //'year' => 'integer|between:1900,'.date('Y'),
             ]);
             if($validatorBirthdate->fails()){
+                session()->flash('error', $validatorBirthdate->errors()->first());
                 return back()->withErrors(['error' => $validatorBirthdate->errors()->first()]);
             }
-            $birthdate = $request->get('year').'-'.$request->get('month').'-'.$request->get('day');
+
+            if (!$request->filled('year')){
+                $year = 1900;
+            }else{
+                $year = intval(trim($request->get('year')));
+                if (!($year >= 1900 && $year <= Carbon::now()->year)){
+                    $year = 1900;
+                }
+            }
+            $birthdate = $year . '-'.trim($request->get('month')).'-'.trim($request->get('day'));
+            //$birthdate = $request->get('year').'-'.$request->get('month').'-'.$request->get('day');
             //$birthdateFormatedArr = explode('-', $birthdate);
             //$secret = $birthdateFormatedArr[2] . $birthdateFormatedArr[1] . $birthdateFormatedArr[0];
             $client->birthdate = $birthdate;
@@ -296,7 +353,7 @@ class ClientController extends Controller
 
         if ($request->filled('gender')){
             $validatorGender = Validator::make($request->all(), [
-                'gender' => 'string|in:MONSIEUR,MADAME,MADEMOISELLE',
+                'gender' => 'required|string|in:MONSIEUR,MADAME,MADEMOISELLE',
             ]);
             if($validatorGender->fails()){
                 return back()->withErrors(['error' => $validatorGender->errors()->first()]);
@@ -351,11 +408,19 @@ class ClientController extends Controller
         $client = Client::where('id', $clientId)->first();
         $user = Auth::user();
         $config = Config::where('is_applicable', true)->first();
-        //$rewards = Reward::where('clientid', $clientId)->orderBy('created_at', 'desc')->get();
+        $rewards = Reward::where('active', true)->orderBy('created_at', 'desc')->get();
         return view('client.client-vouchers', ['client' => $client, 'user' => $user, 'vouchers' => $vouchers,
-            'config' => $config]);
+            'config' => $config, 'rewards' => $rewards]);
 
     }
+
+    public function getVouchersAll()
+    {
+        $vouchers = Voucher::orderBy('created_at', 'desc')->get();
+        return view('vouchers', ['vouchers' => $vouchers, ]);
+    }
+
+
 
 
     public function generateLoyaltyAccountNumber():string
@@ -422,6 +487,8 @@ class ClientController extends Controller
         }
 
         $voucher->active = true;
+        $voucher->activated_at = Carbon::now();
+        $voucher->deactivated_at = Carbon::now();
         $voucher->save();
         $msg = 'Le bon ' . $voucher->name . ' a ete active avec succes.';
 
@@ -460,6 +527,10 @@ class ClientController extends Controller
         }
 
         $voucher->active = false;
+        //$voucher->activated_at = Carbon::now();
+        $voucher->deactivated_at = Carbon::now();
+        //$voucher->activated_by = Auth::user()->id;
+
         $voucher->save();
         $msg = 'Le bon ' . $voucher->name . ' a ete desactive avec succes.';
 
@@ -468,8 +539,54 @@ class ClientController extends Controller
     }
 
 
-    public function useVoucher(string $clientId, string $voucherId)
+    public function useVoucher(Request $request, string $clientId, string $voucherId)
     {
+        $validator = Validator::make($request->all(), [
+            'code' => 'required|string|max:9|min:8',
+        ]);
+        if($validator->fails()){
+            session()->flash('error', $validator->errors()->first());
+            return back()->withErrors(['error' => $validator->errors()->first()]);
+        }
+
+
+        $rawCode = trim($request->input('code'));
+
+        if (!(strlen($rawCode) === 8 || strlen($rawCode) === 9)) {
+            session()->flash('error', 'Code invalide');
+            return back()->withErrors(['error' => 'Code invalide']);
+        }
+
+        $rawCodeArray = explode("-", $rawCode);
+
+        $code = '';
+        //$codewithhifen = '';
+        if (count($rawCodeArray) === 2) {
+            if (strlen($rawCodeArray[0]) !== 4) {
+                session()->flash('error', 'Code invalide');
+                return back()->withErrors(['error' => 'Code invalide']);
+            }
+            if (strlen($rawCodeArray[1]) !== 4) {
+                session()->flash('error', 'Code invalide');
+                return back()->withErrors(['error' => 'Code invalide']);
+            }
+            $code = $rawCode; //$rawCodeArray[0] . '-' . $rawCodeArray[1];
+            //$codewithhifen = $rawCodeArray[0] . '-' . $rawCodeArray[1];
+        }else{
+            if (strlen($rawCode) != 8){
+                session()->flash('error', 'Code invalide');
+                return back()->withErrors(['error' => 'Code invalide']);
+            }
+            if (count($rawCodeArray) !== 1) {
+                session()->flash('error', 'Code invalide');
+                return back()->withErrors(['error' => 'Code invalide']);
+            }
+
+            $part1 = substr($rawCode, 0, 4);
+            $part2 = substr($rawCode, 4, 4);
+            $code =$part1 . '-' . $part2;
+        }
+
         $client = Client::where('id', $clientId)->first();
         if ($client === null) {
             $msg = 'Le client avec l\'ID ' . $clientId . ' n\'existe pas.';
@@ -491,7 +608,7 @@ class ClientController extends Controller
         }
 
         if ($voucher->is_used) {
-            $msg = 'Le bon avec l\'ID ' . $voucherId . ' est deja utilise. Merci de contacter l\'administration pour l\'activer.';
+            $msg = 'Le bon avec l\'ID ' . $voucherId . ' est deja utilise. Merci de contacter l\'administration pour plus d\'informations.';
             session()->flash('error', $msg);
             return redirect()->back()->with('error', $msg);
         }
@@ -499,15 +616,116 @@ class ClientController extends Controller
         $expirationdate = Carbon::parse($voucher->expirationdate);
 
         if ($expirationdate->isBefore(Carbon::now())) {
-            $msg = 'Le bon avec l\'ID ' . $voucherId . ' est expire le ' . $expirationdate->format('d/m/Y') . '.';
+            $msg = 'Le bon avec l\'ID ' . $voucherId . ' est expire le ' . $expirationdate->format('d-m-Y H:i:s') . '.';
             session()->flash('error', $msg);
             return redirect()->back()->with('error', $msg);
         }
 
+
+        $usageCode = VoucherUsageCode::where('voucherid', $voucherId)->first();
+        $encryptedCode = $usageCode->code;
+        $decryptedCode = decrypt($encryptedCode);
+
+        //dd($decryptedCode);
+
+        if ($decryptedCode !== $code) {
+            $msg = 'Code invalide';
+            session()->flash('error', $msg);
+            return redirect()->back()->with('error', $msg);
+        }
+
+        $config = Config::where('is_applicable', true)->first();
+
+        $voucher->code_used = $code;
         $voucher->is_used = true;
         $voucher->used_at = Carbon::now();
-        $voucher->save();
-        $msg = 'Le bon ' . $voucher->name . ' a ete enregistre comme utilise avec succes.';
+
+        DB::beginTransaction();
+
+            try {
+                $voucher->save();
+                $msg = 'Le bon ' . $voucher->name . ' a ete enregistre comme utilise avec succes.';
+                $subjec = 'Utilisation du Bon ayant le numero de serie ' . $voucher->serialnumber . '.';
+                /// TODO Send email and SMS to client
+
+                if ($client->email !== null) {
+                    $message = [$client->gender . ' ' . $client->name . ', votre bon ayant le numero de serie ' . $voucher->serialnumber . ' a ete utiise le ' . (Carbon::now()->format('d-m-Y H:i:s')) . '.'];
+                    $emaildata = ['email' =>$client->email, 'name' => $client->name, 'clientLoginUrl' => url('/home-client'), 'level' => $voucher->level, 'msg' => $message,
+                        'code' => $code, 'config' => $config, 'subject' => $subjec];
+                    //dd($emaildata);
+                    ProcessSendEMailVoucherUsedJob::dispatch($emaildata);
+
+                    $notifid = Str::uuid()->toString();
+                    $notifgenerator = '' . Auth::user()->id . '';
+                    $notifsubject = 'Utilisation du Bon ayant le numero de serie ' . $voucher->serialnumber;
+                    $notifsentat = Carbon::now();
+                    $notifbody = json_encode($message);
+                    $notifdata = json_encode($emaildata);
+                    $notifsender = Auth::user()->name;
+                    $notifrecipient = $client->name;
+                    $notifsenderaddress = Auth::user()->email;
+                    $notifrecipientaddress = $client->email;
+                    $notifread = false;
+
+                    //dd($notifdata);
+                    Notification::create(
+                        [
+                            'id' => $notifid,
+                            'generator' => $notifgenerator,
+                            'subject' => $notifsubject,
+                            'sent_at' => $notifsentat,
+                            'body' => $notifbody,
+                            'data' => $notifdata,
+                            'sender' => $notifsender,
+                            'recipient' => $notifrecipient,
+                            'sender_address' => $notifsenderaddress,
+                            'recipient_address' => $notifrecipientaddress,
+                            'read' => $notifread,
+                        ]
+                    );
+                }
+
+                $message = ['Mme/M. ' . ' ' . Auth::user()->name . ', le bon ayant le numero de serie ' . $voucher->serialnumber . ' a ete utiise le ' . (Carbon::now()->format('d-m-Y H:i:s')) . '.'];
+                $emaildata = ['email' =>Auth::user()->email, 'name' => Auth::user()->name, 'clientLoginUrl' => url('/home'), 'level' => $voucher->level, 'msg' => $message,
+                    'code' => $code, 'config' => $config, 'subject' => $subjec];
+                //dd($emaildata);
+                ProcessSendEMailVoucherUsedJob::dispatch($emaildata);
+
+                $notifid = Str::uuid()->toString();
+                $notifgenerator = '' . Auth::user()->id . '';
+                $notifsubject = 'Utilisation du Bon ayant le numero de serie ' . $voucher->serialnumber;
+                $notifsentat = Carbon::now();
+                $notifbody = json_encode($message);
+                $notifdata = json_encode($emaildata);
+                $notifsender = Auth::user()->name;
+                $notifrecipient = Auth::user()->name;
+                $notifsenderaddress = Auth::user()->email;
+                $notifrecipientaddress = Auth::user()->email;
+                $notifread = false;
+
+                //dd($notifdata);
+                Notification::create(
+                    [
+                        'id' => $notifid,
+                        'generator' => $notifgenerator,
+                        'subject' => $notifsubject,
+                        'sent_at' => $notifsentat,
+                        'body' => $notifbody,
+                        'data' => $notifdata,
+                        'sender' => $notifsender,
+                        'recipient' => $notifrecipient,
+                        'sender_address' => $notifsenderaddress,
+                        'recipient_address' => $notifrecipientaddress,
+                        'read' => $notifread,
+                    ]
+                );
+            }catch (\Exception $exception){
+                DB::rollBack();
+                session()->flash('error', $exception->getMessage());
+                return redirect()->back()->with('error', $exception->getMessage());
+            }
+
+        DB::commit();
 
         session()->flash('status', $msg);
         return redirect()->back()->with('status', $msg);

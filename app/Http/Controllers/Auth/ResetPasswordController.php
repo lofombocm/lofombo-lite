@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserFirstTimeConnection;
 use Illuminate\Foundation\Auth\ResetsPasswords;
 //use Illuminate\Support\Facades\Request;
 use Illuminate\Http\Request;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
@@ -87,4 +89,43 @@ class ResetPasswordController extends Controller
         return redirect()->route('authentification')->with('message', 'Votre mot de passe a ete modifie avec succes!');
         //return redirect('/login')->with('message', 'Votre mot de passe a ete modifie avec succes!');
     }
+
+
+    public function postResetPasswordFirstConnection(Request $request)  {
+        $validator = Validator::make($request->all(), [
+            'userid' => 'required|numeric|exists:users,id',
+            //'currentpassword' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:8', 'max:20', 'confirmed'],
+        ]);
+
+        if($validator->fails()){
+            session()->flash('error', $validator->errors()->first());
+            return back()->withErrors(['error' => $validator->errors()->first()]);
+        }
+
+        $user = User::where('id', intval($request->get('userid')))->first();
+        $user->update(['password' => Hash::make($request->get('password'))]);
+        Session::flush();
+        Auth::logout();
+        //return Redirect('login');
+        session()->flash('status', 'Your password has been changed');
+
+        $request->merge(['username' => $user->username]);
+
+        $credentials = $request->only('username', 'password');
+        if (Auth::attempt($credentials, $request->remember)) {
+            $request->session()->regenerate();
+            session()->flash('status', 'Mot de passe modifie avec succes!');
+            $userFirstTimeConnection = UserFirstTimeConnection::where('id', $user->id)->first();
+            $userFirstTimeConnection->update(['has_been_connected' => true]);
+            return redirect()->intended('home')->withSuccess('status', 'Mot de passe modifie avec succes!');
+        }
+
+        //return back()->withError('message', 'Invalid EMail/username or password');
+        return back()->withErrors([
+            'error' => 'Oups something went wrong, please try again later.',
+        ]);
+        //return redirect('/login')->with('message', 'Votre mot de passe a ete modifie avec succes!');
+    }
+
 }

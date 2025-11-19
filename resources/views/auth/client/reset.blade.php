@@ -12,6 +12,19 @@
                     <form method="POST" action="{{ route('password.reset.client.post') }}">
                         @csrf
 
+                        @if (session('status'))
+                            <div class="alert alert-success" role="alert">
+                                {{ session('status') }}
+                            </div>
+                        @endif
+
+                        @if (session('error'))
+                            <div class="alert alert-danger" role="alert">
+                                {{ session('error') }}
+                            </div>
+                        @endif
+
+
                         {{--<input type="hidden" name="token" value="{{ csrf_token() }}">--}}
                         <input type="hidden" name="telephone" value="{{ Auth::guard('client')->user()->telephone }}">
 

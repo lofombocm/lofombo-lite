@@ -30,7 +30,7 @@ class MailForVoucherReach extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Recompense disponible autravers des bons. ',
+            subject: 'Recompense disponible au travers des bons. ',
         );
     }
 

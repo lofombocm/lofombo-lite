@@ -26,6 +26,7 @@ class ResetPasswordClientController extends Controller
         ]);
 
         if($validator->fails()){
+            session()->flash('error', $validator->errors()->first());
             return back()->withErrors(['error' => $validator->errors()->first()]);
         }
 
@@ -47,6 +48,7 @@ class ResetPasswordClientController extends Controller
 
         $credentials = ['telephone' => $request->get('telephone'), 'password' => $request->get('currentpassword') ];//$request->only('email', 'current-password');
         if (!Auth::guard('client')->attempt($credentials)) {
+            session()->flash('error',  'Invalid current password');
             return back()->withInput()->with('error', 'Invalid current password');
         }
 

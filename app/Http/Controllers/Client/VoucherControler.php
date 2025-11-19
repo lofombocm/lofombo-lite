@@ -3,16 +3,21 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessSendEMailVoucherGeneratedJob;
+use App\Jobs\ProcessSendSMSVoucherUsageCodeJob;
 use App\Models\Client;
 use App\Models\Config;
 use App\Models\Conversion;
 use App\Models\ConversionPointReward;
 use App\Models\Loyaltyaccount;
 use App\Models\Loyaltytransaction;
+use App\Models\Notification;
 use App\Models\Reward;
 use App\Models\Threshold;
 use App\Models\Transactiontype;
+use App\Models\User;
 use App\Models\Voucher;
+use App\Models\VoucherUsageCode;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -82,6 +87,10 @@ class VoucherControler extends Controller
         $voucherid = Str::uuid()->toString();
         $serialnumber = $this->generateVoucherSerialNumber();
 
+        $usagecodeid = Str::uuid()->toString();
+        $usagecode = $this->generateVoucherUsageCode();
+
+
         $clientid  = $client->id;
         $niveau     = $level->name;
         $enterprise = $config->enterprise_name;//env('ENTERPRISE');
@@ -91,13 +100,12 @@ class VoucherControler extends Controller
         /*if (!($config === null)){
             $nummonth = $config->voucher_duration_in_month;
         }*/
-        $expirationdate = Carbon::now()->addMinutes($nummonth * 1440 * 30);
+        $expirationdate = Carbon::now()->addMonths($nummonth);
 
         DB::beginTransaction();
 
         $voucher = null;
         try {
-
             $data = [
                 'id' => $voucherid,
                 'serialnumber' => $serialnumber,
@@ -109,9 +117,19 @@ class VoucherControler extends Controller
                 'expirationdate' => $expirationdate,
                 'active' => false,
                 'activated_by' => (Auth::check())? Auth::user()->id : $client->registered_by,
+                'activated_at' => Carbon::now(),
             ];
-
             $voucher = Voucher::create($data);
+
+            $encryptedCode = encrypt($usagecode);
+            $codeData = [
+              'id' => $usagecodeid,
+              'code' => $encryptedCode,
+              'voucherid' =>  $voucherid,
+              'expired_at' => $expirationdate
+            ];
+            $voucherUsageCode = VoucherUsageCode::create($codeData);
+
 
            /* $transactionDetails = 'Generation de bon identifie par: \'' . $voucherid . '\'. Numero de serie: \'' . $serialnumber.
                 '\'. Niveau: ' . $niveau . ' Nombre de points: ' . $points . ', Montant: ' . $amount .
@@ -143,11 +161,173 @@ class VoucherControler extends Controller
                 ]
             );
 
+
             $loyaltyAccount->update([
                     'amount_balance' =>  $loyaltyAccount->amount_balance - $amount,
                     'point_balance' => $loyaltyAccount->point_balance - $points,
                     'current_point' => $loyaltyAccount->point_balance
                 ]);
+
+            $link = url('').'/client/'. $clientid . '/vouchers' ;
+
+            $smsData = [
+                'to' => '237' . $client->telephone,
+                'message' => 'Le numero de serie du bon genere est: ' . $serialnumber . ' et le code d\'utilisation est: ' . decrypt($voucherUsageCode->code),
+            ];
+            ProcessSendSMSVoucherUsageCodeJob::dispatch($smsData);
+
+            //dd(Auth::check());
+            if (Auth::check()) {
+                if ($client->email != null) {
+                    $message = [$client->gender . ' ' . $client->name . ', un bon de niveau ' . $voucher->level . ' a ete genere a votre compte.'];
+                    $emaildata = ['email' =>$client->email, 'name' => $client->name, 'clientLoginUrl' => $link, 'level' => $voucher->level, 'msg' => $message,
+                        'code' => decrypt($voucherUsageCode->code)];
+                    //dd($emaildata);
+                    ProcessSendEMailVoucherGeneratedJob::dispatch($emaildata);
+
+                    $notifid = Str::uuid()->toString();
+                    $notifgenerator = '' . Auth::user()->id . '';
+                    $notifsubject = 'Generation de Bon';
+                    $notifsentat = Carbon::now();
+                    $notifbody = json_encode($message);
+                    $notifdata = json_encode($emaildata);
+                    $notifsender = Auth::user()->name;
+                    $notifrecipient = $client->name;
+                    $notifsenderaddress = Auth::user()->email;
+                    $notifrecipientaddress = $client->email;
+                    $notifread = false;
+
+                    //dd($notifdata);
+                    Notification::create(
+                        [
+                            'id' => $notifid,
+                            'generator' => $notifgenerator,
+                            'subject' => $notifsubject,
+                            'sent_at' => $notifsentat,
+                            'body' => $notifbody,
+                            'data' => $notifdata,
+                            'sender' => $notifsender,
+                            'recipient' => $notifrecipient,
+                            'sender_address' => $notifsenderaddress,
+                            'recipient_address' => $notifrecipientaddress,
+                            'read' => $notifread,
+                        ]
+                    );
+                }
+                $admins = User::where('is_admin', true)->get();
+                foreach ($admins as $admin) {
+                    $message = ['Mme/M. ' . ' ' .  $admin->name . ', le client ' .  $client->name . ' a genere un bon de niveau ' . $voucher->level . '.'];
+                    $emaildata = ['email' =>$admin->email, 'name' =>  $admin->name, 'clientLoginUrl' => $link, 'level' => $voucher->level, 'msg' => $message];
+                    //dd($emaildata);
+                    ProcessSendEMailVoucherGeneratedJob::dispatch($emaildata);
+
+                    $notifid = Str::uuid()->toString();
+                    $notifgenerator =$client->id;
+                    $notifsubject = 'Generation de Bon';
+                    $notifsentat = Carbon::now();
+                    $notifbody = json_encode($message);
+                    $notifdata = json_encode($emaildata);
+                    $notifsender = $client->name;
+                    $notifrecipient = $admin->name;
+                    $notifsenderaddress = $client->email == null ? Auth::user()->email : $client->email;
+                    $notifrecipientaddress = $admin->email;
+                    $notifread = false;
+
+                    //dd($notifdata);
+                    Notification::create(
+                        [
+                            'id' => $notifid,
+                            'generator' => $notifgenerator,
+                            'subject' => $notifsubject,
+                            'sent_at' => $notifsentat,
+                            'body' => $notifbody,
+                            'data' => $notifdata,
+                            'sender' => $notifsender,
+                            'recipient' => $notifrecipient,
+                            'sender_address' => $notifsenderaddress,
+                            'recipient_address' => $notifrecipientaddress,
+                            'read' => $notifread,
+                        ]
+                    );
+                }
+            }else{
+
+                $admins = User::where('is_admin', true)->get();
+                foreach ($admins as $admin) {
+                    $message = ['Mme/M. ' . ' ' .  $admin->name . ', le client ' .  $client->name . ' a genere un bon de niveau ' . $voucher->level . '.'];
+                    $emaildata = ['email' =>$admin->email, 'name' =>  $admin->name, 'clientLoginUrl' => $link, 'level' => $voucher->level, 'msg' => $message];
+                    //dd($emaildata);
+                    ProcessSendEMailVoucherGeneratedJob::dispatch($emaildata);
+
+                    $notifid = Str::uuid()->toString();
+                    $notifgenerator =$client->id;
+                    $notifsubject = 'Generation de Bon';
+                    $notifsentat = Carbon::now();
+                    $notifbody = json_encode($message);
+                    $notifdata = json_encode($emaildata);
+                    $notifsender = $client->name;
+                    $notifrecipient = $admin->name;
+                    $notifsenderaddress = $client->email != null ? $client->email : $admin->email;
+                    $notifrecipientaddress = $admin->email;
+                    $notifread = false;
+
+                    //dd($notifdata);
+                    Notification::create(
+                        [
+                            'id' => $notifid,
+                            'generator' => $notifgenerator,
+                            'subject' => $notifsubject,
+                            'sent_at' => $notifsentat,
+                            'body' => $notifbody,
+                            'data' => $notifdata,
+                            'sender' => $notifsender,
+                            'recipient' => $notifrecipient,
+                            'sender_address' => $notifsenderaddress,
+                            'recipient_address' => $notifrecipientaddress,
+                            'read' => $notifread,
+                        ]
+                    );
+                }
+
+                if ($client->email != null) {
+                    $message = [$client->gender . ' ' . $client->name . ', un bon de niveau ' . $voucher->level . ' a ete genere a votre compte.'];
+                    $emaildata = ['email' =>$client->email, 'name' => $client->name, 'clientLoginUrl' => $link, 'level' => $voucher->level, 'msg' => $message,
+                        'code' => decrypt($voucherUsageCode->code)];
+                    //dd($emaildata);
+                    ProcessSendEMailVoucherGeneratedJob::dispatch($emaildata);
+
+                    $notifid = Str::uuid()->toString();
+                    $notifgenerator = '' . $client->id . '';
+                    $notifsubject = 'Generation de Bon';
+                    $notifsentat = Carbon::now();
+                    $notifbody = json_encode($message);
+                    $notifdata = json_encode($emaildata);
+                    $notifsender = $client->name;
+                    $notifrecipient = $client->name;
+                    $notifsenderaddress = $client->email;
+                    $notifrecipientaddress = $client->email;
+                    $notifread = false;
+
+                    //dd($notifdata);
+                    Notification::create(
+                        [
+                            'id' => $notifid,
+                            'generator' => $notifgenerator,
+                            'subject' => $notifsubject,
+                            'sent_at' => $notifsentat,
+                            'body' => $notifbody,
+                            'data' => $notifdata,
+                            'sender' => $notifsender,
+                            'recipient' => $notifrecipient,
+                            'sender_address' => $notifsenderaddress,
+                            'recipient_address' => $notifrecipientaddress,
+                            'read' => $notifread,
+                        ]
+                    );
+                }
+
+            }
+
 
         }catch (\Exception $exception){
             DB::rollBack();
@@ -169,6 +349,18 @@ class VoucherControler extends Controller
             $numberStr = (string) $number;
             $numberFormated = implode("-", str_split($numberStr, 3));
         } while (Voucher::where("serialnumber", "=", $numberFormated)->first());
+
+        return $numberFormated;
+    }
+
+    public function generateVoucherUsageCode():string
+    {
+        $numberFormated = null;
+        do {
+            $number = random_int(10000000, 99999999);
+            $numberStr = (string) $number;
+            $numberFormated = implode("-", str_split($numberStr, 4));
+        } while (VoucherUsageCode::where("code", "=", $numberFormated)->first());
 
         return $numberFormated;
     }

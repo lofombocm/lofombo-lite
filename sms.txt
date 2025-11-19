@@ -1,0 +1,2 @@
+{"to":"237671747568","message":"Le numero de serie du bon genere est: 743-761-299-133 et le code d'utilisation est: 4596-9802"}
+{"messages":[{"messageId":"4634573917287950965178","status":{"description":"Message sent to next instance","groupId":1,"groupName":"PENDING","id":26,"name":"PENDING_ACCEPTED"},"to":"237671747568"}]}

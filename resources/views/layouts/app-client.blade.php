@@ -2,7 +2,7 @@
     use App\Models\Config
   ; use App\Models\Loyaltyaccount
   ; use App\Models\Notification
-  ; use Illuminate\Support\Facades\Auth
+  ; use Illuminate\Support\Carbon;use Illuminate\Support\Facades\Auth
   ;
 @endphp
     <!doctype html>
@@ -22,14 +22,53 @@
     <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 </head>
-<body style="font-size: initial;">
+<body style="font-size: initial; font-family: 'DejaVu Sans Light';">
 <div id="app">
 
     <?php
     if (Auth::guard('client')->check()) {
-        $notifications = Notification::
-            where('recipient_address', Auth::guard('client')->user()->telephone)->where('read', false)->get();
+        $notifications0 = Notification:: where('recipient_address', Auth::guard('client')->user()->telephone)->where('read', false)->get();
+        $notifications = [];
+        foreach ($notifications0 as $notification){
+            array_push($notifications, $notification);
+        }
+
+        if(Auth::guard('client')->user()->email != null){
+            $notifications1 = Notification::
+            where('recipient_address', Auth::guard('client')->user()->email)->orWhere('recipient_address', Auth::guard('client')->user()->email)->where('read', false)->get();
+            foreach ($notifications1 as $notification){
+                array_push($notifications, $notification);
+            }
+        }
+
+        //$birthdate = (Auth::guard('client')->user()->birthdate != null) ? Carbon::parse(Auth::guard('client')->user()->birthdate)
+        $incompleteProfile = false;
+        if(Auth::guard('client')->user()->email == null
+            || Auth::guard('client')->user()->birthdate == null
+            || Auth::guard('client')->user()->gender == null
+            || Auth::guard('client')->user()->quarter == null
+            || Auth::guard('client')->user()->city == null){
+            $incompleteProfile = true;
+        }
+        $incompleteProfileMsg = 'Les donnees suivantes sont a completer: ';
+        if (Auth::guard('client')->user()->email == null){
+            $incompleteProfileMsg .= 'Email';
+        }
+        if (Auth::guard('client')->user()->birthdate == null){
+            $incompleteProfileMsg .= ', Date de naissance (jour en mois)';
+        }
+        if (Auth::guard('client')->user()->gender == null){
+            $incompleteProfileMsg .= ', Civilite';
+        }
+        if (Auth::guard('client')->user()->quarter == null){
+            $incompleteProfileMsg .= ', Quartier';
+        }
+        if (Auth::guard('client')->user()->city == null){
+            $incompleteProfileMsg .= ', Ville';
+        }
         $unreadMsgNum = count($notifications);
+
+        $loyaltyaccount =  Loyaltyaccount::where('holderid', Auth::guard('client')->user()->id)->first();
     }
     ?>
 
@@ -42,17 +81,20 @@
                     @endphp
                     @if($config != null)
                         <img src="{{asset('storage/' .$config->enterprise_logo)}}"
-                             style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;" height="65" width="65" alt=""> &nbsp;
-                        &nbsp;{{ $config->enterprise_name }}
+                             style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;" height="65" width="65"
+                             alt=""> &nbsp;
+                        &nbsp;<strong>{{ $config->enterprise_name }}</strong>
                     @else
-                        <img src="{{asset('images/logo.png')}}" style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;"
+                        <img src="{{asset('images/logo.png')}}"
+                             style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;"
                              height="65"
-                             width="65" alt=""> &nbsp; &nbsp;{{ config('app.name', 'Laravel') }}
+                             width="65" alt=""> &nbsp; &nbsp;<strong>{{ config('app.name', 'Laravel') }}</strong>
                     @endif
 
                 @else
-                    <img src="{{asset('images/logo.png')}}" style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;" height="65"
-                         width="65" alt=""> &nbsp; &nbsp;{{ config('app.name', 'Laravel') }}
+                    <img src="{{asset('images/logo.png')}}"
+                         style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;" height="65"
+                         width="65" alt=""> &nbsp; &nbsp;<strong>{{ config('app.name', 'Laravel') }}</strong>
                 @endif
 
             </a>
@@ -75,9 +117,10 @@
                 @if(Auth::guard('client')->check())
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="list-group-item list-group-item-action nav-link" href="{{ route('authentification') }}"
-                               style="font-size: initial;"
-                               data-bs-toggle="modal" data-bs-target="#notifications-modal">
+                            <a class="list-group-item list-group-item-action nav-link"
+                               href="{{ route('clients.notifs.index', Auth::guard('client')->user()->id) }}"
+                               style="font-size: initial; display: inline;">
+                               {{--data-bs-toggle="modal" data-bs-target="#notifications-modal"--}}
                                 {{ 'Notifications' }} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                 <span class="badge bg-success position-absolute top|start-*"
                                       style="
@@ -90,6 +133,84 @@
                                             margin-top: -10px;"
                                 >{{$unreadMsgNum}}</span>
                             </a>
+
+                            @if($incompleteProfile)
+                                &nbsp;&nbsp;&nbsp;&nbsp;
+                                <a  class="" href="{{ route('clients.form.update.client', Auth::guard('client')->user()->id)}}" style="display: inline;" title="{{$incompleteProfileMsg}}">
+                                    <img src="{{asset('images/icons8-error-36.png')}}" alt="!" height="25" width="25">
+                                </a>
+                            @endif
+
+                            {{--<div class="modal fade modal-lg" id="notifications-modal" data-bs-backdrop="static"
+                                 data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+                                 aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
+                                     style="overflow-y: initial; width: 75%;">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h1 class="modal-title fs-5" id="staticBackdropLabel"
+                                                style="border: 0 red solid; width: 100%;">
+                                                <strong
+                                                    style="color: darkred;">{{'Notifications'}}</strong>
+                                                <span style="
+                                            position:relative;
+                                            right: 0;
+                                            float: right;
+                                            color: darkred;
+                                            font-size: x-large;"><strong>{{$unreadMsgNum}}</strong></span>
+                                            </h1>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                        </div>
+                                        --}}{{--<form method="POST" action="{{route('configuration.post')}}"
+                                              enctype="multipart/form-data" onsubmit="return true;" >--}}{{--
+                                        --}}{{--<div class="modal-body" style="height: 80vh; overflow-y: auto;">
+
+                                            <input type="hidden" name="error" id="error"
+                                                   class="form-control @error('error') is-invalid @enderror">
+                                            @error('error')
+                                            <span class="invalid-feedback" role="alert"
+                                                  style="position: relative; width: 100%; text-align: center;">
+                                                                    <strong>{{ $message }}</strong>
+                                                                </span> <br/>
+                                            @enderror
+
+                                            @csrf
+
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <div class="list-group list-group-flush">
+                                                        @foreach($notifications as $notification)
+                                                            <adiv class="list-group-item list-group-item-action">
+                                                                <h5>
+                                                                    Objet: <strong>{{$notification->subject}}</strong>
+                                                                    &nbsp; &nbsp;
+                                                                    <span
+                                                                        class="badge bg-primary position-absolute top|start-*"
+                                                                        style="position: relative; right: 0; font-size: small;">
+                                                        @php
+                                                            $sent_at = Carbon::parse($notification->sent_at);
+                                                        @endphp
+                                                        Le: {{$sent_at->day . '-' . $sent_at->month . '-' . $sent_at->year . ' a ' . $sent_at->hour . ':' . $sent_at->minute . ':' . $sent_at->second}}
+                                                        </span>
+                                                                </h5>
+                                                                <h5 style="font-size: small;">
+                                                                    De: {{$notification->sender}}
+                                                                    <a href="{{route('notifications.index', $notification->id)}}"
+                                                                       style="position: relative; right: 0; float:right; text-decoration: none; margin-top: 5px;">
+                                                                        {{'Details'}}
+                                                                    </a>
+                                                                </h5>
+                                                                --}}{{----}}{{--<br><br>--}}{{----}}{{--
+                                                            </adiv>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>--}}{{--
+                                    </div>
+                                </div>
+                            </div>--}}
                         </li>
                     </ul>
                 @endif

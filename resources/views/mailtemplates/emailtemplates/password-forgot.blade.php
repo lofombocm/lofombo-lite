@@ -40,7 +40,7 @@
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header">
-                        <h1>{{ 'Recovering Password Link' }} <br></h1>
+                        <h1>{{ 'Recuperation du mot de passe' }} <br></h1>
                     {{ 'Mme/M. ' . $data['name'] }}
                     </div>
 

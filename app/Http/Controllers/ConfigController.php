@@ -17,6 +17,10 @@ class ConfigController extends Controller
         $this->middleware('auth');
     }
 
+    public function showConfigForm()
+    {
+        return view('config.index');
+    }
     /**
      * Write code on Method
      *
@@ -75,16 +79,34 @@ class ConfigController extends Controller
 
         $levels = [];
         for ($i = 0; $i < $numLevel; $i++) {
-            array_push($levels, ['config' => $configId, 'name' => strtoupper($request->get('level_name'.$i)), 'point' => intval($request->get('level_point'.$i))]);
+            $levelid = Str::uuid()->toString();
+            array_push($levels,
+                ['id' => $levelid, 'config' => $configId, 'name' => strtoupper($request->get('level_name'.$i)),
+                    'point' => intval($request->get('level_point'.$i))]);
+        }
+
+        $path = '';
+        if ($request->file('enterprise_logo') != null){
+            $logoRule = [
+                'enterprise_logo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:10240|dimensions:min_width=25,max_width=500,min_height=25,max_height=500',
+            ];
+
+            $logoRules = array_merge($validatorRules, $logoRule);
+            //dd($logoRules);
+            $logoValidator = Validator::make($request->all(), $logoRules);
+            //dd($logoValidator->fails());
+            if($logoValidator->fails()){
+                session()->flash('error', $logoValidator->errors()->first());
+                //dd(session('error'));
+                return back()->withErrors(['error' => $logoValidator->errors()->first()]);
+            }
+
+            $path = $request->file('enterprise_logo')->store('images', 'public');
         }
 
         DB::beginTransaction();
 
         try {
-            $path = '';
-            if ($request->file('enterprise_logo')){
-                $path = request()->file('enterprise_logo')->store('images', 'public');
-            }
 
             if (strlen($path) === 0) {
                 $configs = Config::where('is_applicable', true)->get();
@@ -130,7 +152,6 @@ class ConfigController extends Controller
         $msg = 'Bien! la configuration a ete enregistree avec succes.';
         session()->flash('status', $msg);
         session()->flash('logo', $path);
-
         return back()->with('status', $msg);//->withSuccess('status', 'Great! You have Successfully Registered.');
     }
 }

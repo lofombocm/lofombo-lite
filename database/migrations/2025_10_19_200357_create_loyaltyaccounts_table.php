@@ -16,7 +16,7 @@ return new class extends Migration
             $table->uuid('clientid');
             $table->foreign('clientid')->references('id')->on('clients')->onDelete('cascade');
             $table->double('amount')->default(0);
-            $table->string('receiptnumber')->nullable();
+            $table->string('receiptnumber')->nullable(false)->unique();
             $table->json('products')->nullable(false);
             $table->timestamps();
         });
