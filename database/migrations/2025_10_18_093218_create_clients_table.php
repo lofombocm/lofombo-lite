@@ -24,8 +24,14 @@ return new class extends Migration
             $table->bigInteger('registered_by')->nullable(false);
             $table->foreign('registered_by')->references('id')->on('users');
             $table->boolean('active')->default(true);
+            $table->boolean('was_invited')->default(false);
+            $table->uuid('invited_by')->nullable(true);
+            //$table->foreign('invited_by')->references('id')->on('clients');
+            $table->uuid('invitation_id')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
+
     }
 
     /**

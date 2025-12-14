@@ -3,6 +3,7 @@
   ; use App\Models\Loyaltyaccount
   ; use App\Models\Notification
   ; use Illuminate\Support\Carbon;use Illuminate\Support\Facades\Auth
+  ; use App\Http\Controllers\GuestController
   ;
 @endphp
     <!doctype html>
@@ -52,19 +53,19 @@
         }
         $incompleteProfileMsg = 'Les donnees suivantes sont a completer: ';
         if (Auth::guard('client')->user()->email == null){
-            $incompleteProfileMsg .= 'Email';
+            $incompleteProfileMsg .= __('Email');
         }
         if (Auth::guard('client')->user()->birthdate == null){
-            $incompleteProfileMsg .= ', Date de naissance (jour en mois)';
+            $incompleteProfileMsg .= ', ' . __("Date de naissance (Jour et Mois)");
         }
         if (Auth::guard('client')->user()->gender == null){
-            $incompleteProfileMsg .= ', Civilite';
+            $incompleteProfileMsg .= ', ' . __('Civilité');
         }
         if (Auth::guard('client')->user()->quarter == null){
-            $incompleteProfileMsg .= ', Quartier';
+            $incompleteProfileMsg .= ', ' . __('Lieu de résidence');
         }
         if (Auth::guard('client')->user()->city == null){
-            $incompleteProfileMsg .= ', Ville';
+            $incompleteProfileMsg .= ', ' . __('Ville');
         }
         $unreadMsgNum = count($notifications);
 
@@ -121,7 +122,7 @@
                                href="{{ route('clients.notifs.index', Auth::guard('client')->user()->id) }}"
                                style="font-size: initial; display: inline;">
                                {{--data-bs-toggle="modal" data-bs-target="#notifications-modal"--}}
-                                {{ 'Notifications' }} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                {{ __('Notifications') }} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                 <span class="badge bg-success position-absolute top|start-*"
                                       style="
                                             position: relative;
@@ -214,6 +215,48 @@
                         </li>
                     </ul>
                 @endif
+
+                <ul class="navbar-nav ms-auto">
+
+                    <li class="nav-item">
+                        <select class="form-control" name="language" onchange="submitLanguageForm(this.value);"
+                                id="language_selector">
+                            @foreach(config('app.available_locales') as $locale)
+                                <option value="{{ $locale }}"
+                                    {{$locale === Request::segment(1) ? 'selected' : ''}}>
+                                    {{ strtoupper($locale) }}{{-- - {{Request::segment(1)}} - {{$locale}}--}}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <form method="GET" action="" id="select_language_form">
+                            {{--@csrf--}}
+
+                        </form>
+
+                        <script type="text/javascript">
+                            function submitLanguageForm(locale){
+                                var form = document.getElementById('select_language_form');
+                                //var currentUrl = window.location.href;
+                                var path = window.location.pathname;
+                                if(path.length > 0){
+                                    var pathWitoutTrailingSlash = path.substring(1, path.length);
+                                    var pathArray = pathWitoutTrailingSlash.split('/');
+                                    pathArray[0] = locale;
+
+                                    var newPathname = "";
+                                    for (i = 0; i < pathArray.length; i++) {
+                                        newPathname += "/";
+                                        newPathname += pathArray[i];
+                                    }
+                                    form.action = window.location.protocol + "//" + window.location.host + newPathname;
+                                    form.submit();
+                                }
+                            }
+                        </script>
+
+                    </li>
+                </ul>
                 <!-- Right Side Of Navbar -->
                 <ul class="navbar-nav ms-auto">
                     <!-- Authentication Links -->
@@ -235,7 +278,7 @@
                         <li class="nav-item dropdown">
                             <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button"
                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                <strong>Solde: {{$loyaltyaccount->point_balance}} points
+                                <strong>{{__('Solde Fidélité')}}: {{decrypt($loyaltyaccount->point_balance)}} points
                                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                 </strong>
                                 <strong>{{ Auth::guard('client')->user()->name }}</strong>
@@ -245,16 +288,16 @@
 
                                 <a class="dropdown-item"
                                    href="{{ route('clients.form.update.client', Auth::guard('client')->user()->id)}}">
-                                    Modifier Mes parametres
+                                    {{__('Mes Paramètres')}}
                                 </a>
-                                <a class="dropdown-item" href="{{ url('password-reset-client')}}">
+                                <a class="dropdown-item" href="{{ url('/'.GuestController::getApplicationLocal().'/password-reset-client')}}">
                                     Modifier mot de passe
                                 </a>
 
                                 <a class="dropdown-item" href="{{ route('deconnexion') }}"
                                    onclick="event.preventDefault();
                                                      document.getElementById('deconnexion-client-form').submit();">
-                                    Deconnexion
+                                    {{__("Déconnexion")}}
                                 </a>
 
                                 <form id="deconnexion-client-form" action="{{ route('deconnexion.client') }}"

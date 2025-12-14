@@ -6,10 +6,10 @@
             @include('layouts.client-menu')
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header">{{ 'Me renvoyer le code d\'utilisation' }}</div>
+                    <div class="card-header">{{ __("Me renvoyer le code d'utilisation") }}</div>
                     <div class="card-body">
                         <form method="POST" action="{{ route('vouchers.resend.usage.code.post', $voucherid) }}" >
-                            <div><h5>Les champs marques par <b class="" style="color: red;">*</b> sont obligatoires</h5></div>
+                            <div><h5>{{__('Les champs marqués par ')}} <b class="" style="color: red;">*</b> {{__('sont obligatoires')}}</h5></div>
                             <br>
                             @csrf
                             @if (session('status'))
@@ -25,7 +25,7 @@
 
                             <div class="row mb-3">
                                 <label for="serialnumber" class="col-md-5 col-form-label text-md-end">
-                                    {{ 'Numero de serie du bon' }}
+                                    {{ __("N° Série") }}
                                     <b class="" style="color: red;">*</b>
                                 </label>
 
@@ -48,7 +48,7 @@
 
                             <div class="row mb-3">
                                 <label for="email" class="col-md-5 col-form-label text-md-end">
-                                    {{ 'Adresse Email qui recevra le code' }}
+                                    {{ __('Email') }}
                                     <b class="" style="color: red;">*</b>
                                 </label>
 
@@ -69,7 +69,7 @@
 
                             <div class="row mb-3">
                                 <label for="password" class="col-md-5 col-form-label text-md-end">
-                                    {{ 'Mot de passe' }}
+                                    {{ __('Mot de passe') }}
                                     <b class="" style="color: red;">*</b>
                                 </label>
 
@@ -87,7 +87,7 @@
                             <div class="row mb-0">
                                 <div class="col-md-6 offset-md-4">
                                     <button type="submit" class="btn btn-primary">
-                                        {{ 'Demander' }}
+                                        {{ __('Renvoyer') }}
                                     </button>
                                 </div>
                             </div>

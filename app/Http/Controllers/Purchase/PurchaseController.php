@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Purchase;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\GuestController;
 use App\Jobs\ProcessSendEMailVoucherAvailableJob;
 use App\Models\Client;
 use App\Models\Config;
@@ -146,7 +147,7 @@ class PurchaseController extends Controller
 
             if ($totalPoint > $thresholdGold){
                 /// TODO: Send SMS and email notification to client.
-                $link = url('').'/auth/client' ;
+                $link = url('/'.GuestController::getApplicationLocal().'/auth/client');
                 if ($clientEmail){
                     $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'GOLD'];
                     ProcessSendEMailVoucherAvailableJob::dispatch($data);
@@ -160,7 +161,7 @@ class PurchaseController extends Controller
 
             if ($totalPoint < $thresholdGold && $totalPoint >= $thresholdPremium){
                 /// TODO: Send SMS and email notification to client.
-                $link = url('').'/auth/client' ;
+                $link = url('/'.GuestController::getApplicationLocal().'/auth/client') ;
                 if ($clientEmail){
                     $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'PREMIUM'];
                     ProcessSendEMailVoucherAvailableJob::dispatch($data);
@@ -171,7 +172,7 @@ class PurchaseController extends Controller
 
             if ($totalPoint < $thresholdPremium && $totalPoint >= $thresholdClassic){
                 /// TODO: Send SMS and email notification to client.
-                $link = url('').'/auth/client' ;
+                $link = url('/'.GuestController::getApplicationLocal().'/auth/client');
                 if ($clientEmail){
                     $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'CLASSIC'];
                     ProcessSendEMailVoucherAvailableJob::dispatch($data);
@@ -227,10 +228,50 @@ class PurchaseController extends Controller
             'clientid' => 'required|string|max:255|min:2|exists:clients,telephone',
             'amount' => 'required|numeric|min:1',
             'transactiontype' => 'required|string|min:2|max:255',
-            'receiptnumber' => 'required|string|max:255|min:2|unique:purchases,receiptnumber',
+            //'receiptnumber' => 'required|string|max:255|min:2|unique:purchases,receiptnumber',
+        ],[
+            'clientid.required' => __("Le client est obligatoire"),
+            'clientid.exists' => __("Le client n'est pas reconnu"),
+            'amount.required' => __("Le montant est obligatoire"),
+            'amount.numeric' => __('Montant invalide')
         ]);
         if($validator->fails()){
+            session()->flash('error', $validator->errors()->first());
             return back()->withErrors(['error' => $validator->errors()->first()]);
+        }
+
+        $receiptnumber = null;
+        if ($request->filled('receiptnumber')){
+            $validatorNumReceipt = Validator::make($request->all(), [
+                'clientid' => 'required|string|max:255|min:2|exists:clients,telephone',
+                'amount' => 'required|numeric|min:1',
+                'transactiontype' => 'required|string|min:2|max:255',
+                'receiptnumber' => 'required|string|max:255|min:2',
+            ],[
+                'clientid.required' => __("Le client est obligatoire"),
+                'clientid.exists' => __("Le client n'est pas reconnu"),
+                'amount.required' => __("Le montant est obligatoire"),
+                'amount.numeric' => __('Montant invalide'),
+                'receiptnumber.required' => __("Le numéro de recu est obligatoire"),
+            ]);
+
+            if($validatorNumReceipt->fails()){
+                session()->flash('error', $validatorNumReceipt->errors()->first());
+                return back()->withErrors(['error' => $validatorNumReceipt->errors()->first()]);
+            }
+
+            $receiptnumber = trim($request->get('receiptnumber'));
+            $purchases = Purchase::where('receiptnumber', $receiptnumber)->get();
+            if ($purchases->count() > 0){
+                $msg = __('Un achat a déja été enregistré ave ce numéro de recu.');
+                session()->flash('error', $msg);
+                session()->flash('purchase', $purchases[0]);
+                return back()->withErrors(['error' => $msg]);
+            }
+        }else{
+            $msg = __("Le numéro de recu est obligatoire");
+            session()->flash('error', $msg);
+            return back()->withErrors(['error' => $msg]);
         }
 
         $numitem = intval($request->get('numitem'));
@@ -242,7 +283,7 @@ class PurchaseController extends Controller
         //$lineitem = LineItem::createLineItem($productname0, $quantity0, $unitprice0, $unitprice0 * $quantity0);
         $items = [];
         $sum = 0;//$lineitem->total;
-        $purchaseDetails = 'Achat d\'un montant de: ' . $request->get('amount');
+        $purchaseDetails = __("Achat d'un montant de: ") . $request->get('amount');
         $noms = [];
         //$itemArray = [];
         for($i = 0; $i < $numitem; $i++){
@@ -258,19 +299,23 @@ class PurchaseController extends Controller
         //dd($sum);
         $now = Carbon::now();
 
-        $purchaseDetails .= ' des produits : ' . join(', ', $noms) . '. Pour un montant total de: ' . $sum . '. Enregistre le: ' . $now;
+        $purchaseDetails .= __(" des produits : ") . join(', ', $noms) . '. ' . __("Pour un montant total de: ") . $sum . '. ' . __("Enregistré le: ") . $now;
         $amount = doubleval(trim($request->get('amount')));
         if ($numitem > 0){
             //dd(['numitem' => $numitem, 'items' => $items, 'amount' => $amount, 'sum' => $sum]);
             if (!($sum === $amount)){
-                return back()->withErrors(['error' => 'Achat invalide: Le total des  differents produits est differents du montant de l \'achat.']);
+                $msg = __("Achat invalide: Le total des  montants des différents produits est différents du montant de l'achat.");
+                session()->flash('error', $msg);
+                return back()->withErrors(['error' => $msg]);
             }
         }
 
 
         $theclient = Client::where('telephone', $request->get('clientid'))->where('active', true)->first();
         if(!$theclient){
-            return back()->withErrors(['error' => 'Aucun client avec le numero ' . $request->get('clientid') . ' n\'existe pas dans le systeme']);
+            $msg = __("Client inconnu");
+            session()->flash('error', $msg);
+            return back()->withErrors(['error' => $msg]);
         }
 
        /* session()->flash('error', $request->get('clientid'));
@@ -282,7 +327,7 @@ class PurchaseController extends Controller
 
         //$threshold = Threshold::where('is_applicable', true)->first();
 
-        $transactiontype = $request->get('transactiontype'); //Transactiontype::where('id', $request->get('transactiontype'))->first();
+        $transactiontype = trim($request->get('transactiontype')); //Transactiontype::where('id', $request->get('transactiontype'))->first();
 
         $clientId = $theclient->id;
         $clientBithDate = $theclient->birthdate;
@@ -343,9 +388,11 @@ class PurchaseController extends Controller
                             'id' => $productid,
                             'name' => strtoupper($item->name),
                             'price' => $item->price,
-                            'others' => '' . $item->total,
+                            'others' => '' . $item->quantity,
                         ]);
                         array_push($products, $product);
+                    }else{
+                        array_push($products, $prod);
                     }
 
                 }catch (\Exception $exception){
@@ -356,9 +403,11 @@ class PurchaseController extends Controller
 
             $purchaeId = Str::uuid()->toString();
             $purchase = new Purchase(
-                $purchaeId, $theclient->id, $amount, $request->get('receiptnumber'), json_encode($products)
+                $purchaeId, $theclient->id, $amount, trim($request->get('receiptnumber')), json_encode($products)
             );
+
             $purchase->save();
+
             $purchaseAmount = $purchase->amount;
 
             $isApplicableBirthdate = false;
@@ -386,6 +435,12 @@ class PurchaseController extends Controller
 
             //$pointToBeAdded = ($loyaltyAmountBalance === (double)0) ? $loyaltyPointBalance : 0;
             //$amount_per_point
+            $birthdateAmount = 0;
+
+            $birthdateAmount = ($rate - 1) * $purchaseAmount;
+            $giftAmount = 0;
+
+
             $totalPoint = floor(($rate * $purchaseAmount + $loyaltyAmountBalance) / $amount_per_point); // applique pour ne pas avoir quelqu'un qui a un solde de montant eleve et n'a pas de points
             $point = floor($rate * $purchaseAmount / $amount_per_point);
             $montantTransaction = $rate * $purchaseAmount;
@@ -399,9 +454,12 @@ class PurchaseController extends Controller
                     'madeby' => Auth::user()->id,
                     'reference' => 'ENREGISTREMENT ACHAT',
                     'amount' => $amount,
+                    'purchase_amount'  => $purchaseAmount,
+                    'gift_amount' => $giftAmount,
+                    'birthdate_amount' => $birthdateAmount,
                     'point' => $point,
                     'old_amount' => $loyaltyAmountBalance,
-                    'old_point' => $loyaltyPointBalance,
+                    'old_point' => intval(strval(decrypt($loyaltyPointBalance))),
                     'transactiontype' => $request->get('transactiontype'), //env('TRANSACTIONTYPEID_PURCHASE'),
                     'transactiondetail' => $purchaseDetails,
                     'clientid' => $clientId,
@@ -412,7 +470,9 @@ class PurchaseController extends Controller
             $loyaltyaccount->update(
                 [
                     'amount_balance' => $loyaltyAmountBalance + $montantTransaction,
-                    'point_balance' => $totalPoint,
+                    'purchase_amount_balance' => $loyaltyaccount->purchase_amount_balance + $purchaseAmount,
+                    'birthdate_amount_balance' => $loyaltyaccount->birthdate_amount_balance + $birthdateAmount,
+                    'point_balance' => encrypt($totalPoint),
                     'current_point' => $loyaltyPointBalance
                 ]);
 
@@ -448,14 +508,14 @@ class PurchaseController extends Controller
                 }
             }
 
-            $link = url('').'/auth/client' ;
+            $link = url('/'.GuestController::getApplicationLocal().'/auth/client');
             $message = [$theclient->gender . ' '. $theclient->name. ' Vous avez atteint un niveau de points vous permettant de beneficier des recompenses:'];
             //$data = [];
             if ($totalPoint >= $minLevel->point){
                 /// TODO: Send SMS and email notification to client.
                 foreach ($possibleRewards as $possibleReward){
                     $level = json_decode($possibleReward->level);
-                    array_push($message,  '"' . $possibleReward->name . '" pour un bon de niveau "' . $level->name . '" correspondant a ' . $level->point. ' points ');
+                    array_push($message,  '"' . $possibleReward->name . ' ' . __("pour") . '"' . __("un bon de type") . ' "' . $level->name . '" correspondant a ' . $level->point. ' points ');
                 }
                 if ($clientEmail){
                     $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'msg' => $message];
@@ -463,7 +523,7 @@ class PurchaseController extends Controller
 
                     $notifid = Str::uuid()->toString();
                     $notifgenerator = Auth::user()->id;
-                    $notifsubject = 'Disponibilite de recompenses au travers des bons';
+                    $notifsubject = __('Disponibilité de récompenses à travers les Bons de Fidélité');
                     $notifsentat = Carbon::now();
                     $notifbody = json_encode($message);
                     $notifdata = json_encode($data);
@@ -495,7 +555,7 @@ class PurchaseController extends Controller
                 ProcessSendEMailVoucherAvailableJob::dispatch($data);
                 $notifid = Str::uuid()->toString();
                 $notifgenerator = Auth::user()->id;
-                $notifsubject = 'Disponibilite de recompenses au travers des bons';
+                $notifsubject = __('Disponibilité de récompenses à travers les Bons de Fidélité');
                 $notifsentat = Carbon::now();
                 $notifbody = json_encode($message);
                 $notifdata = json_encode($data);
@@ -563,8 +623,10 @@ class PurchaseController extends Controller
             DB::rollBack();
             return back()->withErrors(['error' => $exception->getMessage() . '   ' . $exception->getLine()]);
         }
-        session()->flash('status', 'Achat enregistre avec succes!');
-        return back()->with('status', 'Achat enregistre avec succes!');//->withSuccess(['status' => 'Achat enregistre avec succes.', 'purchase' => $purchase]);
+
+        $msg = __("Enregistrement Achat réussi");
+        session()->flash('status', $msg);
+        return back()->with('status', $msg);//->withSuccess(['status' => 'Achat enregistre avec succes.', 'purchase' => $purchase]);
     }
 }
 

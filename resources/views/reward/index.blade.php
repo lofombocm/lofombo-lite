@@ -9,7 +9,7 @@
 
             <div class="col-md-9">
                 <div class="card">
-                    <div class="card-header">{{ 'Enregistrer une recompense' }}</div>
+                    <div class="card-header">{{ __("Enregistrer une récompense") }}</div>
                     <div class="card-body">
                         @if (session('status'))
                             <div class="alert alert-success" role="alert">
@@ -25,7 +25,7 @@
 
                         <form method="POST" action="{{ route('rewards.index.post') }}">
                             @csrf
-                            <div><h5>Les champs marques par <b class="" style="color: red;">*</b> sont obligatoires</h5></div>
+                            <div><h5>{{__('Les champs marqués par ')}} <b class="" style="color: red;">*</b> {{__('sont obligatoires')}}</h5></div>
                             <br>
 
                             <input type="hidden" name="error" id="error" class="form-control @error('error') is-invalid @enderror">
@@ -36,13 +36,13 @@
                             @enderror
 
                             <div class="row mb-3" >
-                                <label for="name" class="col-md-5 col-form-label text-md-end">{{ 'Nom de la recompense' }}
+                                <label for="name" class="col-md-5 col-form-label text-md-end">{{ __('Nom') }}
                                     <b class="" style="color: red;">*</b></label>
 
                                 <div class="col-md-7">
                                     <input id="name" type="text" class="form-control @error('name') is-invalid @enderror"
                                            name="name" value="{{ old('name') }}" required autocomplete="name" autofocus
-                                           placeholder="Nom de la recompense">
+                                           placeholder="{{ __("Nom de la récompense") }}">
                                     @error('name')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
@@ -52,16 +52,16 @@
                             </div>
 
                             <div class="row mb-3" >
-                                <label for="nature" class="col-md-5 col-form-label text-md-end">{{ 'Nature de la recompense' }}
+                                <label for="nature" class="col-md-5 col-form-label text-md-end">{{ __('Nature') }}
                                     <b class="" style="color: red;">*</b></label>
 
                                 <div class="col-md-7">
                                     <select id="nature" type="text" class="form-control @error('nature') is-invalid @enderror"
                                            name="nature"  required  autofocus>
-                                        <option value="">{{'-- Choisir ici --'}}</option>
-                                        <option value="{{ 'MATERIAL' }}">{{ 'Materiel' }}</option>
-                                        <option value="{{ 'FINANCIAL' }}">{{'Financiere'}}</option>
-                                        <option value="{{ 'SERVICE' }}">{{'Service'}}</option>
+                                        <option value="">-- {{ __("Sélectionnez ici") }} --</option>
+                                        <option value="{{ 'MATERIAL' }}">{{ __("Produit") }}</option>
+                                        <option value="{{ 'FINANCIAL' }}">{{ __("Financière") }}</option>
+                                        <option value="{{ 'SERVICE' }}">{{ __("Service") }}</option>
                                     </select>
                                     @error('nature')
                                     <span class="invalid-feedback" role="alert">
@@ -72,13 +72,13 @@
                             </div>
 
                             <div class="row mb-3" >
-                                <label for="value" class="col-md-5 col-form-label text-md-end">{{ 'Valeur financiere de la recompense' }}
+                                <label for="value" class="col-md-5 col-form-label text-md-end">{{ __("Valeur financière") }}
                                     <b class="" style="color: red;">*</b></label>
 
                                 <div class="col-md-7">
                                     <input id="value" type="number" class="form-control @error('value') is-invalid @enderror"
                                            name="value" value="{{ old('value') }}" required autocomplete="value" autofocus
-                                           placeholder="Valeur financiere de la recompense">
+                                           placeholder="">
                                     @error('value')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
@@ -88,7 +88,7 @@
                             </div>
 
                             <div class="row mb-3" >
-                                <label for="level" class="col-md-5 col-form-label text-md-end">{{ 'Niveau du bon' }}
+                                <label for="level" class="col-md-5 col-form-label text-md-end">{{ __("Type de Bon") }}
                                     <b class="" style="color: red;">*</b></label>
                                 <div class="col-md-7">
                                     @php
@@ -97,7 +97,7 @@
                                     @endphp
                                     <select id="level" type="text" class="form-control @error('level') is-invalid @enderror"
                                             name="level"  required >
-                                        <option >{{'-- Choisir ici --'}}</option>
+                                        <option >-- {{ __("Sélectionnez ici") }} --</option>
                                         @foreach($levels as $level)
                                             <option value="{{$level['name']}}">{{$level['name']}}</option>
                                         @endforeach
@@ -113,14 +113,11 @@
                             <div class="row mb-0">
                                 <div class="col-md-6 offset-md-5">
                                     <button type="submit" class="btn btn-primary">
-                                        {{ 'Enregistrer' }}
+                                        {{ __('Enregistrer') }}
                                     </button>
                                 </div>
                             </div>
                         </form>
-                    </div>
-                    <div class="card-footer">
-                        {{' '}}
                     </div>
                 </div>
             </div>

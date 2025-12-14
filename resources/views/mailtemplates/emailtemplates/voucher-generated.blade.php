@@ -46,7 +46,7 @@
                     <div class="card-body">
                         <h4>{{$data['msg'][0]}}</h4>
                         @if(isset($data['code']))
-                            <h4>{{'Votre code d\'utilisation est: '}} {{$data['code']}}</h4>
+                            <h4>{{ __("Votre nom d'utilisateur est") }}: {{$data['code']}}</h4>
                         @endif
                         @php $i = 0; @endphp
                         <ul>
@@ -59,11 +59,11 @@
                         </ul>
 
                         <p>
-                            Pour pouvoir voir le bon, cliquez sur le lien:
+                            {{ __("Pour voir le bon, cliquez sur le lien") }}:
                             <a href="{{$data['clientLoginUrl']}}" class="btn btn-primary" >{{'Cliquez ici pour voir le bon.'}}</a>
                         </p>
 
-                        <h5>Merci pour votre fidelite.</h5>
+                        <h5>{{ __("Merci pour votre Fidélité.") }}</h5>
                     </div>
                 </div>
             </div>

@@ -7,19 +7,30 @@
             @include('layouts.menu')
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header">{{ 'Enregistrer un client'}}</div>
+                    <div class="card-header">{{ __('Enregistrer un client') }}</div>
 
                     <div class="card-body">
-                        <form method="POST" action="{{ route('clients.index.post') }}">
+                        <form method="POST" action="{{ route('clients.index.post') }}" onsubmit="return verifyBirthDate();">
                             @csrf
-                            <div><h6>Les champs marques par <b class="" style="color: red;">*</b> sont obligatoires</h6></div>
+                            <div><h6>{{__('Les champs marqués par ')}} <b class="" style="color: red;">*</b> {{__('sont obligatoires')}}</h6></div>
 
                             <input type="hidden" name="error" id="error" class="form-control @error('error') is-invalid @enderror">
                             @error('error')
-                            <span class="invalid-feedback" role="alert" style="position: relative; width: 100%; text-align: center;">
-                                        <strong>{{ $message }}</strong>
-                                    </span> <br/>
+                                <span class="invalid-feedback" role="alert" style="position: relative; width: 100%; text-align: center;">
+                                    <strong>{{ $message }}</strong>
+                                </span> <br/>
                             @enderror
+
+                            @if (session('status'))
+                                <div class="alert alert-success" role="alert">
+                                    {{ session('status') }}
+                                </div>
+                            @endif
+                            @if (session('error'))
+                                <div class="alert alert-danger" role="alert">
+                                    {{ session('error') }}
+                                </div>
+                            @endif
 
                             {{--<div class="row mb-3">
                                 @if (session('error'))
@@ -30,7 +41,7 @@
 
                             </div>--}}
                             <div class="row mb-3">
-                                <label for="name" class="col-md-4 col-form-label text-md-end">{{ 'Nom du Client' }}
+                                <label for="name" class="col-md-4 col-form-label text-md-end">{{ __('Nom') }}
                                     <b class="" style="color: red;">*</b>
                                 </label>
 
@@ -47,7 +58,7 @@
 
                             <div class="row mb-3">
                                 <label for="telephone" class="col-md-4 col-form-label text-md-end">
-                                    {{ 'Telephone' }}
+                                    {{ __('Numéro Mobile') }}
                                     <b class="" style="color: red;">*</b>
                                 </label>
 
@@ -63,7 +74,7 @@
                             </div>
 
                             <div class="row mb-3">
-                                <label for="email" class="col-md-4 col-form-label text-md-end">{{ 'E-Mail'}}</label>
+                                <label for="email" class="col-md-4 col-form-label text-md-end">{{ __('Email')}}</label>
 
                                 <div class="col-md-6">
                                     <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" autocomplete="email">
@@ -77,7 +88,7 @@
                             </div>
 
                             <div class="row mb-3">
-                                <label for="birthdate" class="col-md-4 col-form-label text-md-end"><br>{{ 'Date de Naissance' }}</label>
+                                <label for="birthdate" class="col-md-4 col-form-label text-md-end"><br>{{ __('Date de Naissance (Jour Mois Année)') }}</label>
                                 <?php
                                     $date = Carbon::now();
                                     $thisyear = $date->year;
@@ -86,9 +97,9 @@
                                 <div class="col-md-6">
                                     <div class="row">
                                         <div class="col-md-4">
-                                            <label for="day" >Jour</label>
+                                            <label for="day" >{{__("Jour")}}</label>
                                             <select class="form-select" id="day" name="day">
-                                                <option value="">--Choisir ici --</option>
+                                                <option value="">-- {{__("Sélectionnez ici")}} --</option>
                                                 <option value="01">01</option>
                                                 <option value="02">02</option>
                                                 <option value="03">03</option>
@@ -124,29 +135,29 @@
 
                                         </div>
                                         <div class="col-md-4">
-                                            <label for="month" >Mois</label>
-                                            <select class="form-select" id="month" name="month">
-                                                <option value="">--Choisir ici --</option>
-                                                <option value="01">Janvier</option>
-                                                <option value="02">Fevrier</option>
-                                                <option value="03">Mars</option>
-                                                <option value="04">Avril</option>
-                                                <option value="05">Mai</option>
-                                                <option value="06">Juin</option>
-                                                <option value="07">Juillet</option>
-                                                <option value="08">Aout</option>
-                                                <option value="09">Septembre</option>
-                                                <option value="10">Octobre</option>
-                                                <option value="11">Novembre</option>
-                                                <option value="12">Decembre</option>
+                                            <label for="month" >{{__("Mois")}}</label>
+                                            <select class="form-select" id="month" name="month" onchange="verifyBirthDate();">
+                                                <option value="">-- {{__("Sélectionnez ici")}} --</option>
+                                                <option value="01">{{__("Janvier")}}</option>
+                                                <option value="02">{{__("Févier")}}</option>
+                                                <option value="03">{{ __("Mars") }}</option>
+                                                <option value="04">{{__("Avril")}}</option>
+                                                <option value="05">{{__("Mai")}}</option>
+                                                <option value="06">{{__("Juin")}}</option>
+                                                <option value="07">{{__("Juillet")}}</option>
+                                                <option value="08">{{__("Août")}}</option>
+                                                <option value="09">{{__("Septembre")}}</option>
+                                                <option value="10">{{__("Octobre")}}</option>
+                                                <option value="11">{{__("Novembre")}}</option>
+                                                <option value="12">{{__("Décembre")}}</option>
                                             </select>
 
                                         </div>
 
                                         <div class="col-md-4">
-                                            <label for="year" >Annee</label>
+                                            <label for="year" >{{__("Année")}}</label>
                                             <select class="form-select" id="year" name="year">
-                                                <option value="">--Choisir ici --</option>
+                                                <option value="">-- {{__("Sélectionnez ici")}} --</option>
                                                 @for($i = $thisyear; $i >= 1900; $i--)
                                                     <option value="{{$i}}">{{$i}}</option>
                                                 @endfor
@@ -166,14 +177,14 @@
                             </div>
 
                             <div class="row mb-3">
-                                <label for="gender" class="col-md-4 col-form-label text-md-end">{{ 'Civilite' }}</label>
+                                <label for="gender" class="col-md-4 col-form-label text-md-end">{{__('Civilité')}}</label>
 
                                 <div class="col-md-6">
                                     <select id="gender" class="form-control form-select form-select-lg @error('gender') is-invalid @enderror" name="gender" >
-                                        <option value="">Choisissez ici</option>
-                                        <option value="MONSIEUR">Monsieur</option>
-                                        <option value="MADAME">Madame</option>
-                                        <option value="MADEMOISELLE">Mademoiselle</option>
+                                        <option value="">-- {{__("Sélectionnez ici")}} --</option>
+                                        <option value="MONSIEUR">{{__("Monsieur")}}</option>
+                                        <option value="MADAME">{{__("Madame")}}</option>
+                                        <option value="MADEMOISELLE">{{__("Mademoiselle")}}</option>
                                     </select>
 
                                     @error('gender')
@@ -185,7 +196,7 @@
                             </div>
 
                             <div class="row mb-3">
-                                <label for="city" class="col-md-4 col-form-label text-md-end">{{ 'Ville' }}</label>
+                                <label for="city" class="col-md-4 col-form-label text-md-end">{{ __("Ville")}}</label>
 
                                 <div class="col-md-6">
                                     <input id="city" type="text" class="form-control @error('city') is-invalid @enderror" name="city" autocomplete="city">
@@ -199,7 +210,7 @@
                             </div>
 
                             <div class="row mb-3">
-                                <label for="quarter" class="col-md-4 col-form-label text-md-end">{{ 'Quartier' }}</label>
+                                <label for="quarter" class="col-md-4 col-form-label text-md-end">{{ __('Lieu de résidence') }}</label>
 
                                 <div class="col-md-6">
                                     <input id="quarter" type="text" class="form-control @error('quarter') is-invalid @enderror" name="quarter" autocomplete="quarter">
@@ -215,10 +226,24 @@
                             <div class="row mb-0">
                                 <div class="col-md-6 offset-md-4">
                                     <button type="submit" class="btn btn-primary">
-                                        {{ 'Enregistrer' }}
+                                        {{ __('Enregistrer') }}
                                     </button>
                                 </div>
                             </div>
+
+                            <script type="text/javascript">
+                                function verifyBirthDate(){
+                                    var day = parseInt(document.getElementById('day').value);
+                                    console.log(day);
+                                    var month = parseInt(document.getElementById('month').value);
+                                    console.log(month);
+                                    if(month === 2 && day > 29){
+                                        alert('Invalid date.');
+                                        return false;
+                                    }
+                                    return true;
+                                }
+                            </script>
                         </form>
                     </div>
                 </div>

@@ -12,18 +12,20 @@ use Illuminate\Support\Facades\Validator;
 
 class NotificationController extends Controller
 {
-    public function showNotificationView(string $notificationid){
+    public function showNotificationView(string $locale, string $notificationid){
         $notification = Notification::where('id', $notificationid)->first();
         return view('notification.detail', ['notification' => $notification, 'data' => json_decode($notification->data, true)]);
     }
 
-    public function setAsReadOrUnread(Request $request, string $notificationid){
+    public function setAsReadOrUnread(Request $request, string $locale, string $notificationid){
         if (!Auth::check() && !Auth::guard('client')->check()) {
-            session()->flash('error', 'Vous n\'etes pas autorise');
-            return back()->withErrors(['error' => 'Vous n\'etes pas autorise']);
+            session()->flash('error', __("Désolé, vous n'avez pas l'accès"));
+            return back()->withErrors(['error' => __("Désolé, vous n'avez pas l'accès")]);
         }
         $validator = Validator::make($request->all(), [
             'action'            => 'required|string|in:read,unread',
+        ],[
+            'action.required' => __("L'action est obligatoire."),
         ]);
 
         if($validator->fails()){
@@ -33,8 +35,9 @@ class NotificationController extends Controller
 
         $notification = Notification::where('id', $notificationid)->first();
         if ($notification == null) {
-            session()->flash('error', 'Notification not found');
-            return back()->withErrors(['error' => 'Notification not found']);
+            $msg = __("La notification n'existe pas.");
+            session()->flash('error', );
+            return back()->withErrors(['error' => $msg]);
         }
 
         $read = false;
@@ -49,25 +52,29 @@ class NotificationController extends Controller
 
         Notification::where('id', $notificationid)->update(['read' => $read]);
 
-        $msg = 'Notification marquee comme ' . ($read ? ' lue ' : ' non lue') . ' avec succes!';
+        $msg = 'Notification marquée comme ' . ($read ? ' lue ' : ' non lue') . ' avec succes!';
         session()->flash('status', $msg);
         return back()->with('status', $msg);
     }
 
-    public function showNotifs(int $userid)
+    public function showNotifs(string $locale, int $userid)
     {
         $user = Auth::user();
+        if ($user === null) {
+            return redirect()->route('authentification');
+        }
         $utilsateur = User::where('id', $userid)->first();
         if ($utilsateur == null) {
-            session()->flash('error', 'Quelque chose s\'est mal deroule.');
-            return back()->with(['error' => 'Quelque chose s\'est mal deroule.']);
+            $msg = __("Une erreur est survenue, reessayez de nouveau.");
+            session()->flash('error', $msg);
+            return back()->with(['error' => $msg]);
         }
 
         if ($user->id !== $utilsateur->id) {
-            session()->flash('error', 'Quelque chose s\'est mal deroule.');
-            return back()->with(['error' => 'Quelque chose s\'est mal deroule.']);
+            $msg = __("Une erreur est survenue, reessayez de nouveau.");
+            session()->flash('error', $msg);
+            return back()->with(['error' => $msg]);
         }
-
 
         $notifications = Notification::where('sender_address', Auth::user()->email)->orWhere('recipient_address', Auth::user()->email)->where('read', false)->orderBy('created_at', 'desc')->get();
         $unreadMsgNum = count($notifications);
@@ -76,19 +83,20 @@ class NotificationController extends Controller
 
     }
 
-
-    public function showClientNotifs(String  $clientid)
+    public function showClientNotifs(string $locale, String  $clientid)
     {
         $client = Auth::guard('client')->user();
         $customer = Client::where('id', $clientid)->first();
         if ($customer == null) {
-            session()->flash('error', 'Quelque chose s\'est mal deroule.');
-            return back()->with(['error' => 'Quelque chose s\'est mal deroule.']);
+            $msg = __("Une erreur est survenue, reessayez de nouveau.");
+            session()->flash('error', $msg);
+            return back()->with(['error' => $msg]);
         }
 
         if ($client->id !== $customer->id) {
-            session()->flash('error', 'Quelque chose s\'est mal deroule.');
-            return back()->with(['error' => 'Quelque chose s\'est mal deroule.']);
+            $msg = __("Une erreur est survenue, reessayez de nouveau.");
+            session()->flash('error', $msg);
+            return back()->with(['error' => $msg]);
         }
 
         $notifications0 = Notification:: where('recipient_address', Auth::guard('client')->user()->telephone)->where('read', false)->orderBy('created_at', 'desc')->get();
@@ -104,12 +112,6 @@ class NotificationController extends Controller
                 array_push($notifications, $notification);
             }
         }
-
         return view('notification.index-client', ['notifications' => $notifications, 'unreadMsgNum' => count($notifications)]);
-
     }
-
-
-
-
 }

@@ -52,11 +52,11 @@
 
                         </p>
                         <p>
-                            Vous pouvez acceder au systeme en utilisant le lien suivants: &nbsp; <a href="{{$data['invitation_url']}}">{{$data['invitation_url']}}</a>
+                            {{ __("Vous pouvez accéder au système en utilisant le lien suivant") }}: &nbsp; <a href="{{$data['invitation_url']}}">{{$data['invitation_url']}}</a>
                             <br>
                         </p>
 
-                            <h5>Merci pour votre fidelite.</h5>
+                            <h5>{{ __("Merci pour votre Fidélité.") }}</h5>
                     </div>
                 </div>
             </div>

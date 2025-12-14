@@ -32,7 +32,7 @@ class MailForCampaign extends Mailable
     {
         return new Envelope(
             replyTo: [
-                new Address('lofombocm@gmail.com', 'LOFOMBO CM'),
+                new Address($this->data['enterprise_email'], $this->data['enterprise_name']),
             ],
             subject: $this->data['subject'],
         );

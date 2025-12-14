@@ -30,7 +30,7 @@ class MailForVoucherReach extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Recompense disponible au travers des bons. ',
+            subject: __('Disponibilité de récompenses à travers les Bons de Fidélité'),
         );
     }
 

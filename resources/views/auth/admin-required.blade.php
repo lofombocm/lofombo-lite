@@ -1,11 +1,11 @@
-@extends('layouts.app')
+@extends('layouts.email-template')
 
 @section('content')
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header">{{ __('Login') }}</div>
+                    <div class="card-header">{{ __('Connexion') }}</div>
 
                     <div class="card-body">
                         {{--@if(session('error'))
@@ -18,7 +18,9 @@
                                 </div>
                             @endif
 
-                        <a href="{{ route('authentification.client') }}" class="btn btn-primary btn-lg ">Etes-vous client? Cliquez ici</a>
+                        <a href="{{ route('authentification') }}" class="btn btn-primary btn-lg ">
+                            {{__('Cliquez ici pour vous reconnecter') }}
+                        </a>
 
                     </div>
                 </div>

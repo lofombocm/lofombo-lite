@@ -1,5 +1,5 @@
 @php
-    use App\Models\Config;
+    use App\Http\Controllers\GuestController;use App\Models\Config;
     use Illuminate\Support\Carbon;
 @endphp
 @extends('layouts.app')
@@ -10,7 +10,7 @@
             @include('layouts.menu')
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header"><h5>{{ 'Configurer des parametres du systeme'}}</h5></div>
+                    <div class="card-header"><h5>{{ __('Configuration Système')}}</h5></div>
 
                     <div class="card-body">
                         <form method="POST" action="{{route('configs.post')}}"
@@ -38,9 +38,9 @@
                                     {{ session('error') }}
                                 </div>
                             @else
-                               {{-- <div class="alert alert-success" role="alert">
-                                    {{ 'No error' }}
-                                </div>--}}
+                                {{-- <div class="alert alert-success" role="alert">
+                                     {{ 'No error' }}
+                                 </div>--}}
                             @endif
 
                             @php
@@ -54,11 +54,11 @@
                                 $premium_threshold = 80;
                                 $gold_threshold = 120;*/
                                 $voucher_duration_in_month = 3;
-                                $password_recovery_request_duration = 60;
+                                $password_recovery_request_duration = 60*24;
                                 $enterprise_name = "LOFOMBO";
                                 $enterprise_email = 'contact@gmail.com';
                                 $enterprise_phone = '0123456789';
-                                $enterprise_website = url('/');
+                                $enterprise_website = url('/'.GuestController::getApplicationLocal());
                                 $enterprise_address = '';
                                 $enterprise_logo = asset('images/logo');
                                 if (count(Config::where('is_applicable', true)->get()) === 1){
@@ -85,7 +85,7 @@
 
                             <div class="row mb-3">
                                 <label for="initial_loyalty_points" class="col-md-5 col-form-label text-md-end">
-                                    {{ 'Nombre de Point initial Pour les clients'}}</label>
+                                    {{ __('Points initiaux pour les clients')}}</label>
                                 <div class="col-md-7">
                                     <input id="initial_loyalty_points" type="number"
                                            class="form-control @error('initial_loyalty_points') is-invalid @enderror"
@@ -96,15 +96,15 @@
                                            autofocus>
                                     @error('initial_loyalty_points')
                                     <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ $message }}</strong>
-                                                        </span>
+                                            <strong>{{ $message }}</strong>
+                                        </span>
                                     @enderror
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <label for="amount_per_point" class="col-md-5 col-form-label text-md-end">
-                                    {{ 'Montant donnant droit a 1 point'}}
+                                    {{ __("Conversion Montant pour 1 Point de Fidélité") }}
                                 </label>
                                 <div class="col-md-7">
                                     <input id="amount_per_point" type="number"
@@ -116,15 +116,16 @@
                                            autofocus>
                                     @error('amount_per_point')
                                     <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ $message }}</strong>
-                                                        </span>
+                                        <strong>{{ $message }}</strong>
+                                    </span>
                                     @enderror
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <label for="currency_name" class="col-md-5 col-form-label text-md-end">
-                                    {{ 'Monnaie utilisee'}}</label>
+                                    {{ __("Monnaie") }}
+                                </label>
                                 <div class="col-md-7">
                                     <input id="currency_name" type="text"
                                            class="form-control @error('currency_name') is-invalid @enderror"
@@ -135,15 +136,15 @@
                                            autofocus>
                                     @error('currency_name')
                                     <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ $message }}</strong>
-                                                        </span>
+                                            <strong>{{ $message }}</strong>
+                                        </span>
                                     @enderror
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <label for="birthdate_bonus_rate" class="col-md-5 col-form-label text-md-end">
-                                    {{ 'Coefficient pour anniversaire'}}
+                                    {{ __("Coefficient pour anniversaire") }}
                                 </label>
                                 <div class="col-md-7">
                                     <input id="birthdate_bonus_rate" type="number" step="0.01"
@@ -164,7 +165,7 @@
 
                             <div class="row mb-3">
                                 <label for="levels" class="col-md-5 col-form-label text-md-end">
-                                    {{ 'Niveau des Bons' }}
+                                    {{ __("Type de Bons de Fidélité") }}
                                     <br>
                                     <a href="#" onclick="addLevelFilds();"
                                        style="text-decoration: none; font-size: x-large; color: green;"
@@ -176,7 +177,7 @@
                                     @foreach($levels as $level)
                                         <div class="row" id="{{$index}}">
                                             <div class="col-md-6">
-                                                <label for="level_name{{$index}}">Nom</label>
+                                                <label for="level_name{{$index}}">{{__("Nom")}}</label>
 
                                                 <input id="level_name{{$index}}" type="text"
                                                        class="form-control @error('level_name'.$index) is-invalid @enderror"
@@ -193,7 +194,7 @@
                                             </div>
 
                                             <div class="col-md-4">
-                                                <label for="level_point{{$index}}">Point</label>
+                                                <label for="level_point{{$index}}">{{__("Point")}}</label>
 
                                                 <input id="level_point{{$index}}" type="number"
                                                        class="form-control @error('level_point'.$index) is-invalid @enderror"
@@ -204,8 +205,8 @@
                                                        autofocus>
                                                 @error('level_point'.$index)
                                                 <span class="invalid-feedback" role="alert">
-                                                                        <strong>{{ $message }}</strong>
-                                                                    </span>
+                                                        <strong>{{ $message }}</strong>
+                                                    </span>
                                                 @enderror
                                             </div>
                                             <div class="col-md-2">
@@ -221,12 +222,10 @@
                                         </div>
                                         @php $index = $index + 1; @endphp
                                     @endforeach
-                                    {{--<input id="birthdate" type="date" class="form-control @error('birthdate') is-invalid @enderror" name="birthdate"  autocomplete="birthdate">--}}
-                                    {{--@error('levels')
-                                        <span class="invalid-feedback" role="alert">
-                                            <strong>{{ $message }}</strong>
-                                        </span>
-                                    @enderror--}}
+
+                                    <span style="display: none;" id="nom_label">{{__("Nom")}}</span>
+                                    <span style="display: none;" id="point_label">{{__("Point")}}</span>
+
                                 </div>
                                 <input type="hidden" value="{{$index}}" id="index" name="index">
 
@@ -247,14 +246,14 @@
                                         levelrow.innerHTML =
                                             '<div class="row" id="' + rowid + '" style="margin-bottom: 7px;">' +
                                             '<div class="col-md-6">' +
-                                            '<label for="level_name' + index + '" >Nom</label>' +
+                                            '<label for="level_name' + index + '" >' + document.getElementById("nom_label").innerHTML + '</label>' +
                                             '<input id="level_name' + index + '" type="text" ' +
                                             'class="form-control" ' +
                                             'name="level_name' + index + '" ' +
                                             'value="" required autocomplete="level_name' + index + '" autofocus>' +
                                             '</div>' +
                                             '<div class="col-md-4">' +
-                                            '<label for="level_point' + index + '" >Point</label>' +
+                                            '<label for="level_point' + index + '" >' + document.getElementById("point_label").innerHTML + '</label>' +
                                             '<input id="level_point' + index + '" type="number" ' +
                                             'class="form-control" ' +
                                             'name="level_point' + index + '" ' +
@@ -395,7 +394,7 @@
 
                             <div class="row mb-3">
                                 <label for="voucher_duration_in_month" class="col-md-5 col-form-label text-md-end">
-                                    {{ 'Duree d\'un bon (Nombre de mois)'}}</label>
+                                    {{ __("Durée d'un bon (Nombre de mois)") }}</label>
                                 <div class="col-md-7">
                                     <input id="voucher_duration_in_month" type="number"
                                            class="form-control @error('voucher_duration_in_month') is-invalid @enderror"
@@ -406,8 +405,8 @@
                                            autofocus>
                                     @error('voucher_duration_in_month')
                                     <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ $message }}</strong>
-                                                        </span>
+                                            <strong>{{ $message }}</strong>
+                                        </span>
                                     @enderror
                                 </div>
                             </div>
@@ -415,7 +414,7 @@
                             <div class="row mb-3">
                                 <label for="password_recovery_request_duration"
                                        class="col-md-5 col-form-label text-md-end">
-                                    {{ 'Duree de la demande de changement du mot de passe (Nombre d\'heures)'}}</label>
+                                    {{ __("Durée de la demande de changement du mot de passe par le Client (Nombre d'heures)")  }}</label>
                                 <div class="col-md-7">
                                     <input id="password_recovery_request_duration" type="number"
                                            class="form-control @error('password_recovery_request_duration') is-invalid @enderror"
@@ -426,15 +425,15 @@
                                            autofocus>
                                     @error('password_recovery_request_duration')
                                     <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ $message }}</strong>
-                                                        </span>
+                                            <strong>{{ $message }}</strong>
+                                        </span>
                                     @enderror
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <label for="enterprise_name" class="col-md-5 col-form-label text-md-end">
-                                    {{ 'Nom de votre entreprise'}}</label>
+                                    {{ __("Nom Raison Sociale / Entreprise") }}</label>
                                 <div class="col-md-7">
                                     <input id="enterprise_name" type="text"
                                            class="form-control @error('enterprise_name') is-invalid @enderror"
@@ -445,15 +444,15 @@
                                            autofocus>
                                     @error('enterprise_name')
                                     <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ $message }}</strong>
-                                                        </span>
+                                            <strong>{{ $message }}</strong>
+                                        </span>
                                     @enderror
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <label for="enterprise_email" class="col-md-5 col-form-label text-md-end">
-                                    {{ 'Email de votre entreprise'}}</label>
+                                    {{ __("Email Raison Sociale / Entreprise") }}</label>
                                 <div class="col-md-7">
                                     <input id="enterprise_email" type="email"
                                            class="form-control @error('enterprise_email') is-invalid @enderror"
@@ -464,15 +463,15 @@
                                            autofocus>
                                     @error('enterprise_email')
                                     <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ $message }}</strong>
-                                                        </span>
+                                            <strong>{{ $message }}</strong>
+                                        </span>
                                     @enderror
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <label for="enterprise_phone" class="col-md-5 col-form-label text-md-end">
-                                    {{ 'Telephone de votre entreprise'}}</label>
+                                    {{ __("Numéro Tel Raison Sociale / Entreprise") }}</label>
                                 <div class="col-md-7">
                                     <input id="enterprise_phone" type="tel"
                                            class="form-control @error('enterprise_phone') is-invalid @enderror"
@@ -483,17 +482,17 @@
                                            autofocus>
                                     @error('enterprise_phone')
                                     <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ $message }}</strong>
-                                                        </span>
+                                            <strong>{{ $message }}</strong>
+                                        </span>
                                     @enderror
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <label for="enterprise_website" class="col-md-5 col-form-label text-md-end">
-                                    {{ 'Lien du site web de votre entreprise'}}</label>
+                                    {{ __("Site web Raison Sociale / Entreprise")}}</label>
                                 <div class="col-md-7">
-                                    <input id="enterprise_website" type="text"
+                                    <input id="enterprise_website" type="url"
                                            class="form-control @error('enterprise_website') is-invalid @enderror"
                                            name="enterprise_website"
                                            value="{{$enterprise_website}}"
@@ -502,15 +501,15 @@
                                            autofocus>
                                     @error('enterprise_website')
                                     <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ $message }}</strong>
-                                                        </span>
+                                            <strong>{{ $message }}</strong>
+                                        </span>
                                     @enderror
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <label for="enterprise_address" class="col-md-5 col-form-label text-md-end">
-                                    {{ 'Adresse de votre entreprise'}}</label>
+                                    {{ __("Adresse Raison Sociale / Entreprise") }}</label>
                                 <div class="col-md-7">
                                     <input id="enterprise_address" type="text"
                                            class="form-control @error('enterprise_address') is-invalid @enderror"
@@ -521,15 +520,15 @@
                                            autofocus>
                                     @error('enterprise_address')
                                     <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ $message }}</strong>
-                                                        </span>
+                                            <strong>{{ $message }}</strong>
+                                        </span>
                                     @enderror
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <label for="enterprise_logo" class="col-md-5 col-form-label text-md-end">
-                                    {{ 'Logo de votre entreprise'}}
+                                    {{ __('Logo Raison Sociale / Entreprise')}}
                                     @if(count(Config::where('is_applicable', true)->get()) === 1)
                                         @php $config0 = Config::where('is_applicable', true)->get()[0]; @endphp
                                         @if(strlen($config0->enterprise_logo) > 0)
@@ -538,30 +537,44 @@
                                                      alt="">
                                         @endif
                                     @endif
+
                                 </label>
                                 <div class="col-md-7">
                                     <input id="enterprise_logo" type="file"
                                            class="form-control @error('enterprise_logo') is-invalid @enderror"
                                            name="enterprise_logo" onchange="toggleLogoSizeIndicator();">
-                                    <small style="float: right; color: orangered;" >
-                                        <img src="{{asset('images/icons8-warning-25.png')}}" alt="w" width="20" height="20">
-                                        {{'La taille de l\'image est limite a 10 MB.'}}
+                                    <small style="float: right; margin-right: -15px; margin-top: -30px; display: none;"
+                                           id="check_logo">
+                                        <img src="{{asset('images/icons8-done-16.png')}}" alt="checked">
                                     </small>
-                                    <small  id="ligo-size-indicator" style="display: none; color: red; float: right;">
-                                        <img src="{{asset('images/icons8-warning-48.gif')}}" alt="Danger" width="20" height="20">
-                                        {{'Le volume du fichier a depasse la limite requise (10MB).'}}
+                                    <small style="float: right; margin-right: -15px; margin-top: -30px; display: none;"
+                                           id="check_no_logo">
+                                        <img src="{{asset('images/icons8-no-entry-16.png')}}" alt="checked">
+                                    </small>
+                                    <small style="float: right; color: orangered;">
+                                        <img src="{{asset('images/icons8-warning-25.png')}}" alt="w" width="20"
+                                             height="20">
+                                        {{'La taille de l\'image est limite a 10 MB.'}} (<span id="logo_size">0</span>MB)
+                                    </small>
+                                    <small id="ligo-size-indicator" style="display: none; color: red; float: right;">
+                                        <img src="{{asset('images/icons8-warning-48.gif')}}" alt="Danger" width="20"
+                                             height="20">
+                                        {{ __("Le volume du fichier a dépassé la limite requise (10MB).") }}
                                     </small>
                                     @error('enterprise_logo')
                                     <span class="invalid-feedback" role="alert">
-                                                            <strong>{{ $message }}</strong>
-                                                        </span>
+                                            <strong>{{ $message }}</strong>
+                                        </span>
                                     @enderror
+                                    <span style="display: none;" id="alert_logo_size">
+                                        {{ __("Le volume du fichier a dépassé la limite requise (10MB).") }}
+                                    </span>
                                 </div>
                             </div>
                             <div class="row mb-0">
                                 <div class="col-md-6 offset-md-4">
                                     <button type="submit" class="btn btn-primary">
-                                        <strong>{{ 'Enregistrer' }}</strong>
+                                        <strong>{{ __('Enregistrer') }}</strong>
                                     </button>
                                 </div>
                             </div>
@@ -577,31 +590,38 @@
                         </form>
 
                         <script type="text/javascript">
-                            function checkForm(){
-                                var validation  = validateLogoSize();
-                                if(validation === true){
-                                   return true;
+                            function checkForm() {
+                                var validation = validateLogoSize();
+                                if (validation === true) {
+                                    return true;
                                 }
                                 console.log(validation);
-                                alert("Fichier pour logo tres volumineux. Taille limite: 10MB.");
+                                alert(document.getElementById("alert_logo_size").innerHTML);
                                 return false;
                             }
-                            function validateLogoSize(){
+
+                            function validateLogoSize() {
                                 var enterprise_logo = document.getElementById('enterprise_logo');
                                 console.log(enterprise_logo.files[0].size);
                                 return !(enterprise_logo.files.length > 0 && enterprise_logo.files[0].size > 10000000);
                             }
 
-                            function toggleLogoSizeIndicator(){
-
+                            function toggleLogoSizeIndicator() {
                                 var enterprise_logo = document.getElementById('enterprise_logo');
-                                if(enterprise_logo.files.length > 0){
+                                if (enterprise_logo.files.length > 0) {
+                                    document.getElementById('logo_size').innerHTML = (enterprise_logo.files[0].size / 1000000);
                                     var indicator = document.getElementById('ligo-size-indicator');
-                                    if(enterprise_logo.files[0].size > 10000000){
+                                    if (enterprise_logo.files[0].size > 10000000) {
                                         indicator.style.display = 'block';
-                                    }else{
+                                        document.getElementById('check_logo').style.display = 'none';
+                                        document.getElementById('check_no_logo').style.display = 'block';
+                                    } else {
                                         indicator.style.display = 'none';
+                                        document.getElementById('check_logo').style.display = 'block';
+                                        document.getElementById('check_no_logo').style.display = 'none';
                                     }
+                                } else {
+                                    document.getElementById('logo_size').innerHTML = 0;
                                 }
                             }
                         </script>

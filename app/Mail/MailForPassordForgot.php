@@ -30,7 +30,7 @@ class MailForPassordForgot extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Recuperation du mot de passe',
+            subject: __('Récupération du mot de passe'),
         );
     }
 

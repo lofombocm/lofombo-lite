@@ -18,7 +18,7 @@
 
                         <form method="POST" action="{{ route('conversions.index.post') }}">
                             @csrf
-                            <div><h5>Les champs marques par <b class="" style="color: red;">*</b> sont obligatoires</h5></div>
+                            <div><h5>{{__('Les champs marqués par ')}} <b class="" style="color: red;">*</b> {{__('sont obligatoires')}}</h5></div>
                             <br>
 
                             <input type="hidden" name="error" id="error" class="form-control @error('error') is-invalid @enderror">

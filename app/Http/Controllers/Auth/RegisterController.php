@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\GuestController;
+use App\Http\Controllers\SuperAdminController;
 use App\Jobs\ProcessSendEMailUserInvitationJob;
 use App\Jobs\ProcessSendEMailUserRegisteredJob;
 use App\Models\Config;
@@ -19,7 +21,10 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Nanorocks\LicenseManager\Models\License;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+
+
 
 class RegisterController extends Controller
 {
@@ -65,6 +70,14 @@ class RegisterController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'max:20', 'confirmed'],
+        ],[
+            'name.required' => __('Le nom est obligatoire.'),
+            'email.required' => __('L\'adresse E-Mail est obligatoire.'),
+            'email.email' => __('L\'adresse E-Mail n\'est pas valide'),
+            'password.required' => __('Le mot de passe est obligatoire.'),
+            'password.min' => __('Le mot de passe doit avoir au moins 8 caractères'),
+            'password.max' => __('Le mot de passe doit avoir au plus 20 caractères'),
+            'password.confirmed' => __('Les mots de passe ne correspondent pas'),
         ]);
     }
 
@@ -97,7 +110,7 @@ class RegisterController extends Controller
         return view('auth.register');
     }
 
-    public function putRegistrationIndex(int $userid): View
+    public function putRegistrationIndex(string $locale, int $userid): View
     {
         $user  = User::where('id', $userid)->first();
         return view('auth.registration-update', ['user' => $user]);
@@ -124,6 +137,13 @@ class RegisterController extends Controller
             'username' => 'required|string|max:255|unique:users',
             //'password' => 'required|string|min:8|max:20|confirmed',
             'is_admin' => 'required|string|in:on,off'
+        ],[
+            'name.required' => __('Le nom est obligatoire.'),
+            'email.required' => __('L\'adresse E-Mail est obligatoire.'),
+            'email.email' => __('L\'adresse E-Mail n\'est pas valide'),
+            'email.unique' => __('E-Mail déja utilisé.'),
+            'username.required' => __('Le nom d\'utilisateur est obligatoire.'),
+            'username.unique' => __('Nom d\'utilisateur déja utilisé.'),
         ]);
 
         //dd($request->all());
@@ -135,7 +155,7 @@ class RegisterController extends Controller
 
         $config = Config::where('is_applicable', true)->first();
         if($config === null){
-            $msg = 'Aucune configuration active trouvee';
+            $msg = __('Veuillez Patienter la configuration du système');
             session()->flash('error', $msg);
             return back()->withErrors(['error' => $msg]);
         }
@@ -143,8 +163,9 @@ class RegisterController extends Controller
         $users = User::where('is_admin', true)->get();
 
         if (count($users) >= 3 && $request->get('is_admin') === 'on') {
-            session()->flash('error', 'Desole vous ne pouvez plus enregistrer d\'administrateur. ');
-            return back()->withErrors(['error' => 'Desole vous ne pouvez plus enregistrer d\'administrateur. ']);
+            $msg = __("Désole vous ne pouvez plus enregistrer d'administrateur.");
+            session()->flash('error', $msg);
+            return back()->withErrors(['error' => $msg]);
         }
 
 
@@ -161,11 +182,20 @@ class RegisterController extends Controller
             ]);
 
 
-            $link = url('').'/auth' ;
+            $link = url('/' . GuestController::getApplicationLocal() .'/auth') ;
 
             $emaildata = ['email' => $request->get('email'), 'name' => $request->get('name'), 'login_url' => $link, 'enterprise' => $config->enterprise_name,];
 
             ProcessSendEMailUserRegisteredJob::dispatch($emaildata);
+
+            $checkLicenses = SuperAdminController::checkLicences();
+            $valid_licenses = $checkLicenses['valid_licenses'];
+            if (count($valid_licenses) > 0) {
+                foreach ($valid_licenses as $valid_license) {
+                    $license = License::where('id', $valid_license->id)->first();
+                    SuperAdminController::addUserToLicence($user, $license);
+                }
+            }
 
         }catch (\Exception $exception){
             DB::rollBack();
@@ -175,7 +205,7 @@ class RegisterController extends Controller
 
         DB::commit();
         //Auth::login($user);
-        $msg = 'Bien! l\'utilisateur ' . $request->get('name') . ' a ete enregistre avec succes.';
+        $msg = __('Utilisateur enregistré avec succès !');
         session()->flash('status', $msg);
 
         return back()->with('status', $msg);//->withSuccess('status', 'Great! You have Successfully Registered.');
@@ -190,7 +220,7 @@ class RegisterController extends Controller
         return view('auth.all-users-admin', ['users' => $users]);
     }
 
-    public function removeOrAddToAdminRole(Request $request, string $userid): RedirectResponse
+    public function removeOrAddToAdminRole(Request $request, string $locale, string $userid): RedirectResponse
     {
         $validator = Validator::make($request->all(), [
             'operation' => 'required|string|in:remove,add',
@@ -201,23 +231,24 @@ class RegisterController extends Controller
         }
         $user =User::where('id', $userid)->first();
         if ($user == null) {
-            session()->flash('error', 'L\'Utilisateur n\'existe pas.');
-            return back()->withErrors(['error' => 'L\'Utilisateur n\'existe pas.']);
+            $msg = __("Utilisateur non reconnu!");
+            session()->flash('error', );
+            return back()->withErrors(['error' => $msg]);
         }
         $msg = '';
         if (trim($request->get('operation')) == 'remove') {
             $user->is_admin = false;
             $user->save();
-            $msg = 'Bien! l\'utilisateur ' . $user->name . ' a ete retire du role administrateur avec succes.';
+            $msg = __("Utilisateur enregistré avec succès !");
         }else{
             $users = User::where('is_admin', true)->get();
             if (count($users) >= 3) {
-                session()->flash('error', 'Desole vous ne pouvez plus ajouter d\'administrateur. ');
-                return back()->withErrors(['error' => 'Desole vous ne pouvez plus ajouter d\'administrateur. ']);
+                session()->flash('error', __("Désole vous ne pouvez plus enregistrer d'administrateur."));
+                return back()->withErrors(['error' => __("Désole vous ne pouvez plus enregistrer d'administrateur.")]);
             }
             $user->is_admin = true;
             $user->save();
-            $msg = 'Bien! l\'utilisateur ' . $user->name . ' a ete ajoute au role administrateur avec succes.';
+            $msg = __("Utilisateur enregistré avec succès !");
         }
 
         session()->flash('status', $msg);
@@ -226,7 +257,7 @@ class RegisterController extends Controller
 
 
 
-    public function putRegistration(Request $request, string $userid): RedirectResponse
+    public function putRegistration(Request $request, string $locale, string $userid): RedirectResponse
     {
 
         /*$request->validate([
@@ -240,8 +271,12 @@ class RegisterController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|min:2',
-            //'email' => 'required|string|email|max:255|unique:users',
-            'is_admin' => 'required|string|in:on,off'
+            'email' => 'required|string|email|max:255',
+            //'is_admin' => 'required|string|in:on,off'
+        ],[
+            'name.required' => __('Le nom est obligatoire.'),
+            'email.required' => __('L\'adresse E-Mail est obligatoire.'),
+            'email.email' => __('L\'adresse E-Mail n\'est pas valide'),
         ]);
 
         //session()->flash('error', $request->get('is_admin'));
@@ -252,11 +287,28 @@ class RegisterController extends Controller
             return back()->withErrors(['error' => $validator->errors()->first()]);
         }
 
-        $userVerif = User::where('email', $request->get('email'))->first();
+        /*if ($request->filled('email')) {
+            $validatorEmail = Validator::make($request->all(), [
+                'email' => 'required|string|email|max:255|exists:users,email',
+                //'is_admin' => 'required|string|in:on,off'
+            ]);
+
+            //session()->flash('error', $request->get('is_admin'));
+            //return back()->withErrors(['error' => $request->get('is_admin')]);
+            if($validatorEmail->fails()){
+                session()->flash('error', $validatorEmail->errors()->first());
+                //session()->flash('request', json_encode($request->all()));
+                return redirect()->back()->withErrors(['error' => $validatorEmail->errors()->first()]);
+            }
+        }*/
+
+
+
+        $userVerif = User::where('email', $request->get('email'))->where('id', '!=', $userid)->first();
         $user = User::where('id', $userid)->first();
         if($userVerif != null){
             if($userVerif->id !== $user->id){
-                $msg = 'The email has already been taken.';
+                $msg = __('E-Mail déja utilisé.');
                 session()->flash('error', $msg);
                 //session()->flash('request', json_encode($request->all()));
                 return back()->withErrors(['error' => $msg]);
@@ -268,7 +320,7 @@ class RegisterController extends Controller
             'name' => $request->get('name'),
             'email' => $request->get('email'),
             //'username' => $request->get('username'),
-            'is_admin' => (env('ADMIN_NAME') == $request->get('name')) || ($request->get('is_admin') == 'on')
+            //'is_admin' => (env('ADMIN_NAME') == $request->get('name')) || ($request->get('is_admin') == 'on')
         ];
 
         $user->update($data);
@@ -297,7 +349,7 @@ class RegisterController extends Controller
 
         $config = Config::where('is_applicable', true)->first();
         if($config === null){
-            $msg = 'Aucune configuration active trouvee';
+            $msg = __("Veuillez Patienter la configuration du système");
             session()->flash('error', $msg);
             return back()->withErrors(['error' => $msg]);
         }
@@ -305,7 +357,7 @@ class RegisterController extends Controller
         $invitationId = Str::uuid()->toString();
         $invitationDuration = intval(env('USER_INVITATION_DURATION_IN_DAY'));
         $expirationdate = Carbon::now()->addMinutes(1440 * $invitationDuration);
-        $link = url('').'/registration-invitations/'. $invitationId ;
+        $link = url('/' . GuestController::getApplicationLocal() .'/registration-invitations/'. $invitationId );
 
 
         ///registration/invitations/
@@ -330,12 +382,12 @@ class RegisterController extends Controller
         ProcessSendEMailUserInvitationJob::dispatch($emaildata);
 
 
-        $message = ['Mme/M. ' . $request->get('name') . ' Vous etes invite a rejoindre le systeme de fidelite de ' . $config->enterprise_name . '.'];
+        $message = [__('Mme') . '/' . __('M.') . ' ' . $request->get('name') . '  ' . __("Vous êtes invité a rejoindre le système de fidélité de ") . $config->enterprise_name . '.'];
         $donnee = ['email' => $request->get('email'), 'name' => $request->get('name'), 'clientLoginUrl' => $link, 'msg' => $message];
 
         $notifid = Str::uuid()->toString();
         $notifgenerator = '' . Auth::user()->id;
-        $notifsubject = 'Invitation a rejoindre le systeme de fidelite de ' . $config->enterprise_name . '.';
+        $notifsubject =  __("Invitation á rejoindre le système de fidélité de ") . $config->enterprise_name . '.';
         $notifsentat = Carbon::now();
         $notifbody = json_encode($message);
         $notifdata = json_encode($donnee);
@@ -362,7 +414,7 @@ class RegisterController extends Controller
             ]
         );
 
-        $msg = 'Bien! l\'utilisateur ' . $request->get('name') . ' a ete invite avec succes.';
+        $msg = "Utilisateur enregistré avec succès !";
         session()->flash('status', $msg);
         return back()->with('status', $msg);
 

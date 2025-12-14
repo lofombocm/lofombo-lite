@@ -1,15 +1,17 @@
 @extends('layouts.app-client')
-
+@php
+    use App\Http\Controllers\GuestController;
+@endphp
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
         @include('layouts.client-menu')
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header">{{ __('Reset Password') }}</div>
+                <div class="card-header">{{ __('Réinitialisation Mot de passe') }}</div>
 
                 <div class="card-body">
-                    <form method="POST" action="{{ route('password.reset.client.post') }}">
+                    <form method="POST" action="{{ route('password.reset.client.post', ['locale' => GuestController::getApplicationLocal()]) }}">
                         @csrf
 
                         @if (session('status'))
@@ -43,7 +45,7 @@
                         </div>--}}
 
                         <div class="row mb-3">
-                            <label for="Rename…" class="col-md-4 col-form-label text-md-end">{{ 'Mot de passe courant'}}</label>
+                            <label for="Rename…" class="col-md-4 col-form-label text-md-end">{{ __('Mot de passe courant') }}</label>
 
                             <div class="col-md-6">
                                 <input id="current-pwd" type="password" class="form-control @error('currentpassword') is-invalid @enderror" name="currentpassword" required autocomplete="currentpassword">
@@ -71,7 +73,7 @@
                         </div>
 
                         <div class="row mb-3">
-                            <label for="password-confirm" class="col-md-4 col-form-label text-md-end">{{ __('Confirm Password') }}</label>
+                            <label for="password-confirm" class="col-md-4 col-form-label text-md-end">{{ __('Confirmation Mot de passe') }}</label>
 
                             <div class="col-md-6">
                                 <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">

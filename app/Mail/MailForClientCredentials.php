@@ -30,7 +30,7 @@ class MailForClientCredentials extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Enregistrement au systeme de fidelite de ' . $this->data['enterprise'],
+            subject: __("Enregistrement à la plateforme de fidélité de") . ' ' . $this->data['enterprise'],
         );
     }
 

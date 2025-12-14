@@ -1,3 +1,6 @@
+@php
+    use App\Http\Controllers\GuestController;
+@endphp
 @extends('layouts.email-template')
 @section('content')
     <div class="container">
@@ -12,10 +15,10 @@
                         <p>
                             {{$data['message']}}
 
-                            <a href="{{url('')}}" class="btn btn-primary" >{{'Cliquez ici pour acceder a notre site web.'}}</a>
+                            <a href="{{url('/'.GuestController::getApplicationLocal())}}" class="btn btn-primary" >{{ __("Cliquez ici pour accéder a notre site web.") }}</a>
                         </p>
 
-                        <h5>Merci pour votre fidelite.</h5>
+                        <h5> {{ __("Merci pour votre Fidélité.") }}</h5>
                     </div>
                 </div>
             </div>

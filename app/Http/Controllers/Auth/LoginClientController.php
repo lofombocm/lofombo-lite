@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\GuestController;
 use App\Jobs\ProcessSendEMailPwdForgotJob;
 use App\Models\Client;
 use App\Models\Config;
+use App\Models\PasswordRecoveryRequest;
 use App\Models\Reward;
 use App\Models\User;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
@@ -57,7 +59,7 @@ class LoginClientController extends Controller
 
         $configs = Config::where('is_applicable', true)->get();
         if(count($configs) == 0){
-            session()->flash('error', 'Veuillez attendre la configuration s\'il vous plait.');
+            session()->flash('error', __('Veuillez Patienter la configuration du système'));
             return redirect()->route('welcome');
             //return view('welcome',['rewards' => Reward::where('active', true)->get(), 'error' => 'Veuillez attendre la configuration s\'il vous plait.']);
             //return view('auth.client.login', []);
@@ -74,13 +76,19 @@ class LoginClientController extends Controller
     {
         $request->validate([
             'telephone' => 'required|string|exists:clients,telephone',
-            'password' => 'required|string|min:8',
+            'password' => 'required|string|min:8|max:20',
+        ], [
+            'telephone.required' => __('Le numéro de téléphone est obligatoire'),
+            'password.required' => __('Le mot de passe est obligatoire'),
+            'password.min' => __('Le mot de passe doit avoir au moins 8 caractères'),
+            'password.max' => __('Le mot de passe doit avoir au plus 20 caractères')
         ]);
 
         $client = Client::where('telephone', $request->get('telephone'))->first();
         if (!$client->active) {
+            session()->flash('error', __('Désolé, vous n\'avez pas l\'accès'));
             return back()->withErrors([
-                'error' => 'The client is not active.',
+                'error' => __('Désolé, vous n\'avez pas l\'accès') . '.',
             ]);
         }
 
@@ -101,11 +109,13 @@ class LoginClientController extends Controller
             fwrite($h, json_encode( json_encode($credentials)));
             fclose($h);*/
             //return redirect()->route('home.client')->withSuccess('status', 'You have Successfully loggedin');
-            return redirect()->intended('home-client')->withSuccess('status', 'You have Successfully loggedin');
+            session()->flash('status', __('Connexion réussie !'));
+            return redirect()->route('home.client')->withSuccess('status', __('Connexion réussie !'));
         }
         //return redirect("auth/client")->back()->withError(['message' => 'Invalid Telephone or password']);
+        session()->flash('error', __('Aucune entrée correspondant aux identifinats fournis'));
         return back()->withErrors([
-            'error' => 'The provided credentials do not match our records.',
+            'error' => __('Aucune entrée correspondant aux identifinats fournis'),
         ]);
     }
 
@@ -122,32 +132,44 @@ class LoginClientController extends Controller
         $request->validate([
             'telephone' => 'required|string|exists:clients,telephone',
             'email' => 'required|email|max:255',
+        ],[
+            'telephone.required' => __('Le numéro de téléphone est obligatoire'),
+            'email.required' => __('L\'adresse E-Mail est obligatoire'),
+            'telephone.exists' => __('Numéro de téléphone non reconnu')
         ]);
-
-
 
         $client = Client::where('telephone', $request->get('telephone'))->first();
         if(!$client){
-            return back()->withInput()->with('error', 'No client with this email');
+            $msg = __('Aucun client disposant de ce numero de téléphone');
+            session()->flash('error', $msg);
+            return back()->withInput()->with('error', $msg);
         }
 
         $id = Str::uuid()->toString();
         $currentTimestamp = Carbon::now();
-        $configs = Config::all();
-        $config = null;
-        if (count($configs) > 0) {
-            $config = $configs->first();
+        $config = Config::where('is_applicable', true)->first();
+
+        if ($config == null) {
+            $msg = __('Veuillez Patienter la configuration du système');
+            session()->flash('error', $msg);
+            return back()->withInput()->with('error', $msg);
         }
 
-        $pwdRecoverDuation = intval(env('PASSWORD_RECOVER_REQUEST_DURATION'));
-        if (!($config === null)){
+        $pwdRecoverDuation = intval(strval($config->password_recovery_request_duration));
+        /*if (!($config === null)){
             $pwdRecoverDuation = $config->password_recovery_request_duration;
-        }
+        }*/
         $expire_at = $currentTimestamp->addMinutes($pwdRecoverDuation);
 
-        DB::table('password_recovery_requests')->insert(['id' => $id, 'email' => $request->get('email'), 'created_at' => $currentTimestamp, 'expire_at' => $expire_at]);
+        $pwdRequest = PasswordRecoveryRequest::create(
+            [
+                'id' => $id,
+                'email' => $request->get('email'),
+                'telephone' => $request->get('telephone'),
+                'expire_at' => $expire_at
+            ]);
 
-        $link = url('').'/client-password-forgot-form/'. $id ;
+        $link = url('/' . GuestController::getApplicationLocal() . '/client-password-forgot-form/'. $id) ;
         $data = ['email' => $request->get('email'), 'name' => $client->name, 'passwordRecoveringUrl' => $link];
 
         //Mail::to($user->email)->send(new MailForPassordForgot($data));
@@ -156,38 +178,52 @@ class LoginClientController extends Controller
         $client->email = $request->get('email');
         $client->save();
 
-        return back()->with('message', 'Vous recevrez un email a l\'adresse ' . $request->get('email') . ' contenant le lien vous permettant de creer un nouveau mot de passe.');
+        $msg = __('Vous recevrez un message a l\'adresse ') . $request->get('email') . ' ' . __('contenant le lien vous permettant de creer un nouveau mot de passe.');
+        session()->flash('status', $msg);
+
+        return back()->with('status', $msg);
     }
 
 
-    public function forgotPasswordForm($requestId): View
+    public function forgotPasswordForm(string $locale, string $requestId): View
     {
         //$thiken = $this->route('token');
-        return view('auth.passwords.client-recover-password', ['requestId' => $requestId]);
+        $req = PasswordRecoveryRequest::where('id', $requestId)->first();
+        $client = Client::where('telephone', $req->telephone)->first();
+        return view('auth.passwords.client-recover-password', ['requestId' => $requestId, 'client' => $client]);
     }
 
 
     public function postForgotPasswordForm(Request $request){
         $request->validate([
             'password' => ['required', 'string', 'min:8', 'max:20', 'confirmed'],
+        ],[
+            'password.required' => __('Le mot de passe est obligatoire'),
+            'password.min' => __('Le mot de passe doit avoir au moins 8 caractères'),
+            'password.max' => __('Le mot de passe doit avoir au plus 20 caractères'),
+            'password.confirmed' => __('Les mots de passe ne correspondent pas'),
         ]);
-        $password_recovery_request = DB::table('password_recovery_requests')
-            ->where([
-                'id' => $request->get('requestid'),
-            ])->first();
+        $password_recovery_request = PasswordRecoveryRequest::where('id', $request->get('requestid'))->first();
 
         if(!$password_recovery_request){
-            return back()->withInput()->with('error', 'Aucune demande de redefinition mot de passe');
+            $msg = __('Aucun demande de redéfinition de mot de passe trouvée pour vous.');
+            session()->flash('error', $msg);
+            return back()->withInput()->with('error', $msg);
         }
 
         $now = Carbon::now();
         $expire_at = Carbon::parse($password_recovery_request->expire_at);
         if ($expire_at->isBefore($now)) {
-            return back()->withInput()->with('error', 'Votre demande a expire le: ' . $expire_at);
+            $msg = __('Votre demande a expiré le: ');
+            session()->flash('error',  $msg . $expire_at);
+            return back()->withInput()->with('error', $msg . $expire_at);
         }
 
-        Client::where('email', $password_recovery_request->email)->update(['password' => Hash::make($request->get('password'))]);
-        return redirect('/auth/client')->with('message', 'Votre mot de passe a ete redefini avec succes!');
+        Client::where('telephone', $password_recovery_request->telephone)->first()->update(['password' => Hash::make($request->get('password'))]);
+        //Client::where('id', $client->id)->update(['password' => Hash::make($request->get('password'))]);
+        $msg  = __('Mot de passe modifié avec succès !');
+        session()->flash('status', '');
+        return redirect()->route('authentification.client')->with('message', $msg);
     }
 
 }

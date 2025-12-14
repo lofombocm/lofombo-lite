@@ -30,7 +30,7 @@ class MailForVoucherGenerated extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Bon de niveau ' . $this->data['level'] . ' genere.',
+            subject: __("Bon de Type") . ' ' . $this->data['level'] . ' '. __("généré") . ' .',
         );
     }
 

@@ -1,5 +1,5 @@
 @php
-
+    use App\Http\Controllers\GuestController;
 @endphp
 @extends('layouts.app')
 
@@ -13,9 +13,9 @@
                 <div class="card">
                     <div class="card-header">
                         <div id="top" style="display: inline; float: left;">
-                            <a class="btn btn-link"  href="{{url('/home')}}" style="text-decoration: none; font-size: large;">&lt;</a>
+                            <a class="btn btn-link"  href="{{url('/' . GuestController::getApplicationLocal() . '/home')}}" style="text-decoration: none; font-size: large;">&lt;</a>
                             <button class="btn btn-link" onclick="history.back();" style="text-decoration: none; font-size: large;"><<</button>
-                            &nbsp;&nbsp;&nbsp;{{ 'Les Collaborateurs' }}</div>
+                            &nbsp;&nbsp;&nbsp;<strong>{{ __('UTILISATEURS') }}</strong></div>
                     </div>
                     <div class="card-body" >
                         @if(count($users) > 0)
@@ -23,27 +23,27 @@
                             <table class="table table-striped table-responsive table-bordered">
                                 <thead class="" style="color: darkred;">
                                 <th scope="col">
-                                    {{ 'ID' }}
+                                    {{ __('ID') }}
                                 </th>
 
                                 <th scope="col">
-                                    {{ 'Name' }}
+                                    {{ __('Nom') }}
                                 </th>
 
                                 <th scope="col">
-                                    {{ 'Email' }}
+                                    {{ __('Email') }}
                                 </th>
                                 <th scope="col">
-                                    {{ 'Pseudo' }}
+                                    {{ __('Pseudo') }}
                                 </th>
                                 <th scope="col">
-                                    {{ 'Role' }}
+                                    {{ __('Rôle') }}
                                 </th>
                                 <th scope="col">
-                                    {{'Enregistre le'}}
+                                    {{__('Créé le')}}
                                 </th>
                                 <th scope="col">
-                                    {{ 'Actions' }}
+                                    {{ __('Actions') }}
                                 </th>
                                 </thead>
                                 <tbody>
@@ -115,7 +115,7 @@
                                 @endforeach
                             </div>--}}
                         @else
-                            <h5>{{'Aucun utilisateur trouve !'}}</h5>
+                            <h5>{{ __('Aucun utilisateur') }}</h5>
                         @endif
                     </div>
                 </div>

@@ -1,12 +1,13 @@
 @php
-    use App\Http\Controllers\Auth\RegisterController
+    use App\Http\Controllers\Auth\RegisterAdminController
    ;use App\Models\User
    ;use App\Models\Config
+   ;use App\Models\UserFirstTimeConnection
    ;use Illuminate\Support\Carbon
    ;use Illuminate\Support\Facades\Request
    ;use Illuminate\Support\Facades\Auth
    ;use App\Models\Notification
-   ;
+   ;use App\Http\Controllers\GuestController;
 @endphp
     <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -24,48 +25,35 @@
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
 
     <!-- Scripts -->
-    @vite(['resources/sass/app.scss', 'resources/js/app.js', 'resources/js/myScript.js'])
+    @vite(['resources/sass/app.scss', 'resources/js/app.js'/*, 'resources/css/card.css'*/])
+
 </head>
 <body style="font-size: initial; font-family: 'DejaVu Sans Light';">
 
 
 <?php
-if (count(User::all()) === 0) {
-    $registerController = new RegisterController();
-    $request = Request::create('/registration', 'POST');
-    $request->merge([
-        'name' => env('ADMIN_NAME'),
-        'email' => env('ADMIN_EMAIL'),
-        'username' => env('ADMIN_USERNAME'),
-        'password' => env('ADMIN_PWD'),
-        'password_confirmation' => env('ADMIN_PWD'),
-        'is_admin' => 'on'
-    ]);
-    $response = $registerController->postRegistration($request);
-}
-
-if (Auth::check()) {
-    $notifications = Notification::where('sender_address', Auth::user()->email)->orWhere('recipient_address', Auth::user()->email)->where('read', false)->get();
-    $unreadMsgNum = count($notifications);
-}
-
+    if (Auth::check()) {
+        $notifications = Notification::where('sender_address', Auth::user()->email)->where('read', false)->orWhere('recipient_address', Auth::user()->email)->get();
+        $unreadMsgNum = count($notifications);
+        $userFirstTimeConnection = UserFirstTimeConnection::where('id', Auth::user()->id)->first();
+    }
 ?>
 <div id="app">
     <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="{{ url('') }}">
+            <a class="navbar-brand" href="{{ url('/') }}">
                 @if(count(Config::all()) > 0)
                     @php
                         $config = Config::where('is_applicable', true)->first();
                     @endphp
-                    @if($config != null)
-                        <img src="{{asset('storage/' .$config->enterprise_logo)}}"
+                    @if($config != null && $config->enterprise_logo)
+                        <img src="{{asset('storage/' . $config->enterprise_logo)}}"
                              style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;" height="65" width="65"
                              alt=""> &nbsp; &nbsp;<strong>{{ $config->enterprise_name }}</strong>
                     @else
                         <img src="{{asset('images/logo.png')}}"
                              style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;" height="65" width="65"
-                             alt=""> &nbsp; &nbsp;<strong>{{ config('app.name', 'Laravel') }}</strong>
+                             alt=""> &nbsp; &nbsp;<strong>{{ $config->enterprise_name != null ? $config->enterprise_name : config('app.name', 'Laravel') }}</strong>
                     @endif
                 @else
                     <img src="{{asset('images/logo.png')}}"
@@ -92,10 +80,11 @@ if (Auth::check()) {
                 @if(Auth::check())
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="list-group-item list-group-item-action nav-link" href="{{route('notifs.index', Auth::user()->id)}}"
+                            <a class="list-group-item list-group-item-action nav-link"
+                               href="{{route('notifs.index', Auth::user()->id)}}"
                                {{--data-bs-toggle="modal" data-bs-target="#notifications-modal"--}}
                                style="font-size: initial;">
-                                {{ 'Notifications' }} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                {{ __('Notifications') }} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                 <span class="badge bg-success position-absolute top|start-*"
                                       style="
                                             position: relative;
@@ -107,91 +96,51 @@ if (Auth::check()) {
                                             margin-top: -10px;"
                                 >{{$unreadMsgNum}}</span>
                             </a>
-                            {{--<div class="modal fade modal-lg" id="notifications-modal" data-bs-backdrop="static"
-                                 data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
-                                 aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
-                                     style="overflow-y: initial; width: 75%;">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h1 class="modal-title fs-5" id="staticBackdropLabel"
-                                                style="border: 0 red solid; width: 100%;">
-                                                <strong
-                                                    style="color: darkred;">Notifications</strong>
-                                                <span style="
-                                            position:relative;
-                                            right: 0;
-                                            float: right;
-                                            color: darkred;
-                                            font-size: x-large;"><strong>{{$unreadMsgNum}}</strong></span>
-                                            </h1>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
-                                        </div>
-                                        --}}{{--<form method="POST" action="{{route('configuration.post')}}"
-                                              enctype="multipart/form-data" onsubmit="return true;" >--}}{{--
-                                        <div class="modal-body" style="height: 80vh; overflow-y: auto;">
-
-                                            <input type="hidden" name="error" id="error"
-                                                   class="form-control @error('error') is-invalid @enderror">
-                                            @error('error')
-                                            <span class="invalid-feedback" role="alert"
-                                                  style="position: relative; width: 100%; text-align: center;">
-                                                                    <strong>{{ $message }}</strong>
-                                                                </span> <br/>
-                                            @enderror
-
-                                            @csrf
-
-                                            <div class="card">
-                                                <div class="card-body">
-                                                    <div class="list-group list-group-flush">
-                                                        @foreach($notifications as $notification)
-                                                            <adiv class="list-group-item list-group-item-action">
-                                                                <h5>
-                                                                    Objet: <strong>{{$notification->subject}}</strong>
-                                                                    &nbsp; &nbsp;
-                                                                    <span
-                                                                        class="badge bg-primary position-absolute top|start-*"
-                                                                        style="position: relative; right: 0; font-size: small;">
-                                                        @php
-                                                            $sent_at = Carbon::parse($notification->sent_at);
-                                                        @endphp
-                                                        Le: {{$sent_at->day . '-' . $sent_at->month . '-' . $sent_at->year . ' a ' . $sent_at->hour . ':' . $sent_at->minute . ':' . $sent_at->second}}
-                                                        </span>
-                                                                </h5>
-                                                                <h5 style="font-size: small;">
-                                                                    De: {{$notification->sender}}
-                                                                    <a href="{{route('notifications.index', $notification->id)}}"
-                                                                       style="position: relative; right: 0; float:right; text-decoration: none; margin-top: 5px;">
-                                                                        {{'Details'}}
-                                                                    </a>
-                                                                </h5>
-                                                                --}}{{--<br><br>--}}{{--
-                                                            </adiv>
-
-                                                        @endforeach
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                        </div>
-                                        --}}{{--<div class="modal-footer">
-                                            <button type="button" class="btn btn-danger"
-                                                    data-bs-dismiss="modal">Annuler
-                                            </button>
-                                            <button type="submit" class="btn btn-success">Enregistrer
-                                            </button>
-                                        </div>--}}{{--
-                                        --}}{{--</form>--}}{{--
-
-
-                                    </div>
-                                </div>
-                            </div>--}}
                         </li>
                     </ul>
                 @endif
+
+                <ul class="navbar-nav ms-auto">
+
+                    <li class="nav-item">
+                        <select class="form-control" name="language" onchange="submitLanguageForm(this.value);"
+                            id="language_selector">
+                            @foreach(config('app.available_locales') as $locale)
+                                <option value="{{ $locale }}"
+                                        {{$locale === Request::segment(1) ? 'selected' : ''}}>
+                                    {{ strtoupper($locale) }}{{-- - {{Request::segment(1)}} - {{$locale}}--}}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <form method="GET" action="" id="select_language_form">
+                            {{--@csrf--}}
+
+                        </form>
+
+                        <script type="text/javascript">
+                            function submitLanguageForm(locale){
+                                var form = document.getElementById('select_language_form');
+                                //var currentUrl = window.location.href;
+                                var path = window.location.pathname;
+                                if(path.length > 0){
+                                    var pathWitoutTrailingSlash = path.substring(1, path.length);
+                                    var pathArray = pathWitoutTrailingSlash.split('/');
+                                    pathArray[0] = locale;
+
+                                    var newPathname = "";
+                                    for (i = 0; i < pathArray.length; i++) {
+                                        newPathname += "/";
+                                        newPathname += pathArray[i];
+                                    }
+                                    form.action = window.location.protocol + "//" + window.location.host + newPathname;
+                                    form.submit();
+                                }
+                            }
+                        </script>
+
+                    </li>
+                </ul>
 
                 <!-- Right Side Of Navbar notifications-modal -->
                 <ul class="navbar-nav ms-auto">
@@ -199,7 +148,7 @@ if (Auth::check()) {
                     @guest
                         @if (Route::has('authentification'))
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('authentification') }}">{{ __('Login') }}</a>
+                                <a class="nav-link" href="{{ route('authentification') }}">{{ __('Connexion') }}</a>
                             </li>
                         @endif
 
@@ -221,26 +170,22 @@ if (Auth::check()) {
 
                                 <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
 
-                                    <a class="dropdown-item" href="{{ url('password-reset')}}">
-                                        Modifier mot de passe
+                                    <a class="dropdown-item" href="{{ url('/'.GuestController::getApplicationLocal().'/password-reset')}}">
+                                        {{ __('Modifier mot de passe') }}
                                     </a>
 
                                     <a class="dropdown-item"
                                        href="{{ route('user.update-parameter.index', Auth::user()->id)}}">
-                                        Modifier mes parametres
+                                        {{ __('Mes Paramètres') }}
                                     </a>
 
-                                    {{--<a class="dropdown-item"
-                                       href="{{ route('user.list')}}">
-                                        Collaborateur
-                                    </a>--}}
 
 
-                                    <a class="dropdown-item" href="{{ route('deconnexion') }}"
+                                    <a class="dropdown-item" href="#"
                                        onclick="event.preventDefault();
                                                      document.getElementById('deconnexion-form').submit();"
                                        id="deconnexion-link">
-                                        Deconnexion
+                                        {{ __('Déconnexion') }}
                                     </a>
 
                                     <form id="deconnexion-form" action="{{ route('deconnexion') }}" method="POST"

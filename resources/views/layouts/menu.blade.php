@@ -1,34 +1,51 @@
 @php
-    use App\Models\ConversionAmountPoint;
     use App\Models\Client;
-    use Illuminate\Support\Facades\Auth;
+    use App\Models\FriendInvitatin;use Illuminate\Support\Facades\Auth;
     use App\Models\Config;
 @endphp
 
-<div class="col-md-3" >
+<div class="col-md-3">
     <div class="card">
-        <div class="card-header"><h5>{{ 'Menu' }}</h5></div>
-        <div class="card-body" >
+        <div class="card-header">
+            <h5>
+                {{ __('Menu principal') }}
+                <img src="{{asset('images/icons8-triangle-arrow-24.png')}}" alt="" height="15" width="15"/>
+            </h5>
+        </div>
+        <div class="card-body">
             <div class="list-group list-group-flush">
+
+                <a class="list-group-item list-group-item-action btn btn-link"
+                   href="{{ (Auth::check() && Auth::user()->is_admin) ? route('reports.menu') : route('home.purchases.index')}}">
+                    <h6><img src="{{asset('images/icons8-home-25.png')}}" alt=""> &nbsp;{{ __('Accueil') }}</h6>
+                </a>
                 @if(count(Config::where('is_applicable', true)->get()) > 0)
-                    <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('home.clients-list')}}">
-                        <h6><img src="{{asset('images/icons8-list-24.png')}}" alt=""> &nbsp;{{ 'Liste des Clients' }}</h6>
+                    <a class="list-group-item list-group-item-action btn btn-link"
+                       href="{{ route('home.clients-list')}}">
+                        <h6><img src="{{asset('images/icons8-list-24.png')}}" alt=""> &nbsp;{{ __('Clients') }}</h6>
                     </a>
                 @endif
 
                 @if(count(Client::all()) > 0)
-                    <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('purchases.index')}}">
-                        <h6><img src="{{asset('images/icons8-purchase-order-25.png')}}" alt=""> &nbsp;{{ 'Enregistrer un Achat' }}</h6>
+                    <a class="list-group-item list-group-item-action btn btn-link" href="{{ route('home.purchases.index')}}">
+                        <h6><img src="{{asset('images/icons8-purchase-order-25.png')}}" alt="">
+                            &nbsp;{{ __('Enregistrer un Achat') }}</h6>
                     </a>
 
-                    <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('clients.getVouchersAll.all')}}">
-                        <h6><img src="{{asset('images/icons8-loyalty-card-25.png')}}" alt=""> &nbsp;{{ 'Tous les bons' }}</h6>
-                    </a>
+                    @if(count(\App\Models\Voucher::all()) > 0)
+                        <a class="list-group-item list-group-item-action btn btn-link"
+                           href="{{ route('clients.getVouchersAll.all')}}">
+                            <h6><img src="{{asset('images/icons8-loyalty-card-25.png')}}" alt="">
+                                &nbsp;{{ __('Bons de Fidélité') }}</h6>
+                        </a>
+                    @endif
 
                 @endif
                 @if(count(Config::where('is_applicable', true)->get()) > 0)
-                    <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('rewards.index.list') }}">
-                        <h6><img src="{{asset('images/icons8-reward-25.png')}}" alt=""> &nbsp;{{ 'Recompenses' }}</h6>
+                    <a class="list-group-item list-group-item-action btn btn-link"
+                       href="{{ route('rewards.index.list') }}">
+                        <h6><img src="{{asset('images/icons8-reward-25.png')}}" alt=""> &nbsp;{{ __('Récompenses') }}
+                        </h6>
                     </a>
                 @endif
 
@@ -38,9 +55,10 @@
 
                 @if(Auth::check() && Auth::user()->is_admin)
 
-                    <a class="list-group-item list-group-item-action btn btn-link"  href="{{route('configs.index')}}"
+                    <a class="list-group-item list-group-item-action btn btn-link" href="{{route('configs.index')}}"
                        {{--data-bs-toggle="modal" data-bs-target="#system-config-modal"--}} id="lien-pour-configuration">
-                        <h6><img src="{{asset('images/icons8-configuration-25.png')}}" alt=""> &nbsp;{{ 'Configurer les parametres' }}</h6>
+                        <h6><img src="{{asset('images/icons8-configuration-25.png')}}" alt="">
+                            &nbsp;{{ __('Configuration Système') }}</h6>
                     </a>
 
                     {{--<div class="modal fade modal-lg" id="system-config-modal" data-bs-backdrop="static"
@@ -590,7 +608,7 @@
                             var link = document.getElementById('lien-pour-configuration');
                             if (link) {
                                 console.log(link.id);
-                                var  evt = new MouseEvent('click', {
+                                var evt = new MouseEvent('click', {
                                     bubbles: true,
                                     cancelable: true,
                                     view: window
@@ -618,20 +636,39 @@
                         {{ 'Definir La Conversion de point a Appliquer' }}
                     </a>--}}
 
-                   {{-- <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('enregistrement')}}">
-                        {{ 'Enregistrer un utilisateur' }}
-                    </a>--}}
-                    <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('utilisateurs.admin')}}">
-                        <h6><img src="{{asset('images/icons8-user-25.png')}}" alt=""> &nbsp;{{ 'Utilisateurs' }}</h6>
+                    {{-- <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('enregistrement')}}">
+                         {{ 'Enregistrer un utilisateur' }}
+                     </a>--}}
+                    <a class="list-group-item list-group-item-action btn btn-link"
+                       href="{{ route('utilisateurs.admin')}}">
+                        <h6><img src="{{asset('images/icons8-user-25.png')}}" alt=""> &nbsp;{{ __('Utilisateurs') }}
+                        </h6>
                     </a>
 
-                    <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('reports.menu')}}">
-                        <h6><img src="{{asset('images/icons8-report-file-25.png')}}" alt=""> &nbsp;{{ 'Rapports' }}</h6>
+                    <a class="list-group-item list-group-item-action btn btn-link" href="{{ route('reports.menu')}}">
+                        <h6><img src="{{asset('images/icons8-report-file-25.png')}}" alt=""> &nbsp;{{ __('Rapports') }}
+                        </h6>
                     </a>
 
-                        <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('send-bulk-message.admin')}}">
-                            <h6><img src="{{asset('images/icons8-sent-25.png')}}" alt=""> &nbsp;{{ 'Notifier' }}</h6>
+                    <a class="list-group-item list-group-item-action btn btn-link"
+                       href="{{ route('send-bulk-message.admin')}}">
+                        <h6><img src="{{asset('images/icons8-sent-25.png')}}" alt=""> &nbsp;{{ __('Message groupé') }}
+                        </h6>
+                    </a>
+
+                        <?php
+
+                        $friendInvitationAccepteds = FriendInvitatin::where('state', FriendInvitatin::ACCEPTED)->get();
+                        ?>
+                    @if(count($friendInvitationAccepteds) > 0)
+                        <a class="list-group-item list-group-item-action btn btn-link" href="{{route('client.invitations.accepted.index')}}">
+                            <h6><img src="{{asset('images/icons8-join-25.png')}}" alt="">
+                                &nbsp;{{ __('Invitations') . ' ' .__('accepté') }}
+                                <span class="badge bg-primary position-absolute top|start-*"
+                                      style="position: relative; right: 0; padding-top: 7px; margin-top: 10px;">{{ count($friendInvitationAccepteds) }}</span>
+                            </h6>
                         </a>
+                    @endif
 
                     {{--<a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('transactiontype')}}">
                         {{ 'Enregistrer un type de transaction' }}
@@ -641,97 +678,100 @@
                         {{ 'Enregistrer les seuils de points pour les bons' }}
                     </a>--}}
                 @endif
-                    <a class="list-group-item list-group-item-action btn btn-link"  href="{{route('users.purchases-products.index')}}"
-                       {{--data-bs-toggle="modal" data-bs-target="#system-products-modal"--}} id="lien-pour-produits-enregistres">
-                        <h6><img src="{{asset('images/icons8-product-25.png')}}" alt=""> &nbsp;{{ 'Produits enregistres' }}</h6>
-                    </a>
+                <a class="list-group-item list-group-item-action btn btn-link"
+                   href="{{route('users.purchases-products.index')}}"
+                   {{--data-bs-toggle="modal" data-bs-target="#system-products-modal"--}} id="lien-pour-produits-enregistres">
+                    <h6><img src="{{asset('images/icons8-product-25.png')}}" alt="">
+                        &nbsp;{{ __('Articles Enregistrés') }}</h6>
+                </a>
 
-                    {{--<div class="modal fade modal-lg" id="system-products-modal" data-bs-backdrop="static"
-                         data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
-                         aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="overflow-y: initial; width: 75%;">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h1 class="modal-title fs-5" id="staticBackdropLabel1">
-                                        <strong
-                                            style="color: darkred;">Produits deja enregistres du systeme</strong></h1>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                            aria-label="Close"></button>
-                                </div>
-
-                                    <div class="modal-body" style="height: 80vh; overflow-y: auto;">
-                                        @php
-                                            $products = \App\Models\Product::all();
-                                            $i = 1;
-                                        @endphp
-                                        @if(count($products) > 0)
-                                            <table class="table table-striped table-responsive table-bordered">
-                                                <thead class="" style="color: darkred;">
-                                                <th scope="col">
-                                                    {{ '#' }}
-                                                </th>
-
-                                                <th scope="col">
-                                                    {{ 'Nom du Produits' }}
-                                                </th>
-
-                                                <th scope="col">
-                                                    {{ 'Prix Unitaire' }}
-                                                </th>
-                                                <th scope="col">
-                                                    {{ 'Total' }}
-                                                </th>
-                                                </thead>
-                                                <tbody>
-                                                @foreach($products as $product)
-                                                    <tr>
-                                                        <th scope="row">
-                                                            <h5 >{{$i}}</h5>
-                                                        </th>
-                                                        <th scope="row">
-                                                            <h5 >{{$product->name}}</h5>
-                                                        </th>
-
-                                                        <td >
-                                                            <h5 >{{$product->price}}</h5>
-                                                        </td>
-
-                                                        <td >
-                                                            <h5>{{$product->others}}</h5>
-                                                        </td>
-                                                    </tr>
-                                                    @php $i = $i + 1; @endphp
-                                                @endforeach
-                                                </tbody>
-                                            </table>
-                                        @endif
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-danger"
-                                                data-bs-dismiss="modal">Annuler
-                                        </button>
-                                        --}}{{--<button type="submit" class="btn btn-success">Enregistrer
-                                        </button>--}}{{--
-                                    </div>
+                {{--<div class="modal fade modal-lg" id="system-products-modal" data-bs-backdrop="static"
+                     data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+                     aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="overflow-y: initial; width: 75%;">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h1 class="modal-title fs-5" id="staticBackdropLabel1">
+                                    <strong
+                                        style="color: darkred;">Produits deja enregistres du systeme</strong></h1>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
                             </div>
-                        </div>
-                    </div>--}}
 
-                    <a class="list-group-item list-group-item-action btn btn-link"  href="{{route('home.loyaltytransactions.all')}}"
-                       id="lien-pour-transaction-enregistres">
-                        <h6>
-                            <img src="{{asset('images/icons8-transaction-25.png')}}" alt=""> &nbsp;{{ 'Transactions' }}
-                            <span class="badge bg-primary position-absolute top|start-*"
-                                  style="position: relative; right: 0; padding-top: 7px;">{{''}}</span>
-                        </h6>
-                    </a>
-                    {{--<a class="list-group-item list-group-item-action btn btn-link"  href="#">
-                        <h6>
-                            <img src="{{asset('images/icons8-transaction-25.png')}}" alt=""> &nbsp;{{ 'Transactions' }}
-                            <span class="badge bg-primary position-absolute top|start-*"
-                                  style="position: relative; right: 0; padding-top: 7px;"></span>
-                        </h6>
-                    </a>--}}
+                                <div class="modal-body" style="height: 80vh; overflow-y: auto;">
+                                    @php
+                                        $products = \App\Models\Product::all();
+                                        $i = 1;
+                                    @endphp
+                                    @if(count($products) > 0)
+                                        <table class="table table-striped table-responsive table-bordered">
+                                            <thead class="" style="color: darkred;">
+                                            <th scope="col">
+                                                {{ '#' }}
+                                            </th>
+
+                                            <th scope="col">
+                                                {{ 'Nom du Produits' }}
+                                            </th>
+
+                                            <th scope="col">
+                                                {{ 'Prix Unitaire' }}
+                                            </th>
+                                            <th scope="col">
+                                                {{ 'Total' }}
+                                            </th>
+                                            </thead>
+                                            <tbody>
+                                            @foreach($products as $product)
+                                                <tr>
+                                                    <th scope="row">
+                                                        <h5 >{{$i}}</h5>
+                                                    </th>
+                                                    <th scope="row">
+                                                        <h5 >{{$product->name}}</h5>
+                                                    </th>
+
+                                                    <td >
+                                                        <h5 >{{$product->price}}</h5>
+                                                    </td>
+
+                                                    <td >
+                                                        <h5>{{$product->others}}</h5>
+                                                    </td>
+                                                </tr>
+                                                @php $i = $i + 1; @endphp
+                                            @endforeach
+                                            </tbody>
+                                        </table>
+                                    @endif
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-danger"
+                                            data-bs-dismiss="modal">Annuler
+                                    </button>
+                                    --}}{{--<button type="submit" class="btn btn-success">Enregistrer
+                                    </button>--}}{{--
+                                </div>
+                        </div>
+                    </div>
+                </div>--}}
+
+                <a class="list-group-item list-group-item-action btn btn-link"
+                   href="{{route('home.loyaltytransactions.all')}}"
+                   id="lien-pour-transaction-enregistres">
+                    <h6>
+                        <img src="{{asset('images/icons8-transaction-25.png')}}" alt=""> &nbsp;{{ __('Transactions') }}
+                        <span class="badge bg-primary position-absolute top|start-*"
+                              style="position: relative; right: 0; padding-top: 7px;">{{''}}</span>
+                    </h6>
+                </a>
+                {{--<a class="list-group-item list-group-item-action btn btn-link"  href="#">
+                    <h6>
+                        <img src="{{asset('images/icons8-transaction-25.png')}}" alt=""> &nbsp;{{ 'Transactions' }}
+                        <span class="badge bg-primary position-absolute top|start-*"
+                              style="position: relative; right: 0; padding-top: 7px;"></span>
+                    </h6>
+                </a>--}}
             </div>
         </div>
     </div>

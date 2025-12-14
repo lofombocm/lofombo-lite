@@ -40,7 +40,7 @@
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header">
-                        <h3>{{ 'Disponibilite de recompenses au travers des bons' }} <br></h3>
+                        <h3>{{ __('Disponibilité de récompenses à travers les Bons de Fidélité') }} <br></h3>
                     </div>
 
                     <div class="card-body">
@@ -56,11 +56,11 @@
                         </ul>
 
                         <p>
-                            Pour le faire vous devez vous connecter en cliquant sur le lien:
+                            {{ __("Cliquez sur le lien suivant pour accéder à la plateforme") }}:
                             <a href="{{$data['clientLoginUrl']}}" class="btn btn-primary" >{{'Cliquez ici pour vous connecter.'}}</a>
                         </p>
 
-                        <h5>Merci pour votre fidelite.</h5>
+                        <h5>{{ __("Merci pour votre Fidélité.") }}</h5>
                     </div>
                 </div>
             </div>

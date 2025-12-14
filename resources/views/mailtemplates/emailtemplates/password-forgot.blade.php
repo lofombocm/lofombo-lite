@@ -41,16 +41,17 @@
                 <div class="card">
                     <div class="card-header">
                         <h1>{{ 'Recuperation du mot de passe' }} <br></h1>
-                    {{ 'Mme/M. ' . $data['name'] }}
+                    {{ __('Mme'). '/' . __('M.') . ' ' . $data['name'] }}
                     </div>
 
                     <div class="card-body">
                         <p>
-                            L'application {{env('APP_NAME')}} vient de recevoir votre demande de recuperation de votre mot de passe.
-                            Nous vous prions de cliquer sur le bouton ci-dessous pour poursuivre l'operation sollicitee. <br>
+                            {{ __('L\'application') }} {{env('APP_NAME')}} {{' '}}
+                            {{ __('vient de recevoir votre demande de récupération de votre mot de passe. Nous vous prions de cliquer sur le bouton ci-dessous pour poursuivre l\'opération sollicitée.') }}
+                            <br>
                         </p>
 
-                        <a href="{{$data['passwordRecoveringUrl']}}" class="btn btn-primary" >{{'Cliquez ici pour recuperer votre mot de passe.'}}</a>
+                        <a href="{{$data['passwordRecoveringUrl']}}" class="btn btn-primary" >{{ __('Cliquez ici pour récupérer votre mot de passe') }}</a>
 
                     </div>
                 </div>

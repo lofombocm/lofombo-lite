@@ -4,6 +4,7 @@
     use App\Models\Notification;
     use Illuminate\Support\Facades\Auth;
     use App\Models\Client;
+    use App\Http\Controllers\GuestController;
 
     $notifications = Notification::where('sender_address', Auth::user()->email)->where('read', false)->get();
     $unreadMsgNum = count($notifications);
@@ -37,15 +38,15 @@
                         <div class="col-md-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h4 style="display: inline; float: left;">{{ 'Clients' }} </h4>
+                                    <h4 style="display: inline; float: left;">{{ __('Clients') }} </h4>
                                     <h5 style="display: inline; float: right;">
                                         @if(count(Config::where('is_applicable', true)->get()) > 0)
                                             <a href="{{ route('clients.index')}}"
                                                style="text-decoration: none; font-size: x-large; color: green;"
                                                id="add_level_field"
-                                               title="Ajouter un client">
+                                               title="{{ __('Ajouter un client') }}">
                                                 <strong><span class="glyphicon glyphicon-plus">+</span></strong>
-                                                <span style="font-size: initial;">{{ 'Ajouter' }}</span>
+                                                <span style="font-size: initial;">{{ __('Ajouter') }}</span>
                                             </a>
                                         @endif
                                     </h5>
@@ -55,19 +56,19 @@
                                     <table class="table table-striped table-responsive table-bordered">
                                         <thead class="" style="color: darkred;">
                                         <th scope="col">
-                                            {{ 'Nom' }}
+                                            {{ __('Nom') }}
                                         </th>
                                         <th scope="col">
-                                            {{ 'Telephone' }}
+                                            {{ __('Numéro Tel') }}
                                         </th>
                                         <th scope="col">
-                                            {{ 'Email' }}
+                                            {{ __('Email') }}
                                         </th>
                                         <th scope="col">
-                                            {{ 'Solde' }}
+                                            {{ __('Points de fidélité') }}
                                         </th>
                                         <th scope="col">
-                                            {{ 'Actions' }}
+                                            {{ __('Actions') }}
                                         </th>
                                         </thead>
                                         <tbody>
@@ -86,83 +87,24 @@
                                                     <h5>{{$c->email ? $c->email : 'N/D'}}</h5>
                                                 </td>
                                                 <td>
-                                                    <h5>{{$loyaltyaccount->point_balance}}</h5>
+                                                    <h5>{{intval(strval(decrypt(($loyaltyaccount->point_balance)))}}</h5>
                                                 </td>
                                                 <td>
-                                                    <a href="{{url('/home/clients/' . $c->id)}}"
+                                                    <a href="{{url('/'.GuestController::getApplicationLocal().'/home/clients/' . $c->id)}}"
                                                        class="list-group-item list-group-item-action">
                                                         <img src="{{asset('images/icons8-right-chevron-25.png')}}" alt=">"/>
                                                     </a>
-
                                                 </td>
                                             </tr>
                                         @endforeach
                                         </tbody>
                                     </table>
-
-
-                                    {{--<div class="list-group list-group-flush">
-                                        @foreach(Client::all() as $c)
-                                            <br>
-                                            <a href="{{url('/home/clients/' . $c->id)}}"
-                                               class="list-group-item list-group-item-action">
-                                                <h5>
-                                                    {{$c->name}} &nbsp; &nbsp; {{$c->email}}
-                                                    <span class="badge bg-primary position-absolute top|start-*"
-                                                          style="position: relative; right: 0;">{{$c->telephone}}
-                                                        @if($c->active)
-                                                            <span class="position-absolute top-0 start-100
-                                                                         translate-middle p-2 rounded-pill
-                                                                         bg-success border border-light
-                                                                         rounded-circle badge">
-                                                                <span class="visually-hidden">
-                                                                    Notifications of newly launched courses
-                                                                </span>
-                                                            </span>
-
-                                                        @else
-
-                                                            <span class="position-absolute top-0 start-100
-                                                                         translate-middle p-2 rounded-pill
-                                                                         bg-danger border border-light
-                                                                         rounded-circle badge">
-                                                                <span class="visually-hidden">
-                                                                    Notifications of newly launched courses
-                                                                </span>
-                                                            </span>
-                                                        @endif
-                                                        </span>
-                                                    <br>
-                                                    <span class="badge bg-light position-absolute top|start-*"
-                                                          style="position: relative; right: 0; margin-top: 5px;">
-                                                            <?php
-                                                            $loyaltyaccount = \App\Models\Loyaltyaccount::where('holderid', $c->id)->first();
-                                                            ?>
-                                                            <strong
-                                                                style="color: #6f42c1;">Solde point de fidelite: {{$loyaltyaccount->point_balance}}</strong>
-                                                        </span>
-
-                                                </h5>
-                                                <br>
-                                            </a>
-
-                                        @endforeach
-                                    </div>--}}
                                 </div>
                             </div>
                         </div>
-                        {{--<div class="col-md-5">
-                            <div class="card">
-                                <div class="card-header"><h4>{{ 'Last Transaction' }}</h4></div>
-                            </div>
-                        </div>--}}
+
                     </div>
 
-                    {{--</div>--}}
-
-                    {{--<div class="card-footer">
-                        {{' '}}
-                    </div>--}}
                 </div>
             </div>
         </div>

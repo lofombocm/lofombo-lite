@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -30,7 +29,7 @@ class MailForUserInvitation extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Invitation a s\'enregistrer  au systeme de fidelite de ' . $this->data['enterprise'],
+            subject: __("Invitation à s'enregistrer  à la plateforme de fidélité de") . ' ' . $this->data['enterprise'],
         );
     }
 

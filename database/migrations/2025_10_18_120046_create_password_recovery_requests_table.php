@@ -15,8 +15,10 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('email');
             $table->foreign('email')->references('email')->on('users');;
-            $table->timestamp('created_at')->useCurrent();
+            $table->string('telephone');
+            $table->foreign('telephone')->references('telephone')->on('clients');;
             $table->timestamp('expire_at')->useCurrent();
+            $table->timestamps();
         });
     }
 

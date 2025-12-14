@@ -65,7 +65,10 @@ class ConfigController extends Controller
             //'enterprise_logo' => 'required|file|mimes:jpeg,jpg,png',
         ];
         $validatorRules = array_merge(array_merge($validatorRule1, $levelValidatorRule), $validatorRule2);
-        $validator = Validator::make($request->all(), $validatorRules);
+        $validator = Validator::make(
+            $request->all(),
+            $validatorRules,
+        );
 
         if($validator->fails()){
             session()->flash('error', $validator->errors()->first());
@@ -122,9 +125,6 @@ class ConfigController extends Controller
                 'amount_per_point'=> doubleval($request->get('amount_per_point')),
                 'currency_name' => $request->get('currency_name'),
                 'levels' => json_encode($levels),
-                /*'classic_threshold' => $request->get('classic_threshold'),
-                'premium_threshold' => $request->get('premium_threshold'),
-                'gold_threshold' => $request->get('gold_threshold'),*/
                 'voucher_duration_in_month' => intval($request->get('voucher_duration_in_month')),
                 'password_recovery_request_duration' => $numMinute,
                 'enterprise_name' => $request->get('enterprise_name'),

@@ -1,5 +1,5 @@
 @php
-
+    use App\Http\Controllers\GuestController;
 @endphp
 @extends('layouts.app')
 
@@ -13,9 +13,9 @@
                 <div class="card">
                     <div class="card-header">
                         <div id="top" style="display: inline; float: left;">
-                            <a class="btn btn-link"  href="{{url('/home')}}" style="text-decoration: none; font-size: large;">&lt;</a>
+                            <a class="btn btn-link"  href="{{url('/'.GuestController::getApplicationLocal().'/home')}}" style="text-decoration: none; font-size: large;">&lt;</a>
                             <button class="btn btn-link" onclick="history.back();" style="text-decoration: none; font-size: large;"><<</button>
-                            &nbsp;&nbsp;&nbsp;{{ 'Les Transactions' }}</div>
+                            &nbsp;&nbsp;&nbsp;{{ __('Transactions') }}</div>
                         <div style="display: inline; float: right;">
                             <form action="{{route('home.loyaltytransactions.search')}}" method="POST" role="search">
                                 @csrf
@@ -44,20 +44,20 @@
                                     </th>
 
                                     <th scope="col">
-                                        {{ 'Date' }}
+                                        {{ __('Date') }}
                                     </th>
 
                                     <th scope="col">
-                                        {{ 'Montant' }}
+                                        {{ __('Montant') }}
                                     </th>
                                     <th scope="col">
-                                        {{ 'Nbre Points' }}
+                                        {{ __('Nbre Points') }}
                                     </th>
                                     <th scope="col">
-                                        {{ 'Type Transaction' }}
+                                        {{ __('Type Transaction') }}
                                     </th>
                                     <th scope="col">
-                                        {{ 'Plus Details' }}
+                                        {{ __('Plus...') }}
                                     </th>
 
                                     </thead>
@@ -85,7 +85,7 @@
                                             </td>
 
                                             <td >
-                                                <a href="{{route('home.loyaltytransactions.details', $tx->id)}}"
+                                                <a href="{{route('home.loyaltytransactions.details', ['txid' => $tx->id/*, 'locale' => \Illuminate\Support\Facades\Request::segment(1)*/])}}"
                                                    class="btn btn-link" style="text-decoration: none;">
                                                     <img src="{{asset('images/icons8-right-chevron-25.png')}}" alt=">"/>
                                                 </a>
@@ -96,7 +96,7 @@
                                     </tbody>
                                 </table>
                         @else
-                            <h5>{{'Aucun detail trouve. Essayer de chercher de nouveau !'}}</h5>
+                            <h5>{{ __("Aucune transaction trouvée") }}</h5>
                         @endif
                     </div>
 

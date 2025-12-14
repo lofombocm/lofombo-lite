@@ -17,13 +17,13 @@
                         <h4 style="width: 100%; text-align: right; border-bottom: 0 black solid; text-decoration: underline;">
                             <i>Le {{Carbon::now()->format('d-m-Y')}}</i>
                         </h4>
-                        <span style="width: 100%; text-align: center; border-bottom: 0 black solid; font-size: x-large; margin-bottom: 30px;">
+                        <span style="width: 100%; text-align: center; border-bottom: 0 black solid; font-size: large; margin-bottom: 30px;">
                             @if(isset($from))
-                                {{ 'Transaction de la periode du ' . Carbon::parse($from)->format('d-m-Y') .
-                                ' au ' . Carbon::parse($to)->format('d-m-Y')}}
+                                {{ __("Transactions de la période du") . ' ' . Carbon::parse($from)->format('d-m-Y') .
+                                __("au") . '  ' . Carbon::parse($to)->format('d-m-Y')}}
                             @else
                                 <span style="width: 100%; text-align: center; border-bottom: 0 black solid; font-size: x-large; margin-bottom: 30px;">
-                                     {{'Toutes les Transactions'}}
+                                     {{ __("Toutes les Transactions") }}
                                 </span>
                             @endif
 
@@ -39,20 +39,20 @@
                                 </th>
 
                                 <th scope="col" style="vertical-align: middle;">
-                                    {{ 'Date' }}
+                                    {{ __('Date') }}
                                 </th>
 
                                 <th scope="col" style="vertical-align: middle;">
-                                    {{ 'Montant' }}
+                                    {{ __('Montant') }}
                                 </th>
                                 <th scope="col" style="vertical-align: middle;">
-                                   {{ 'Nbre Points' }}
+                                   {{ __('Points') }}
                                 </th>
                                 <th scope="col">
-                                    {{ 'Type Transaction' }}
+                                    {{ __('Type Transaction') }}
                                 </th>
                                 <th scope="col" style="vertical-align: middle;">
-                                    {{ 'Client' }}
+                                    {{ __('Client') }}
                                 </th>
 
                                 </thead>
@@ -97,96 +97,66 @@
                                 @endforeach
                                 </tbody>
                             </table>
+
+                        <br><br>
+                            <div class="row" style="border-bottom: 3px black solid; margin-top: 20px;">
+
+                            </div>
+
+                        <br><br>
+                            <table>
+                                <thead class="" style="color: darkred; border: 1px black solid;">
+                                    <th scope="col" style="vertical-align: middle;">
+                                        {{ '#' }}
+                                    </th>
+
+                                    <th scope="col" style="vertical-align: middle;">
+                                        {{ __('Libelé') }}
+                                    </th>
+
+                                    <th scope="col" style="vertical-align: middle;">
+                                        {{ __('Valeur') }}
+                                    </th>
+                                </thead>
+                                <tbody style="color: black;">
+                                    <tr style="height: 60px;">
+                                        <th scope="row" style="vertical-align: middle;">
+                                            <span>{{'1'.'- '}}</span>
+                                            <br>
+                                        </th>
+                                        <td>{{__("Montant Total")}}</td>
+                                        <td>{{$total}}</td>
+                                    </tr>
+
+                                    <tr style="height: 60px;">
+                                        <th scope="row" style="vertical-align: middle;">
+                                            <span>{{'2'.'- '}}</span>
+                                            <br>
+                                        </th>
+                                        <td>{{__("Montant Achat")}}</td>
+                                        <td>{{$purchase_total}}</td>
+                                    </tr>
+                                    <tr style="height: 60px;">
+                                        <th scope="row" style="vertical-align: middle;">
+                                            <span>{{'3'.'- '}}</span>
+                                            <br>
+                                        </th>
+                                        <td>{{__("Bonus Enregistrement")}}</td>
+                                        <td>{{$gift_total}}</td>
+                                    </tr>
+                                    <tr style="height: 60px;">
+                                        <th scope="row" style="vertical-align: middle;">
+                                            <span>{{'4'.'- '}}</span>
+                                            <br>
+                                        </th>
+                                        <td>{{__("Bonus Anniversaire")}}</td>
+                                        <td>{{$birthdate_total}}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                             @else
-                            <h4>{{'Aucune transaction trouvee'}}</h4>
+                            <h4>{{ __("Aucune transaction trouvée") }}</h4>
                         @endif
-                        {{--<div class="list-group list-group-flush alert alert-info" style="margin-top: -20px;">
-                            <a href="#" class="list-group-item list-group-item-action"
-                               style="margin-left: 15px; width: 98%; text-decoration: none; color: black;">
-                                <span>
-                                    No. de Serie: {{$voucher->serialnumber}}
-                                    <span style="display: inline; position: relative; float:right; color: #000000;">
-                                        {{ 'ID: ' }} {{$voucher->id}}
-                                    </span>
-                                </span>
-                                <br>
-                            </a>
-
-                            <a href="#" class="list-group-item list-group-item-action"
-                               style="margin-left: 15px; width: 98%; text-decoration: none; color: black;">
-                                <br>
-                                <span>
-                                    Porteur: {{$client->name}}
-                                    <span style="display: inline; position: relative; float:right; color: #000000;">
-                                        {{ 'Tel: ' }} {{$client->telephone}}
-                                    </span>
-                                </span>
-                                <br>
-                            </a>
-
-                            <a href="#" class="list-group-item list-group-item-action"
-                               style="margin-left: 15px; width: 98%; text-decoration: none; color: black;">
-                                <br>
-                                <span>
-                                    Point: {{$voucher->point}}
-                                </span>
-                                <br>
-                            </a>
-
-                            <a href="#" class="list-group-item list-group-item-action"
-                               style="margin-left: 15px; width: 98%; text-decoration: none; color: black;">
-                                <br>
-                                <span>
-                                    Emetteur: {{$voucher->enterprise}}
-                                </span>
-                                <br>
-                            </a>
-
-                            <a href="#" class="list-group-item list-group-item-action"
-                               style="margin-left: 15px; width: 98%; text-decoration: none; color: black;">
-                                <br>
-                                <span>
-                                    Emis le: &nbsp; &nbsp; {{\Illuminate\Support\Carbon::parse($voucher->created_at)->format('d-m-Y H:i:s')}}
-                                </span>
-                                <br>
-                            </a>
-
-                            <a href="#" class="list-group-item list-group-item-action"
-                               style="margin-left: 15px; width: 98%; text-decoration: none; color: black;">
-                                <br>
-                                <span>
-                                    Expire le: {{\Illuminate\Support\Carbon::parse($voucher->expirationdate)->format('d-m-Y H:i:s')}}
-                                </span>
-                                <br>
-                            </a>
-
-                            <a href="#" class="list-group-item list-group-item-action"
-                               style="margin-left: 15px; width: 98%; text-decoration: none;">
-                                <h5 style="display: inline; float: right; margin-top: -110px;">
-                                    <?php
-
-                                    $from = [255, 0, 0];
-                                    $to = [0, 0, 255];
-                                    $qrcode = QrCode::size(200)
-                                        ->style('dot')
-                                        ->eye('circle')
-                                        ->gradient($from[0], $from[1], $from[2], $to[0], $to[1], $to[2], 'diagonal')
-                                        ->margin(1)
-                                        ->generate($voucher->serialnumber);
-                                    ?>
-                                    <span style="float: right; text-align: center;">
-                                        {{$qrcode}}
-                                    </span>
-                                    <br>
-                                    <span style="float: right; text-align: center; margin-top: 50px; color: black;">
-                                        <span><b>{{$voucher->enterprise . ' Vous remercie de votre fidelite.'}}</b></span>
-                                    </span>
-                                </h5>
-                            </a>
-                            <br>
-
-                        </div>--}}
-
 
                     </div>
                 </div>

@@ -30,7 +30,7 @@ class MailForVoucherSendUsageCode extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Votre code d\'utilisation de Bon.',
+            subject: __("Votre code d'utilisation de bon") . '.',
         );
     }
 

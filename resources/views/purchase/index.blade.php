@@ -8,30 +8,42 @@
 
             <div class="col-md-9">
                 <div class="card">
-                    <div class="card-header">{{ 'Enregistrer un Achat' }}</div>
+                    <div class="card-header"><h5>{{ __('Enregistrer un Achat') }}</h5></div>
                     <div class="card-body">
-                        @if (session('status'))
-                            <div class="alert alert-success" role="alert">
-                                {{ session('status') }}
-                            </div>
-                        @endif
+
 
                             <span  id="produits" style="display: none; height: 0; width: 0;">{{json_encode(\App\Models\Product::all())}}</span>
                             <form method="POST"
                                   action="{{ route('purchases.index.post') }}"
                                   enctype="multipart/form-data" onsubmit="return onSubmitPurchse();">
                                 @csrf
-                                <div><h5>Les champs marques par <b class="" style="color: red;">*</b> sont obligatoires</h5></div>
+                                <div><h5>{{__('Les champs marqués par ')}} <b class="" style="color: red;">*</b> {{__('sont obligatoires')}}</h5></div>
                                 <br>
+                                @if (session('status'))
+                                    <div class="alert alert-success" role="alert">
+                                        {{ session('status') }}
+                                    </div>
+                                @endif
+                                {{--@if (session('status'))
+                                    <div class="alert alert-success" role="alert">
+                                        {{ session('status') }}
+                                    </div>
+                                @endif--}}
+                                @if (session('error'))
+                                    <div class="alert alert-danger" role="alert">
+                                        {{ session('error') }}
+                                    </div>
+                                @endif
 
-                                <input type="hidden" name="error" id="error" class="form-control @error('error') is-invalid @enderror">
+                                {{--<input type="hidden" name="error" id="error" class="form-control @error('error') is-invalid @enderror">
                                 @error('error')
                                 <span class="invalid-feedback" role="alert" style="position: relative; width: 100%; text-align: center;">
                                         <strong>{{ $message }}</strong>
                                     </span> <br/>
-                                @enderror
+                                @enderror--}}
+
                                 <div class="row mb-3">
-                                    <label for="client_id" class="col-md-3 col-form-label text-md-end">{{ 'Client' }}
+                                    <label for="client_id" class="col-md-3 col-form-label text-md-end">{{ __("Client") }}
                                         <b class="" style="color: red;">*</b></label>
 
                                     <div class="col-md-9">
@@ -56,7 +68,7 @@
                                 </div>
 
                                 <div class="row mb-3">
-                                    <label for="amount" class="col-md-3 col-form-label text-md-end">{{ 'Montant De l\'achat' }}
+                                    <label for="amount" class="col-md-3 col-form-label text-md-end">{{ __('Montant') }}
                                         <b class="" style="color: red;">*</b>
                                     </label>
 
@@ -73,7 +85,7 @@
 
                                 <div class="row mb-3">
                                     <label for="receiptnumber" class="col-md-3 col-form-label text-md-end">
-                                        {{ 'Numero du recu' }}
+                                        {{ __("Numéro Ticket / Reçu") }}
                                         <b class="" style="color: red;">*</b>
                                     </label>
 
@@ -85,6 +97,16 @@
                                         <strong>{{ $message }}</strong>
                                     </span>
                                         @enderror
+                                        @if(session('purchase'))
+                                            <small style="color: red; font-size: x-small;">
+                                                {{__("Créé le")}}: {{\Illuminate\Support\Carbon::parse(session('purchase')->created_at)->format('d-m-Y H:i:s')}}
+                                                <?php
+                                                    $clientReceipt = \App\Models\Client::where('id', session('purchase')->clientid)->first();
+                                                ?>
+                                                {{__("a nom du client")}}: {{$clientReceipt->name}}, {{__("Montant")}}: {{session('purchase')->amount}}
+                                                (ID: {{session('purchase')->id}})
+                                            </small>
+                                        @endif
                                     </div>
                                 </div>
 
@@ -107,7 +129,7 @@
                                 <div class="row mb-3" id="product-content" {{--style="display: none;"--}}>
                                     <input type="hidden" id="numitem" name="numitem" value="0">
                                     <label for="products" class="col-md-3 col-form-label text-md-end">
-                                        {{ 'Produits'}}
+                                        {{ __("Articles")}}
                                         <br>
                                         <a href="#" onclick="addProduct_fields();" style="text-decoration: none; font-size: initial; color: green;" id="add_level_field">
                                             <strong><span class="glyphicon glyphicon-plus">+</span></strong>
@@ -126,14 +148,19 @@
                                     </div>
 
                                 </div>
-                                    {{--<div class="input-group-btn" style="text-align: right;">
-                                        <button class="btn btn-link" type="button"  > <span class="glyphicon glyphicon-plus" style="font-size: large;">Ajouter</span> </button>
-                                    </div>--}}
+
+                                <span style="display: none;" id="label_unit_price">{{__("Prix Unitaire (TTC)")}}</span>
+                                <span style="display: none;" id="label_quantity">{{__("QTE")}}</span>
+                                <span style="display: none;" id="label_item_name">{{__("Nom Article")}}</span>
+
+                                {{--<div class="input-group-btn" style="text-align: right;">
+                                    <button class="btn btn-link" type="button"  > <span class="glyphicon glyphicon-plus" style="font-size: large;">Ajouter</span> </button>
+                                </div>--}}
 
                                         <script type="text/javascript">
                                             function setClientId(nameAndTel){
                                                 //var regExp = /([A-Z]|[a-z]|[0-9])+(\s([A-Z]|[a-z]|[0-9])+)*(\s+\(Tel\:\s[0-9]{9,15}\))/g;
-                                                var regExp2 = /[0-9]{9,15}/g;
+                                                var regExp2 = /[0-9]{8,15}/g;
                                                 var clientid = document.getElementById("clientid");
                                                 //var test = "Nguetsop Ngoufack Edwige Laure (Tel: 691179154)";
                                                 var matches = nameAndTel.match(regExp2);
@@ -162,17 +189,17 @@
                                                     '<div class="row" id="product' + index + '" style="margin-bottom: 7px;">' +
                                                         '<div class="col-sm-3 nopadding">' +
                                                             '<div class="form-group">' +
-                                                                '<input type="text" class="form-control" name="productname' + index + '" value="" placeholder="Nom du produit" onblur="filterProducts(this);">' +
+                                                                '<input type="text" class="form-control" name="productname' + index + '" value="" placeholder="' + document.getElementById("label_item_name").innerHTML + '" onblur="filterProducts(this);">' +
                                                             '</div>' +
                                                         '</div>' +
                                                         '<div class="col-sm-3 nopadding">' +
                                                             '<div class="form-group">' +
-                                                                '<input id="unitprice' +  index + '" type="number" class="form-control" name="unitprice' + index + '" value="" placeholder="Prix Unitaire" onblur="displayTotal();">'+
+                                                                '<input id="unitprice' +  index + '" type="number" class="form-control" name="unitprice' + index + '" value="" placeholder="'  +  document.getElementById("label_unit_price").innerHTML + '" onblur="displayTotal();">'+
                                                             '</div>' +
                                                         '</div>' +
                                                         '<div class="col-sm-3 nopadding">' +
                                                             '<div class="form-group">' +
-                                                                '<input id="' +  index + '" type="number" class="form-control" name="quantity' + index + '" value="" placeholder="Quantite" onblur="displayTotal();">' +
+                                                                '<input id="' +  index + '" type="number" class="form-control" name="quantity' + index + '" value="" placeholder="' + document.getElementById("label_quantity").innerHTML + '" onblur="displayTotal();">' +
                                                            '</div>' +
                                                         '</div>' +
                                                         '<div class="col-sm-3 nopadding">' +
@@ -208,7 +235,7 @@
                                                 console.log(inputPriceId);
                                                 console.log(nomProduit);
                                                 for(var i = 0; i < produits.length; i++){
-                                                    if(nomProduit.toUpperCase() === produits[i].name){
+                                                    if(nomProduit.toUpperCase() === produits[i].name.toUpperCase()){
                                                         console.log(produits[i].price);
                                                         inputPrice.setAttribute("value", produits[i].price);
                                                         break;
@@ -313,7 +340,7 @@
                                         <a {{--type="submit"--}} class="btn btn-primary" href="#" onclick="loadModal();"
                                            data-bs-toggle="modal"
                                            data-bs-target="#confirm-register-purchase-modal">
-                                            {{ 'Enregistrer' }}
+                                            {{ __('Enregistrer') }}
                                         </a>
 
                                         {{--<button id="open-confirm-purchase-modal" class="btn btn-primary" data-bs-toggle="modal"
@@ -329,7 +356,7 @@
                                                 <div class="modal-content">
                                                     <div class="modal-header">
                                                         <h1 class="modal-title fs-5" id="staticBackdropLabel">
-                                                            {{'Confirmez-vous l\'enregistrement de l\'achat?'}}
+                                                            {{ __("Confirmez les informations") }}
                                                             {{--<strong
                                                                 style="color: darkred;">{{$client->name}}</strong>--}}
                                                         </h1>
@@ -366,7 +393,7 @@
                                                                     data-bs-dismiss="modal">Annuler
                                                             </button>
                                                             <button type="submit" class="btn btn-success">
-                                                                {{'Confirmer l\'achat'}}
+                                                                {{__('Confirmer l\'achat')}}
                                                             </button>
                                                         </div>
                                                     {{--</form>--}}
@@ -403,7 +430,7 @@
 
                                                 for(var i = 0; i < datalistOptions.length; i++){
                                                     //console.log(datalistOptions[i]);
-                                                    var regExp2 = /[0-9]{9,15}/g;
+                                                    var regExp2 = /[0-9]{8,15}/g;
                                                     var matches = datalistOptions[i].value.match(regExp2);
                                                     //if(matches !== null){
                                                     console.log(datalistOptions[i].value + ' ?= ' + nameTel);
@@ -442,10 +469,6 @@
                             </form>
 
                     </div>
-
-                    {{--<div class="card-footer">
-                        {{' '}}
-                    </div>--}}
                 </div>
             </div>
         </div>

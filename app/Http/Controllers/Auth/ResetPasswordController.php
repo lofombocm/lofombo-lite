@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
@@ -47,6 +48,8 @@ class ResetPasswordController extends Controller
     public function resetPassword(): View
     {
         //$thiken = $this->route('token');
+        //dd(Route::current()->parameters());
+        //dd(array_merge(Route::current()->parameters(),[/*'locale' => $locale*/]));
         return view('auth.passwords.reset');
     }
 
@@ -60,10 +63,20 @@ class ResetPasswordController extends Controller
         //$reqStr = json_encode($request);
         //return redirect('/test')->with('message', $reqStr);
 
+        //dd($request);
         $request->validate([
-            'email' => ['required', 'string', 'email'],
-            'currentpassword' => ['required', 'string'],
-            'password' => ['required', 'string', 'min:8', 'max:20', 'confirmed'],
+            'email' => 'required|string|email|exists:users,email',
+            'currentpassword' => 'required|string|min:8|max:20',
+            'password' => 'required|string|min:8|max:20|confirmed',
+        ], [
+            'email.required' => __('L\'adresse E-Mail est obligatoire'),
+            'email.email' => __('L\'adresse E-Mail n\'est pas valide'),
+            'email.exists' => __("L'adresse E-Mail n'existe pas"),
+            'currentpassword.required' => __('Le mot de passe actuel est obligatoire'),
+            'password.required' => __('Le mot de passe est obligatoire'),
+            'password:max' => __('Le mot de passe doit avoir au plus 20 caractères'),
+            'password.min' => __('Le mot de passe doit avoir au moins 8 caractères'),
+            'password.confirmed' => __('Les mots de passe ne correspondent pas'),
         ]);
         /*$updatePassword = DB::table('password_reset_tokens')
             ->where([
@@ -75,9 +88,14 @@ class ResetPasswordController extends Controller
             return back()->withInput()->with('error', 'Invalid token!');
         }*/
 
-        $credentials = ['email' => $request->email, 'password' => $request->currentpassword ];//$request->only('email', 'current-password');
+        $user = User::where('email', $request->get('email'))->first();
+
+        $credentials = ['username' => $user->username, 'password' => $request->get('currentpassword') ];//$request->only('email', 'current-password');
         if (!Auth::attempt($credentials)) {
-            return back()->withInput()->with('error', 'Invalid current password');
+            //dd($request->get('password'));
+            $msg = __("Mot de passe actuel invalide");
+            session()->flash('error', );
+            return back()->withInput()->with('error', $msg);
         }
 
         User::where('email', $request->email)->update(['password' => Hash::make($request->password)]);
@@ -85,46 +103,9 @@ class ResetPasswordController extends Controller
         Session::flush();
         Auth::logout();
         //return Redirect('login');
-        session()->flash('status', 'Your password has been changed');
-        return redirect()->route('authentification')->with('message', 'Votre mot de passe a ete modifie avec succes!');
-        //return redirect('/login')->with('message', 'Votre mot de passe a ete modifie avec succes!');
-    }
-
-
-    public function postResetPasswordFirstConnection(Request $request)  {
-        $validator = Validator::make($request->all(), [
-            'userid' => 'required|numeric|exists:users,id',
-            //'currentpassword' => ['required', 'string'],
-            'password' => ['required', 'string', 'min:8', 'max:20', 'confirmed'],
-        ]);
-
-        if($validator->fails()){
-            session()->flash('error', $validator->errors()->first());
-            return back()->withErrors(['error' => $validator->errors()->first()]);
-        }
-
-        $user = User::where('id', intval($request->get('userid')))->first();
-        $user->update(['password' => Hash::make($request->get('password'))]);
-        Session::flush();
-        Auth::logout();
-        //return Redirect('login');
-        session()->flash('status', 'Your password has been changed');
-
-        $request->merge(['username' => $user->username]);
-
-        $credentials = $request->only('username', 'password');
-        if (Auth::attempt($credentials, $request->remember)) {
-            $request->session()->regenerate();
-            session()->flash('status', 'Mot de passe modifie avec succes!');
-            $userFirstTimeConnection = UserFirstTimeConnection::where('id', $user->id)->first();
-            $userFirstTimeConnection->update(['has_been_connected' => true]);
-            return redirect()->intended('home')->withSuccess('status', 'Mot de passe modifie avec succes!');
-        }
-
-        //return back()->withError('message', 'Invalid EMail/username or password');
-        return back()->withErrors([
-            'error' => 'Oups something went wrong, please try again later.',
-        ]);
+        $msg = __("Modification reussie !");
+        session()->flash('status', $msg);
+        return redirect()->route('authentification')->with('message', $msg);
         //return redirect('/login')->with('message', 'Votre mot de passe a ete modifie avec succes!');
     }
 

@@ -35,7 +35,7 @@
                         <div class="row justify-content-center">
 
                             <form method="POST" action="{{route('clients.post.update.client', $client->id)}}"
-                                  onsubmit="return true;">
+                                  onsubmit="return verifyBirthDate();">
                                 <div class="modal-body">
                                     <input type="hidden" name="error" id="error"
                                            class="form-control @error('error') is-invalid @enderror">
@@ -50,7 +50,7 @@
 
                                     <div class="row mb-3">
                                         <label for="name"
-                                               class="col-md-4 col-form-label text-md-end">{{ 'Nom du Client' }}
+                                               class="col-md-4 col-form-label text-md-end">{{ __('Nom') }}
                                             <b class="" style="color: red;">*</b>
                                         </label>
 
@@ -71,7 +71,7 @@
                                     <div class="row mb-3">
                                         <label for="telephone"
                                                class="col-md-4 col-form-label text-md-end">
-                                            {{ 'Telephone' }}
+                                            {{ __("Téléphone") }}
                                             <b class="" style="color: red;">*</b>
                                         </label>
 
@@ -90,7 +90,7 @@
 
                                     <div class="row mb-3">
                                         <label for="email"
-                                               class="col-md-4 col-form-label text-md-end">{{ 'E-Mail'}}</label>
+                                               class="col-md-4 col-form-label text-md-end">{{ 'Email'}}</label>
 
                                         <div class="col-md-6">
                                             <input id="email" type="email"
@@ -108,7 +108,7 @@
 
                                     <div class="row mb-3">
                                         <label for="birthdate"
-                                               class="col-md-4 col-form-label text-md-end"><br>{{ 'Date de Naissance' }}
+                                               class="col-md-4 col-form-label text-md-end"><br>{{ __("Date de Naissance (Jour Mois Année)") }}
                                         </label>
                                             <?php
                                             $date = Carbon::now();
@@ -128,9 +128,9 @@
                                         <div class="col-md-6">
                                             <div class="row">
                                                 <div class="col-md-4">
-                                                    <label for="day">Jour</label>
+                                                    <label for="day">{{__("Jour")}}</label>
                                                     <select class="form-select" id="day" name="day">
-                                                        <option value=""> --Choisir ici--</option>
+                                                        <option value="">-- {{__("Sélectionnez ici")}} --</option>
                                                         <option
                                                             value="01" {{($day !== '00' ?  ($day === '01' ? 'selected' : ''): '')}}>
                                                             01
@@ -259,65 +259,65 @@
 
                                                 </div>
                                                 <div class="col-md-4">
-                                                    <label for="month">Mois</label>
-                                                    <select class="form-select" id="month" name="month">
-                                                        <option value="">--Choisir ici --</option>
+                                                    <label for="month">{{__("Mois")}}</label>
+                                                    <select class="form-select" id="month" name="month" onchange="verifyBirthDate();">
+                                                        <option value="">-- {{__("Sélectionnez ici")}} --</option>
                                                         <option
                                                             value="01" {{($month !== '00' ?  ($month === '01' ? 'selected' : ''): '')}}>
-                                                            Janvier
+                                                            {{__("Janvier")}}
                                                         </option>
                                                         <option
                                                             value="02" {{($month !== '00' ?  ($month === '02' ? 'selected' : ''): '')}}>
-                                                            Fevrier
+                                                            {{__("Févier")}}
                                                         </option>
                                                         <option
                                                             value="03" {{($month !== '00' ?  ($month === '03' ? 'selected' : ''): '')}}>
-                                                            Mars
+                                                            {{__("Mars")}}
                                                         </option>
                                                         <option
                                                             value="04" {{($month !== '00' ?  ($month === '04' ? 'selected' : ''): '')}}>
-                                                            Avril
+                                                            {{__("Avril")}}
                                                         </option>
                                                         <option
                                                             value="05" {{($month !== '00' ?  ($month === '05' ? 'selected' : ''): '')}}>
-                                                            Mai
+                                                            {{__("Mai")}}
                                                         </option>
                                                         <option
                                                             value="06" {{($month !== '00' ?  ($month === '06' ? 'selected' : ''): '')}}>
-                                                            Juin
+                                                            {{__("Juin")}}
                                                         </option>
                                                         <option
                                                             value="07" {{($month !== '00' ?  ($month === '07' ? 'selected' : ''): '')}}>
-                                                            Juillet
+                                                            {{__("Juillet")}}
                                                         </option>
                                                         <option
                                                             value="08" {{($month !== '00' ?  ($month === '08' ? 'selected' : ''): '')}}>
-                                                            Aout
+                                                            {{__("Août")}}
                                                         </option>
                                                         <option
                                                             value="09" {{($month !== '00' ?  ($month === '09' ? 'selected' : ''): '')}}>
-                                                            Septembre
+                                                            {{__("Septembre")}}
                                                         </option>
                                                         <option
                                                             value="10" {{($month !== '00' ?  ($month === '10' ? 'selected' : ''): '')}}>
-                                                            Octobre
+                                                            {{__("Octobre")}}
                                                         </option>
                                                         <option
                                                             value="11" {{($month !== '00' ?  ($month === '11' ? 'selected' : ''): '')}}>
-                                                            Novembre
+                                                            {{__("Novembre")}}
                                                         </option>
                                                         <option
                                                             value="12" {{($month !== '00' ?  ($month === '12' ? 'selected' : ''): '')}}>
-                                                            Decembre
+                                                            {{__("Décembre")}}
                                                         </option>
                                                     </select>
 
                                                 </div>
 
                                                 <div class="col-md-4">
-                                                    <label for="year">Annee</label>
+                                                    <label for="year">{{__("Année")}}</label>
                                                     <select class="form-select" id="year" name="year">
-                                                        <option value="">--Choisir ici --</option>
+                                                        <option value="">-- {{__("Sélectionnez ici")}} --</option>
                                                         @for($i = $thisyear; $i >= 1900; $i--)
                                                             <option
                                                                 value="{{$i}}" {{($year !== '00' ?  ($year === (''. $i) ? 'selected' : ''): '')}}>{{$i}}</option>
@@ -339,38 +339,38 @@
 
                                     <div class="row mb-3">
                                         <label for="gender"
-                                               class="col-md-4 col-form-label text-md-end">{{ 'Civilite' }}</label>
+                                               class="col-md-4 col-form-label text-md-end">{{__('Civilité')}}</label>
 
                                         <div class="col-md-6">
                                             <select id="gender"
                                                     class="form-control form-select form-select-lg @error('gender') is-invalid @enderror"
                                                     name="gender">
-                                                <option value="">Choisissez ici</option>
+                                                <option value="">-- {{__("Sélectionnez ici")}} --</option>
                                                 <option
                                                     value="MONSIEUR" {{$client->gender === 'MONSIEUR' ? 'selected' : ''}}>
-                                                    Monsieur
+                                                    {{__("Monsieur")}}
                                                 </option>
                                                 <option
                                                     value="MADAME" {{$client->gender === 'MADAME' ? 'selected' : ''}}>
-                                                    Madame
+                                                    {{__("Madame")}}
                                                 </option>
                                                 <option
                                                     value="MADEMOISELLE" {{$client->gender === 'MADEMOISELLE' ? 'selected' : ''}}>
-                                                    Mademoiselle
+                                                    {{__("Mademoiselle")}}
                                                 </option>
                                             </select>
 
                                             @error('gender')
-                                            <span class="invalid-feedback" role="alert">
-                                                                        <strong>{{ $message }}</strong>
-                                                                    </span>
+                                                <span class="invalid-feedback" role="alert">
+                                                    <strong>{{ $message }}</strong>
+                                                </span>
                                             @enderror
                                         </div>
                                     </div>
 
                                     <div class="row mb-3">
                                         <label for="city"
-                                               class="col-md-4 col-form-label text-md-end">{{ 'Ville' }}</label>
+                                               class="col-md-4 col-form-label text-md-end">{{ __('Ville') }}</label>
 
                                         <div class="col-md-6">
                                             <input id="city" type="text"
@@ -388,7 +388,7 @@
 
                                     <div class="row mb-3">
                                         <label for="quarter"
-                                               class="col-md-4 col-form-label text-md-end">{{ 'Quartier' }}</label>
+                                               class="col-md-4 col-form-label text-md-end">{{ __('Lieu de résidence') }}</label>
 
                                         <div class="col-md-6">
                                             <input id="quarter" type="text"
@@ -407,27 +407,30 @@
                                     <div class="row mb-0">
                                         <div class="col-md-6 offset-md-5">
                                             <button type="submit" class="btn btn-primary">
-                                                {{ 'Enregistrer' }}
+                                                {{ __('Enregistrer') }}
                                             </button>
                                         </div>
                                     </div>
 
 
                                 </div>
-                                {{--<div class="modal-footer">
-                                    <button type="button" class="btn btn-danger"
-                                            data-bs-dismiss="modal">Annuler
-                                    </button>
-                                    <button type="submit" class="btn btn-success">Ajourner le client
-                                    </button>
-                                </div>--}}
+                                <script type="text/javascript">
+                                    function verifyBirthDate(){
+                                        var day = parseInt(document.getElementById('day').value);
+                                        console.log(day);
+                                        var month = parseInt(document.getElementById('month').value);
+                                        console.log(month);
+                                        if(month === 2 && day > 29){
+                                            alert('Invalid date.');
+                                            return false;
+                                        }
+                                        return true;
+                                    }
+                                </script>
                             </form>
 
                         </div>
 
-                    </div>
-                    <div class="card-footer">
-                        {{' '}}
                     </div>
                 </div>
             </div>

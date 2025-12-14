@@ -1,5 +1,5 @@
 @php
-
+    use App\Http\Controllers\GuestController;
     @endphp
 @extends('layouts.app')
 
@@ -13,17 +13,17 @@
                 <div class="card">
                     <div class="card-header">
                         <div id="top" style="display: inline; float: left;">
-                            <a class="btn btn-link"  href="{{url('/home')}}" style="text-decoration: none; font-size: large;">&lt;</a>
+                            <a class="btn btn-link"  href="{{url('/'.GuestController::getApplicationLocal().'/home')}}" style="text-decoration: none; font-size: large;">&lt;</a>
                             <button class="btn btn-link" onclick="history.back();" style="text-decoration: none; font-size: large;"><<</button>
-                            &nbsp;&nbsp;&nbsp;{{ 'Les Collaborateurs' }}</div>
+                            &nbsp;&nbsp;&nbsp;<strong>{{ __('UTILISATEURS') }}</strong></div>
                         <h5 style="display: inline; float: right;">
                             {{--@if(count(Config::where('is_applicable', true)->get()) > 0)--}}
                                 <a href="{{ route('enregistrement')}}"
                                    style="text-decoration: none; font-size: x-large; color: green;"
                                    id="add_level_field"
-                                   title="Enregistrer un utilisateur">
+                                   title="{{__('Enregistrer un utilisateur')}}">
                                     <strong><span class="glyphicon glyphicon-plus">+</span></strong>
-                                    <span style="font-size: initial;">{{ 'Ajouter' }}</span>
+                                    <span style="font-size: initial;">{{ __('Ajouter') }}</span>
                                 </a>
                             {{--@endif--}}
                         </h5>
@@ -46,27 +46,27 @@
                             <table class="table table-striped table-responsive table-bordered">
                                 <thead class="" style="color: darkred;">
                                 <th scope="col">
-                                    {{ 'ID' }}
+                                    {{ __('ID') }}
                                 </th>
 
                                 <th scope="col">
-                                    {{ 'Name' }}
+                                    {{ __('Nom') }}
                                 </th>
 
                                 <th scope="col">
-                                    {{ 'Email' }}
+                                    {{ __('Email') }}
                                 </th>
                                 <th scope="col">
-                                    {{ 'Pseudo' }}
+                                    {{ __('Pseudo') }}
                                 </th>
                                 <th scope="col">
-                                    {{ 'Role' }}
+                                    {{ __('Rôle') }}
                                 </th>
                                 <th scope="col">
-                                    {{'Enregistre le'}}
+                                    {{__('Créé le')}}
                                 </th>
                                 <th scope="col">
-                                    {{ 'Actions' }}
+                                    {{ __('Actions') }}
                                 </th>
                                 </thead>
                                 <tbody>
@@ -97,7 +97,7 @@
                                             @if($user->is_admin)
                                                 <a class="btn btn-sm btn-link" href="#" data-bs-toggle="modal"
                                                    data-bs-target="#confirm-remove-admin-role-modal" style="text-decoration: none;">
-                                                    <b style="color: red;">{{'Retirer'}}</b>
+                                                    <b style="color: red;">{{ __('Retrait Rôle') }}</b>
                                                 </a>
                                                 <div class="modal fade" id="confirm-remove-admin-role-modal"
                                                      data-bs-backdrop="static"
@@ -108,7 +108,7 @@
                                                         <div class="modal-content">
                                                             <div class="modal-header">
                                                                 <h1 class="modal-title fs-5" id="staticBackdropLabel">
-                                                                    Vous confirmer que {{$user->name}}  n'est plus Administrateur
+                                                                    {{__("Retrait du rôle Administrateur de l'utilisateur:")}} {{$user->name}}
                                                                 </h1>
                                                                 <button type="button" class="btn-close"
                                                                         data-bs-dismiss="modal"
@@ -137,7 +137,7 @@
                                                                             data-bs-dismiss="modal">Annuler
                                                                     </button>
                                                                     <button type="submit" class="btn btn-success">
-                                                                        Confirmer
+                                                                        {{__("Confirmer")}}
                                                                     </button>
                                                                 </div>
                                                             </form>
@@ -148,7 +148,7 @@
 
                                                 <a class="btn btn-sm btn-link" href="#" data-bs-toggle="modal"
                                                    data-bs-target="#confirm-add-admin-role-modal" style="text-decoration: none;">
-                                                    <b style="color: limegreen;">{{'Ajouter'}}</b>
+                                                    <b style="color: limegreen;">{{ __('Ajout Rôle') }}</b>
                                                 </a>
                                                 <div class="modal fade" id="confirm-add-admin-role-modal"
                                                      data-bs-backdrop="static"
@@ -159,7 +159,7 @@
                                                         <div class="modal-content">
                                                             <div class="modal-header">
                                                                 <h1 class="modal-title fs-5" id="staticBackdropLabel">
-                                                                    Vous confirmer que {{$user->name}} devient Administrateur
+                                                                    {{__("Ajout du rôle Administrateur à l'utilisateur:")}} {{$user->name}}
                                                                 </h1>
                                                                 <button type="button" class="btn-close"
                                                                         data-bs-dismiss="modal"
@@ -188,7 +188,7 @@
                                                                             data-bs-dismiss="modal">Annuler
                                                                     </button>
                                                                     <button type="submit" class="btn btn-success">
-                                                                        Confirmer
+                                                                        {{ __("Confirmer") }}
                                                                     </button>
                                                                 </div>
                                                             </form>
@@ -236,7 +236,7 @@
                                 @endforeach
                             </div>--}}
                         @else
-                            <h5>{{'Aucun utilisateur trouve !'}}</h5>
+                            <h5>{{ __('Aucun utilisateur') }}</h5>
                         @endif
                     </div>
                 </div>

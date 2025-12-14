@@ -40,33 +40,33 @@
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header">
-                        <h3>{{ 'Enregistrement au systeme de fidelite de ' . $data['enterprise'] }} <br></h3>
+                        <h3>{{ __("Enregistrement à la plateforme de fidélité du commerçant") . ' ' . $data['enterprise'] }} <br></h3>
                     {{ $data['gender'] . ' ' . $data['name'] }}
                     </div>
 
                     <div class="card-body">
                         <p>
-                            Vous avez ete enregistre avec succes dans le systeme de fidelite de l'entreprise  <strong>{{$data['enterprise']}} </strong>.
+                            {{ __("Vous avez été enregistré avec succès au le système de fidélité de l'entreprise") }}  <strong>{{$data['enterprise']}} </strong>.
                             <br>
 
                         </p>
                         <p>
-                            Vous pouvez acceder au systeme en utilisant les identifiants suivants:
+                            {{ __("Vous pouvez accéder au système en utilisant les identifiants suivants") }}:
                             <ul>
                                 <li>
-                                    Numero de telephone: {{$data['telephone']}}
+                                    {{ __("Téléphone") }}: {{$data['telephone']}}
                                 </li>
                                 <li>
-                                    Mot de passe: {{$data['secret']}}
+                                    {{ __("Mot de passe") }}: {{$data['secret']}}
                                 </li>
                                 <li>
-                                    Lien: <a href="{{$data['clientLoginUrl']}}" class="btn btn-primary" >{{$data['clientLoginUrl']}}</a>
+                                    {{ __("Lien") }}: <a href="{{$data['clientLoginUrl']}}" class="btn btn-primary" >{{$data['clientLoginUrl']}}</a>
                                 </li>
                             </ul>
                             <br>
                         </p>
 
-                            <h5>Merci pour votre fidelite.</h5>
+                            <h5>{{ __("Merci pour votre Fidélité.") }}</h5>
                     </div>
                 </div>
             </div>

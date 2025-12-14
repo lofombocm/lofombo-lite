@@ -5,7 +5,8 @@
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header">Redefinir votre mot de passe</div>
+
+                    <div class="card-header">{{__('Réinitialisation du mot de passe')}}</div>
 
                     <div class="card-body">
                         @if (session('status'))
@@ -13,6 +14,12 @@
                                 {{ session('status') }}
                             </div>
                         @endif
+
+                            @if (session('error'))
+                                <div class="alert alert-danger" role="alert">
+                                    {{ session('error') }}
+                                </div>
+                            @endif
 
                         <form method="POST" action="{{ route('client.password.forgot.post.form') }}">
                             @csrf
@@ -34,7 +41,7 @@
                             </div>
 
                             <div class="row mb-3">
-                                <label for="password-confirm" class="col-md-4 col-form-label text-md-end">{{ __('Confirm Password') }}</label>
+                                <label for="password-confirm" class="col-md-4 col-form-label text-md-end">{{ __('Confirmation Mot de passe') }}</label>
 
                                 <div class="col-md-6">
                                     <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
@@ -44,7 +51,7 @@
                             <div class="row mb-0">
                                 <div class="col-md-6 offset-md-4">
                                     <button type="submit" class="btn btn-primary">
-                                        Redefinir
+                                        {{__("Réinitialiser")}}
                                     </button>
                                 </div>
                             </div>

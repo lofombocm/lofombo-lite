@@ -9,7 +9,7 @@
 
             <div class="col-md-9">
                 <div class="card">
-                    <div class="card-header"><h5>{{ 'Dashboard' }}</h5></div>
+                    <div class="card-header"><h5>{{ __('Récompenses') }}</h5></div>
                     <div class="card-body">
                         @if (session('error'))
                             <div class="alert alert-danger" role="alert">
@@ -36,7 +36,7 @@
                                 <div class="card">
                                     <div class="">
                                         <br>
-                                        <h5 style="display: inline; float: left; margin-left: 20px;">{{ 'Recompenses' }}</h5>
+                                        <h5 style="display: inline; float: left; margin-left: 20px;">{{ __('Récompenses') }}</h5>
                                         {{--<h5 style="display: inline; float: right;">
                                             @if(count(Config::where('is_applicable', true)->get()) > 0)
                                                 <a href="{{ route('clients.index')}}" style="text-decoration: none; font-size: x-large; color: green;" id="add_level_field"
@@ -51,9 +51,9 @@
                                             @if(Auth::check() && Auth::user()->is_admin)
 
                                                 <a href="{{ route('rewards.index')}}" style="text-decoration: none; font-size: x-large; color: green;" id="add_level_field"
-                                                   title="Recompenses">
+                                                   title="{{__('Récompenses')}}">
                                                     <strong><span class="glyphicon glyphicon-plus">+</span></strong>
-                                                    <span style="font-size: initial;">{{ 'Ajouter' }}</span>
+                                                    <span style="font-size: initial;">{{ __('Ajouter') }}</span>
                                                 </a>
                                             @endif
                                         </h5>

@@ -49,14 +49,14 @@
                         <h1 style="width: 100%; text-align: center; border-bottom: 1px black solid;">
                             {{ $voucher->enterprise }}
                         </h1><br>
-                        <h2 style="width: 100%; text-align: center; border-bottom: 0px black solid;">
-                            {{ 'BON DE TYPE ' . $voucher->level }}
+                        <h2 style="width: 100%; text-align: center; border-bottom: 0 black solid;">
+                            {{ __("Type de bon") . ' ' . $voucher->level }}
                         </h2><br>
                         <div class="list-group list-group-flush alert alert-info" style="margin-top: -20px;">
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%; text-decoration: none; color: black;">
                                 <span>
-                                    No. de Serie: {{$voucher->serialnumber}}
+                                    {{ __("N° Série") }}: {{$voucher->serialnumber}}
                                     <span style="display: inline; position: relative; float:right; color: #000000;">
                                         {{ 'ID: ' }} {{$voucher->id}}
                                     </span>
@@ -68,9 +68,9 @@
                                style="margin-left: 15px; width: 98%; text-decoration: none; color: black;">
                                 <br>
                                 <span>
-                                    Porteur: {{$client->name}}
+                                    {{ __("Titulaire") }}: {{$client->name}}
                                     <span style="display: inline; position: relative; float:right; color: #000000;">
-                                        {{ 'Tel: ' }} {{$client->telephone}}
+                                        {{ 'Téléphone: ' }} {{$client->telephone}}
                                     </span>
                                 </span>
                                 <br>
@@ -80,7 +80,7 @@
                                style="margin-left: 15px; width: 98%; text-decoration: none; color: black;">
                                 <br>
                                 <span>
-                                    Point: {{$voucher->point}}
+                                    {{__("Point")}}: {{$voucher->point}}
                                 </span>
                                 <br>
                             </a>
@@ -89,7 +89,7 @@
                                style="margin-left: 15px; width: 98%; text-decoration: none; color: black;">
                                 <br>
                                 <span>
-                                    Emetteur: {{$voucher->enterprise}}
+                                    {{__("Emetteur")}}: {{$voucher->enterprise}}
                                 </span>
                                 <br>
                             </a>
@@ -98,7 +98,7 @@
                                style="margin-left: 15px; width: 98%; text-decoration: none; color: black;">
                                 <br>
                                 <span>
-                                    Emis le: &nbsp; &nbsp; {{\Illuminate\Support\Carbon::parse($voucher->created_at)->format('d-m-Y H:i:s')}}
+                                    {{__("Emis le")}}: &nbsp; &nbsp; {{\Illuminate\Support\Carbon::parse($voucher->created_at)->format('d-m-Y H:i:s')}}
                                 </span>
                                 <br>
                             </a>
@@ -131,7 +131,7 @@
                                     </span>
                                     <br>
                                     <span style="float: right; text-align: center; margin-top: 50px; color: black;">
-                                        <span><b>{{$voucher->enterprise . ' Vous remercie de votre fidelite.'}}</b></span>
+                                        <span><b>{{$voucher->enterprise . __("Vous remercie de votre Fidélité") . '.'}}</b></span>
                                     </span>
                                 </h5>
                             </a>

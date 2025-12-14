@@ -6,7 +6,7 @@
         @include('layouts.menu')
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header">{{ 'Modifier ses Parametres' }}</div>
+                <div class="card-header">{{ __("Mes Paramètres") }}</div>
                 <div class="card-body">
                     <form method="POST" action="{{ route('user.update-parameter.index.put', $user->id) }}" enctype="multipart/form-data">
                         @csrf
@@ -30,7 +30,7 @@
                         @endif--}}
 
                         <div class="row mb-3">
-                            <label for="name" class="col-md-4 col-form-label text-md-end">{{ 'Nom complet' }}</label>
+                            <label for="name" class="col-md-4 col-form-label text-md-end">{{ __('Nom utilisateur') }}</label>
 
                             <div class="col-md-6">
                                 <input id="name"
@@ -47,7 +47,7 @@
                         </div>
 
                         <div class="row mb-3">
-                            <label for="email" class="col-md-4 col-form-label text-md-end">{{ 'Adresse Email' }}</label>
+                            <label for="email" class="col-md-4 col-form-label text-md-end">{{ __('Email') }}</label>
 
                             <div class="col-md-6">
                                 <input id="email"
@@ -86,7 +86,7 @@
                             </div>
                         </div>--}}
 
-                        <div class="row mb-3">
+                        {{--<div class="row mb-3">
                             <label for="isadmin" class="col-md-4 col-form-label text-md-end">{{ 'Utilisateur Administrateur?' }}</label>
 
                             <div class="col-md-6">
@@ -115,12 +115,12 @@
                                         </span>
                                 @enderror
                             </div>
-                        </div>
+                        </div>--}}
 
                         <div class="row mb-0">
                             <div class="col-md-6 offset-md-4">
                                 <button type="submit" class="btn btn-primary">
-                                    {{ 'Modifier' }}
+                                    {{ __('Modifier') }}
                                 </button>
                             </div>
                         </div>

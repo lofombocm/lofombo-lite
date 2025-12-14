@@ -16,10 +16,14 @@ class EnsureUserIsAdministrator
      */
     public function handle(Request $request, Closure $next): Response
     {
+        EnsureUserIsActivated::checkLicences();
+
         if (Auth::check() && (!Auth::user()->active || !Auth::user()->is_admin)) {
             // User is authenticated but not activated
             // You can redirect them to an activation required page or show an error
-            return redirect('/admin-required')->with('error', 'Your account is not activated or you ar not administrator.');
+            //Session::flush();
+            Auth::logout();
+            return redirect('/admin-required')->with('error', __("Votre compte n'est pas actif."));
         }
         return $next($request);
     }

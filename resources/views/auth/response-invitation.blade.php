@@ -8,8 +8,7 @@
             <div class="card">
                 <div class="card-header">
                     @if(!session('error'))
-                        {{ 'Mme/M. '. $invitation->name}}, vous etes invites a vous enregistrer au systeme de
-                          fidelite de <strong>{{$invitation->enterprise_name}}</strong>
+                        {{ __('Cher') . ' ' . $invitation->name}}, {{ __("vous êtes invités a vous enregistrer au système de fidélité de ") }} <strong>{{$invitation->enterprise_name}}</strong>
                     @endif
 
                 </div>
@@ -59,7 +58,7 @@
                         </div>--}}
 
                         <div class="row mb-3">
-                            <label for="password" class="col-md-4 col-form-label text-md-end">{{ 'Mot de passe' }}</label>
+                            <label for="password" class="col-md-4 col-form-label text-md-end">{{ __("Mot de passe") }}</label>
 
                             <div class="col-md-6">
                                 <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password"
@@ -74,7 +73,7 @@
                         </div>
 
                         <div class="row mb-3">
-                            <label for="password-confirm" class="col-md-4 col-form-label text-md-end">{{ __('Confirm Password') }}</label>
+                            <label for="password-confirm" class="col-md-4 col-form-label text-md-end">{{ __('Confirmation Mot de passe') }}</label>
 
                             <div class="col-md-6">
                                 <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
@@ -84,7 +83,7 @@
                         <div class="row mb-0">
                             <div class="col-md-6 offset-md-4">
                                 <button type="submit" class="btn btn-primary">
-                                    {{ 'Repondre a l\'invitation' }}
+                                    {{ __("Répondre à l'invitation") }}
                                 </button>
                             </div>
                         </div>

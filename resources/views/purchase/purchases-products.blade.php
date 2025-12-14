@@ -11,10 +11,9 @@
             @include('layouts.menu')
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header"><h5>{{ 'Produits du systeme'}}</h5></div>
+                    <div class="card-header"><h5>{{ __("Article de la plateforme") }}</h5></div>
 
                     <div class="card-body">
-                        {{--<div class="modal-body" style="height: 80vh; overflow-y: auto;">--}}
                             @php
                                 $products = \App\Models\Product::all();
                                 $i = 1;
@@ -27,14 +26,14 @@
                                     </th>
 
                                     <th scope="col">
-                                        {{ 'Nom du Produits' }}
+                                        {{ __("Nom Article") }}
                                     </th>
 
                                     <th scope="col">
-                                        {{ 'Prix Unitaire' }}
+                                        {{ __("Prix Unitaire (TTC)") }}
                                     </th>
                                     <th scope="col">
-                                        {{ 'Enreg. Le' }}
+                                        {{ __("Enregistré le") }}
                                     </th>
                                     </thead>
                                     <tbody>

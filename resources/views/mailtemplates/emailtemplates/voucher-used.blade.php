@@ -40,13 +40,13 @@
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header">
-                        <h3>{{ 'Bon genere' }} <br></h3>
+                        <h3>{{ __("Bon Utilisé") }} <br></h3>
                     </div>
 
                     <div class="card-body">
                         <h4>{{$data['msg'][0]}}</h4>
                         @if(isset($data['code']))
-                            <h4>{{'Le code utilise est: '}} {{$data['code']}}</h4>
+                            <h4>{{ __("") }}: {{$data['code']}}</h4>
                         @endif
                         @php $i = 0; @endphp
                         <ul>
@@ -59,11 +59,11 @@
                         </ul>
 
                         <p>
-                            Pour plus de detail, cliquez sur le lien:
-                            <a href="{{$data['clientLoginUrl']}}" class="btn btn-primary" >{{'Cliquez ici pour voir les details.'}}</a>
+                            {{ __("Pour plus de détail, cliquez sur le lien") }}:
+                            <a href="{{$data['clientLoginUrl']}}" class="btn btn-primary" >{{ __("Cliquez ici pour avoir les détails.") }}</a>
                         </p>
 
-                        <h5>{{$data['config']->enterprise_name}} vus remercie pour votre fidelite.</h5>
+                        <h5>{{$data['config']->enterprise_name}} {{ __("vous remercie pour votre fidélité") }}.</h5>
                     </div>
                 </div>
             </div>

@@ -40,28 +40,26 @@
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header">
-                        <h3>{{ 'Mme/M. ' .  $data['name'] . ', vous avez ete enregistre  au systeme de fidelite de ' . $data['enterprise'] }} <br></h3>
+                        <h3>{{ __('Madame') . '/' . __('Monsieur'). ' ' . __("vous avez été enregistré à la plateforme de fidélité de") . ' ' .  $data['name'] . ',  ' . $data['enterprise'] }} <br></h3>
                     </div>
 
                     <div class="card-body">
                         <div>
-                            Vous pouvez acceder au systeme en utilisant le lien suivants: &nbsp;
+                            {{ __("Vous pouvez accéder au système en utilisant le lien suivant") }}: &nbsp;
                             <a href="{{$data['login_url']}}">{{$data['login_url']}}</a>
                             <br>
-                            Au premier acces, vous utiliserez les identifiants suivants pour acceder au systeme.
+                            {{ __("Au premier accès, vous utiliserez les identifiants suivants pour accéder à la plateforme.") }}
                             <ul>
                                 <li>
-                                    Nom d'utilisateur: {{$data['email']}}
+                                    {{ __("Nom d'utilisateur") }}: {{$data['email']}}
                                 </li>
                                 <li>
-                                    Mot de passe: {{'12345678'}}
+                                    {{ __("Mot de passe") }}: {{'12345678'}}
                                 </li>
                             </ul>
-                            Il vous sera demande de changer ce mot de passe pour acceder aux multiples  fonctionnalites
-                            du systeme.
+                            {{ __("Il vous sera demandé de changer ce mot de passe pour accéder aux multiples  fonctionnalités de la plateforme.") }}
 
-
-                            <h5>Merci pour votre collaboration.</h5>
+                            <h5>{{ __("Merci pour votre collaboration.") }}</h5>
                     </div>
                 </div>
             </div>

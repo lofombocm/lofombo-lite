@@ -12,25 +12,25 @@
 @extends('layouts.app-client')
 
 @section('content')
-    <div class="container">
-        <div class="row justify-content-center">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="row justify-content-center">
 
-            @include('layouts.client-menu')
+                @include('layouts.client-menu')
 
-            <div class="col-md-9">
-                <div class="card">
-                    <div class="card-header"><h5>{{ 'Dashboard' }}</h5></div>
+                <div class="col-md-9">
+                    <div class="card">
+                        <div class="card-header"><h5>{{ __('Récompenses') }}</h5></div>
 
-                    <div class="card-body">
+                        <div class="card-body">
 
-                        @include('reward.list')
+                            @include('reward.list-card')
 
-                    </div>
-                    <div class="card-footer">
-                        {{' '}}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 @endsection

@@ -6,10 +6,10 @@
         @include('layouts.menu')
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header">{{ 'Enregistrer un collaborateur' }}</div>
+                <div class="card-header">{{ __('Enregistrer un utilisateur') }}</div>
                 <div class="card-body">
                     <form method="POST" action="{{ route('enregistrement.post') }}" >
-                        <div><h5>Les champs marques par <b class="" style="color: red;">*</b> sont obligatoires</h5></div>
+                        <div><h5>{{__('Les champs marqués par ')}} <b class="" style="color: red;">*</b> {{__('sont obligatoires')}}</h5></div>
                         <br>
                         @csrf
                         @if (session('status'))
@@ -31,7 +31,7 @@
 
                         <div class="row mb-3">
                             <label for="name" class="col-md-4 col-form-label text-md-end">
-                                {{ 'Nom complet' }}
+                                {{ __('Nom utilisateur') }}
                                 <b class="" style="color: red;">*</b>
                             </label>
 
@@ -48,7 +48,7 @@
 
                         <div class="row mb-3">
                             <label for="email" class="col-md-4 col-form-label text-md-end">
-                                {{ 'Adresse Email' }}
+                                {{ __('Email') }}
                                 <b class="" style="color: red;">*</b>
                             </label>
 
@@ -65,7 +65,7 @@
 
                         <div class="row mb-3">
                             <label for="username" class="col-md-4 col-form-label text-md-end">
-                                {{ 'Nom d\'utilisateur' }}
+                                {{ __('Pseudo') }}
                                 <b class="" style="color: red;">*</b>
                             </label>
 
@@ -110,7 +110,7 @@
 
                         <div class="row mb-3">
                             <label for="isadmin" class="col-md-4 col-form-label text-md-end">
-                                {{ 'Utilisateur Administrateur?' }}
+                                {{ __('Rôle Administrateur ?') }}
                                 <b class="" style="color: red;">*</b>
                             </label>
 
@@ -139,25 +139,27 @@
 
 
                             function setIsAdmin(input, isAdmin) {
-                                if(input.value === 'off') {
+                                /*if(input.value === 'off') {
                                     input.setAttribute('value', 'on');
                                 } else {
                                     input.setAttribute('value', 'off');
-                                }
+                                }*/
 
                                 var isadmininput = document.getElementById(isAdmin);
-                                isadmininput.setAttribute('value', input.value);
+                                isadmininput.setAttribute('value', input.checked ? 'on' : 'off');
                                 //alert(input.value);
                                 //return true;
                             }
                             function initiateCheckBox(){
                                 var checkbox = document.getElementById("isadmin");
                                 var hidden = document.getElementById("is_admin");
-                                if(checkbox.value !== hidden.value){
-                                    checkbox.checked = false;
-                                    checkbox.setAttribute("value", "off");
+                                if(checkbox.checked){
+                                    //checkbox.checked = false;
+                                    //checkbox.setAttribute("value", "off");
+                                    hidden.setAttribute("value", "on");
+                                    //checkbox.click();
+                                }else{
                                     hidden.setAttribute("value", "off");
-                                    checkbox.click();
                                 }
                             }
 

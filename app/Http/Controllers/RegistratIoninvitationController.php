@@ -23,7 +23,7 @@ class RegistratIoninvitationController extends Controller
 
     protected $redirectTo = '/home';
 
-    public function index(string $invitationId){
+    public function index(string $locale, string $invitationId){
         $invitation = RegistratIoninvitation::where('id', $invitationId)->where('active', true)->first();
         if($invitation == null){
             $msg = 'Invitation non trouvee';
@@ -44,7 +44,7 @@ class RegistratIoninvitationController extends Controller
     }
 
 
-    public function postRegistratioInvitationResponse(Request $request, string $invitationId): RedirectResponse
+    public function postRegistratioInvitationResponse(Request $request, string $locale, string $invitationId): RedirectResponse
     {
 
         $validator = Validator::make($request->all(), [
@@ -52,6 +52,11 @@ class RegistratIoninvitationController extends Controller
             'email' => 'required|string|email|max:255|unique:users',*/
             'password' => 'required|string|min:8|max:20|confirmed',
             //'is_admin' => 'required|string|in:on,off'
+        ],[
+            'password.required' => __('Le mot de passe est obligatoire'),
+            'password.min' => __('Le mot de passe doit avoir au moins 8 caractères'),
+            'password.max' => __('Le mot de passe doit avoir au plus 20 caractères'),
+            'password.confirmed' => __('Les mots de passe ne correspondent pas'),
         ]);
 
         if($validator->fails()){

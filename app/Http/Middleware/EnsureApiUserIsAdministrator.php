@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\User;
+use App\Models\UserFirstTimeConnection;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,9 +18,14 @@ class EnsureApiUserIsAdministrator
      */
     public function handle(Request $request, Closure $next): Response
     {
+
         $user = User::where('id', $request->get('userid'))->where('active', true)->where('is_admin', true)->first();
         if (!$user) {
-            return response()->json(['error' => 1, 'success'=>0, 'errorMessage' => 'User not found', 'successMessage' =>'', 'result' => array()], Response::HTTP_OK);
+            return response()->json(['error' => 1, 'success'=>0, 'errorMessage' => __("Utilisateur non reconnu!"), 'successMessage' =>'', 'result' => array()], Response::HTTP_OK);
+        }
+        $userFirstTimeConnection = UserFirstTimeConnection::where('id', $user->id)->first();
+        if (!$userFirstTimeConnection->has_been_connected) {
+            return response()->json(['error' => 1, 'success'=>0, 'errorMessage' => __("Changer le mot de passe"), 'successMessage' =>'', 'result' => array()], Response::HTTP_OK);
         }
         /*if (Auth::check() && (!Auth::user()->active || !Auth::user()->is_admin)) {
             // User is authenticated but not activated

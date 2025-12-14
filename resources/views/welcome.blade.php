@@ -5,24 +5,22 @@
         <div class="row justify-content-center">
             <div class="col-md-12">
                 <div class="card">
-                    {{--<div class="card-header">Vous etes la Bienvenue sur LOFOMBO</div>--}}
 
                     <div class="card-body">
-
                         <br>
                         <h1 style="font-size: 75px; text-align: center;">
-                            {{'Vous etes la Bienvenue sur '}}
+                            {{ __('Bienvenue sur votre plateforme de fidélité') }}
                             @if(count(\App\Models\Config::where('is_applicable', true)->get()) > 0)
                                 @php
                                     $config = \App\Models\Config::where('is_applicable', true)->first();
                                 @endphp
                                 @if($config === null)
-                                    {{'LOFOMBO'}}
+                                    {{ __('LOFOMBO') }}
                                 @else
                                     {{$config->enterprise_name}}
                                 @endif
                             @else
-                                {{'LOFOMBO'}}
+                                {{ __('LOFOMBO') }}
                             @endif
                         </h1>
                         <br>
@@ -38,17 +36,13 @@
                             </div>
                         @endif
                         @if(count(\App\Models\Client::all()))
-                            <a href="{{ route('authentification.client') }}" class="btn btn-primary btn-lg">
+                            <a href="{{ route('authentification.client') }}" class="btn btn-primary btn-lg" style="background: #164fa9; border: 1px #164fa9 solid;">
                                 <strong style="font-size: xx-large;">Etes-vous client? Cliquez ici</strong>
                             </a>
                         @endif
 
                         <br><br><br>
-                        <h1 style="font-size: xx-large;">
-                            @if(count($rewards) > 0) {{'Nos recompenses'}}@endif
-                        </h1>
-                        <br>
-                        @include('reward.list')
+                        @include('reward.list-card')
                     </div>
                 </div>
             </div>

@@ -8,10 +8,10 @@
                 <div class="card-header">{{ 'Recovering Password' }}</div>
 
                 <div class="card-body">
-                    @if (session('message'))
+                    @if (session('status'))
                         <div class="alert alert-success" role="alert">
                             {{--{{ session('status') }}--}}
-                            {{ session('message') }}
+                            {{ session('status') }}
                         </div>
                     @endif
                     @if (session('error'))
@@ -25,7 +25,7 @@
                         @csrf
 
                         <div class="row mb-3">
-                            <label for="telephone" class="col-md-4 col-form-label text-md-end">{{ 'Numero de telephone' }}</label>
+                            <label for="telephone" class="col-md-4 col-form-label text-md-end">{{ __('Numéro Mobile') }}</label>
 
                             <div class="col-md-6">
                                 <input id="telephone" type="tel" class="form-control @error('telephone') is-invalid @enderror" name="telephone" value="{{ old('telephone') }}" required autocomplete="telephone" autofocus>
@@ -38,7 +38,7 @@
                         </div>
 
                         <div class="row mb-3">
-                            <label for="email" class="col-md-4 col-form-label text-md-end">{{ 'Address Email' }}</label>
+                            <label for="email" class="col-md-4 col-form-label text-md-end">{{ __('Email') }}</label>
 
                             <div class="col-md-6">
                                 <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
@@ -53,7 +53,7 @@
                         <div class="row mb-0">
                             <div class="col-md-6 offset-md-4">
                                 <button type="submit" class="btn btn-primary">
-                                    {{ 'Demander le lien de modification du Mot de passe' }}
+                                    {{ __('Demande Lien de modification Mot de passe') }}
                                 </button>
                             </div>
                         </div>

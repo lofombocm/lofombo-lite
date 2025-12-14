@@ -7,7 +7,7 @@ export default defineConfig({
             input: [
                 'resources/scss/app.scss',
                 'resources/js/app.js',
-                'resources/js/myScript.js',
+                'resources/css/card.css'
             ],
             refresh: true,
         }),

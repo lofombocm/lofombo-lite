@@ -1,4 +1,10 @@
-@php use App\Models\Client;use App\Models\Config;use App\Models\Reward;use Illuminate\Support\Carbon; @endphp
+@php
+    use App\Models\Client;
+    use App\Models\Config;
+    use App\Models\Reward;
+    use Illuminate\Support\Carbon;
+    use App\Http\Controllers\GuestController;
+@endphp
 @extends('layouts.app')
 
 @section('content')
@@ -10,7 +16,7 @@
             <div class="col-md-9">
                 <div class="card">
                     <div class="card-header">
-                        <h5 style="display: inline;"><strong>{{ 'Bons du client: ' . $client->name }}</strong></h5>
+                        <h5 style="display: inline;"><strong>{{ __("Bons du client") . ': ' . $client->name }}</strong></h5>
                     </div>
                     <div class="card-body">
                         @if (session('status'))
@@ -29,25 +35,25 @@
                             <table class="table table-striped table-responsive table-bordered">
                                 <thead class="" style="color: darkred;">
                                 <th scope="col">
-                                    {{ 'No. Serie' }}
+                                    {{ __('N° Série') }}
                                 </th>
                                 {{--<th scope="col">
                                     {{ 'Client' }}
                                 </th>--}}
                                 <th scope="col">
-                                    {{ 'Niveau' }}
+                                    {{ __('Type de Bon') }}
                                 </th>
                                 <th scope="col">
-                                    {{ 'Points' }}
+                                    {{ __('Points') }}
                                 </th>
                                 <th scope="col">
-                                    {{ 'Expiration' }}
+                                    {{ __('Date Expiration') }}
                                 </th>
                                 <th scope="col">
-                                    {{ 'Statut' }}
+                                    {{ __('Statut') }}
                                 </th>
                                 <th scope="col">
-                                    {{ 'Actions' }}
+                                    {{ __('Actions') }}
                                 </th>
                                 </thead>
                                 <tbody>
@@ -62,15 +68,15 @@
                                         $statut = '';
                                         if ($voucher->active) {
                                             if ($voucher->is_used) {
-                                                $statut = 'UTILISE';
+                                                $statut = __('UTILISE');
                                             } else {
-                                                $statut = 'ACTIVE';
+                                                $statut = __('ACTIVE');
                                             }
                                         } else {
                                             if ($expirationdate->isBefore(Carbon::now())) {
-                                                $statut = 'EXPIRE';
+                                                $statut = __('EXPIRE');
                                             } else {
-                                                $statut = 'GENERE';
+                                                $statut = __('GENERE');
                                             }
                                         }
 
@@ -135,7 +141,7 @@
                                                     <a class="btn btn-link btn-sm" href="#" data-bs-toggle="modal"
                                                        style="text-decoration: none;"
                                                        data-bs-target="#confirm-activate-voucher-modal">
-                                                        <b style="color: limegreen;">{{'Activer'}}</b>
+                                                        <b style="color: limegreen;">{{__('Activer')}}</b>
                                                     </a>
                                                     <div class="modal fade" id="confirm-activate-voucher-modal"
                                                          data-bs-backdrop="static"
@@ -147,8 +153,9 @@
                                                             <div class="modal-content">
                                                                 <div class="modal-header">
                                                                     <h1 class="modal-title fs-5"
-                                                                        id="staticBackdropLabel">Vous souhaitez
-                                                                        activer le bon <strong
+                                                                        id="staticBackdropLabel">
+                                                                        {{__("Confirmer l'activation du bon")}}
+                                                                        <strong
                                                                             style="color: darkred;">{{$voucher->serialnumber}}</strong>
                                                                     </h1>
                                                                     <button type="button" class="btn-close"
@@ -156,7 +163,7 @@
                                                                             aria-label="Close"></button>
                                                                 </div>
                                                                 <form method="POST"
-                                                                      action="{{url('/client/' . $client->id . '/vouchers/' . $voucher->id . '/activate')}}"
+                                                                      action="{{url('/'.GuestController::getApplicationLocal().'/client/' . $client->id . '/vouchers/' . $voucher->id . '/activate')}}"
                                                                       onsubmit="return true;">
                                                                     <div class="modal-body">
 
@@ -180,7 +187,7 @@
                                                                                 data-bs-dismiss="modal">Annuler
                                                                         </button>
                                                                         <button type="submit" class="btn btn-success">
-                                                                            Activer le bon
+                                                                            {{__("Activer")}}
                                                                         </button>
                                                                     </div>
                                                                 </form>
@@ -194,7 +201,7 @@
                                                         <a class="btn btn-sm btn-link" href="#" data-bs-toggle="modal"
                                                            data-bs-target="#confirm-deactivate-voucher-modal"
                                                            style=" text-decoration: none;">
-                                                            <b style="color: red;">{{'Desactiver'}}</b>
+                                                            <b style="color: red;">{{__('Désactiver')}}</b>
                                                         </a>
                                                         <div class="modal fade" id="confirm-deactivate-voucher-modal"
                                                              data-bs-backdrop="static"
@@ -206,8 +213,9 @@
                                                                 <div class="modal-content">
                                                                     <div class="modal-header">
                                                                         <h1 class="modal-title fs-5"
-                                                                            id="staticBackdropLabel">Vous souhaitez
-                                                                            desactiver le bon <strong
+                                                                            id="staticBackdropLabel">
+                                                                            {{__("Confirmez la désactivation du bon")}}
+                                                                            <strong
                                                                                 style="color: darkred;">{{$voucher->serialnumber}}</strong>
                                                                         </h1>
                                                                         <button type="button" class="btn-close"
@@ -215,7 +223,7 @@
                                                                                 aria-label="Close"></button>
                                                                     </div>
                                                                     <form method="POST"
-                                                                          action="{{url('/client/' . $client->id . '/vouchers/' . $voucher->id . '/deactivate')}}"
+                                                                          action="{{url('/'.GuestController::getApplicationLocal().'/client/' . $client->id . '/vouchers/' . $voucher->id . '/deactivate')}}"
                                                                           onsubmit="return true;">
                                                                         <div class="modal-body">
                                                                             <input type="hidden" name="error" id="error"
@@ -235,8 +243,8 @@
                                                                                     data-bs-dismiss="modal">Annuler
                                                                             </button>
                                                                             <button type="submit"
-                                                                                    class="btn btn-success"> Desactiver
-                                                                                le bon
+                                                                                    class="btn btn-success">
+                                                                                {{__("Désactiver")}}
                                                                             </button>
                                                                         </div>
                                                                     </form>
@@ -247,7 +255,7 @@
                                                         <a class="btn btn-link btn-sm" href="#" data-bs-toggle="modal"
                                                            data-bs-target="#confirm-use-voucher-modal"
                                                            style=" text-decoration: none;">
-                                                            <b style="color: blue;">{{'Utiliser'}}</b>
+                                                            <b style="color: blue;">{{__('Utiliser')}}</b>
                                                         </a>
                                                         <div class="modal fade modal-lg" id="confirm-use-voucher-modal"
                                                              data-bs-backdrop="static"
@@ -259,8 +267,9 @@
                                                                 <div class="modal-content">
                                                                     <div class="modal-header">
                                                                         <h1 class="modal-title fs-5"
-                                                                            id="staticBackdropLabel">Vous souhaitez
-                                                                            confirme l'utilisation du bon <strong
+                                                                            id="staticBackdropLabel">
+                                                                            {{__("Confirmez l'utilisation du bon")}}
+                                                                            <strong
                                                                                 style="color: darkred;">{{$voucher->serialnumber}}</strong>
                                                                         </h1>
                                                                         <button type="button" class="btn-close"
@@ -268,7 +277,7 @@
                                                                                 aria-label="Close"></button>
                                                                     </div>
                                                                     <form method="POST"
-                                                                          action="{{url('/client/' . $client->id . '/vouchers/' . $voucher->id . '/use')}}"
+                                                                          action="{{url('/'.GuestController::getApplicationLocal().'/client/' . $client->id . '/vouchers/' . $voucher->id . '/use')}}"
                                                                           onsubmit="return true;">
                                                                         <div class="modal-body">
 
@@ -287,15 +296,12 @@
                                                                             <input type="hidden" name="clientid"
                                                                                    value="{{$client->id}}">
                                                                             <h6><strong style="color: darkred;">
-                                                                                    En confirmant l'utilisation du bon,
-                                                                                    le systeme ne vous permet plus de
-                                                                                    revenir en arriere. Rassurez-vous
-                                                                                    que le client utilise ce
-                                                                                    bon.</strong></h6>
+                                                                                {{__("Après cette étape de confirmation, Aucun retour n'est possible pour l'utilisation du Bon. Rassurez vous auprès du client qu'il souhaite vraiment utiliser son BON")}}
+                                                                                </strong></h6>
 
                                                                             <div class="row mb-3">
                                                                                 <label for="code"
-                                                                                       class="col-md-4 col-form-label text-md-end">{{ 'Code d\'utilisation' }}
+                                                                                       class="col-md-4 col-form-label text-md-end">{{ __("Code d'utilisation") }}
                                                                                     <b class=""
                                                                                        style="color: red;">*</b>
                                                                                 </label>
@@ -317,20 +323,20 @@
                                                                                 </div>
                                                                             </div>
 
-                                                                            @if(count($rewards) > 0)
+                                                                            {{--@if(count($rewards) > 0)--}}
                                                                                 <div class="row mb-3">
-                                                                                    <label for="code"
-                                                                                           class="col-md-4 col-form-label text-md-end">{{ 'Recompense' }}
+                                                                                    <label for="reward"
+                                                                                           class="col-md-4 col-form-label text-md-end">{{ __('Récompense') }}
                                                                                         {{--<b class="" style="color: red;">*</b>--}}
                                                                                     </label>
 
                                                                                     <div class="col-md-8">
                                                                                         <select id="reward"
                                                                                                 class="form-control @error('reward') is-invalid @enderror"
-                                                                                                name="reward" required
+                                                                                                name="reward"
                                                                                                 autocomplete="reward"
                                                                                                 autofocus>
-                                                                                            <option value="">-- Choisir ici --</option>
+                                                                                            <option value="">-- {{__("Sélectionnez ici")}} --</option>
                                                                                             @foreach($rewards as $reward)
                                                                                                 <option
                                                                                                     value="{{$reward->id}}">{{$reward->name}}</option>
@@ -344,7 +350,7 @@
                                                                                                    id="add_level_field">
                                                                                                     <strong><span
                                                                                                             class="glyphicon glyphicon-plus">+</span></strong>
-                                                                                                    &nbsp;{{'Ajouter une recompense'}}
+                                                                                                    &nbsp;{{ __('Ajouter une récompense') }}
                                                                                                 </a><br>
                                                                                                     <span id="add_reward_result"></span>
                                                                                                 </small>
@@ -360,10 +366,10 @@
                                                                                 </div>
 
                                                                                 <fieldset id="reward_form" style="display: none; border: 1px darkblue solid; border-radius: 5px;">
-                                                                                    <legend><small style="font-size: small;">Ajout de recompense</small></legend>
+                                                                                    <legend><small style="font-size: small;">{{__("Ajout de récompense")}}</small></legend>
                                                                                     <div class="row mb-3">
                                                                                         <label for="name"
-                                                                                               class="col-md-5 col-form-label text-md-end">{{ 'Nom de la recompense' }}
+                                                                                               class="col-md-5 col-form-label text-md-end">{{ __('Nom') }}
                                                                                             <b class=""
                                                                                                style="color: red;">*</b></label>
 
@@ -372,10 +378,9 @@
                                                                                                    class="form-control @error('name') is-invalid @enderror"
                                                                                                    name="name"
                                                                                                    value="{{ old('name') }}"
-                                                                                                   required
                                                                                                    autocomplete="name"
                                                                                                    autofocus
-                                                                                                   placeholder="Nom de la recompense">
+                                                                                                   placeholder="{{__("Nom")}}">
                                                                                             @error('name')
                                                                                             <span
                                                                                                 class="invalid-feedback"
@@ -388,7 +393,7 @@
 
                                                                                     <div class="row mb-3">
                                                                                         <label for="nature"
-                                                                                               class="col-md-5 col-form-label text-md-end">{{ 'Nature de la recompense' }}
+                                                                                               class="col-md-5 col-form-label text-md-end">{{ __('Nature') }}
                                                                                             <b class=""
                                                                                                style="color: red;">*</b></label>
 
@@ -397,15 +402,15 @@
                                                                                                     type="text"
                                                                                                     class="form-control @error('nature') is-invalid @enderror"
                                                                                                     name="nature"
-                                                                                                    required autofocus>
+                                                                                                    autofocus>
                                                                                                 <option
-                                                                                                    value="">{{'-- Choisir ici --'}}</option>
+                                                                                                    value="">-- {{__('Sélectionnez ici')}} --</option>
                                                                                                 <option
-                                                                                                    value="{{ 'MATERIAL' }}">{{ 'Materiel' }}</option>
+                                                                                                    value="{{ 'MATERIAL' }}">{{ __('Materiel') }}</option>
                                                                                                 <option
-                                                                                                    value="{{ 'FINANCIAL' }}">{{'Financiere'}}</option>
+                                                                                                    value="{{ 'FINANCIAL' }}">{{__('Financière')}}</option>
                                                                                                 <option
-                                                                                                    value="{{ 'SERVICE' }}">{{'Service'}}</option>
+                                                                                                    value="{{ 'SERVICE' }}">{{__("Service")}}</option>
                                                                                             </select>
                                                                                             @error('nature')
                                                                                             <span
@@ -419,7 +424,7 @@
 
                                                                                     <div class="row mb-3">
                                                                                         <label for="value"
-                                                                                               class="col-md-5 col-form-label text-md-end">{{ 'Valeur financiere de la recompense' }}
+                                                                                               class="col-md-5 col-form-label text-md-end">{{ __('Valeur financière') }}
                                                                                             <b class=""
                                                                                                style="color: red;">*</b></label>
 
@@ -429,10 +434,9 @@
                                                                                                    class="form-control @error('value') is-invalid @enderror"
                                                                                                    name="value"
                                                                                                    value="{{ old('value') }}"
-                                                                                                   required
                                                                                                    autocomplete="value"
                                                                                                    autofocus
-                                                                                                   placeholder="Valeur financiere de la recompense">
+                                                                                                   placeholder="{{__("Valeur financière")}}">
                                                                                             @error('value')
                                                                                             <span
                                                                                                 class="invalid-feedback"
@@ -445,7 +449,7 @@
 
                                                                                     <div class="row mb-3">
                                                                                         <label for="level"
-                                                                                               class="col-md-5 col-form-label text-md-end">{{ 'Niveau du bon' }}
+                                                                                               class="col-md-5 col-form-label text-md-end">{{ __('Type de bon') }}
                                                                                             <b class=""
                                                                                                style="color: red;">*</b></label>
                                                                                         <div class="col-md-7">
@@ -456,9 +460,8 @@
                                                                                             <select id="level"
                                                                                                     type="text"
                                                                                                     class="form-control @error('level') is-invalid @enderror"
-                                                                                                    name="level"
-                                                                                                    required>
-                                                                                                <option>{{'-- Choisir ici --'}}</option>
+                                                                                                    name="level">
+                                                                                                <option>{{__("Sélectionnez ici")}}</option>
                                                                                                 @foreach($levels as $level)
                                                                                                     <option
                                                                                                         value="{{$level['name']}}">{{$level['name']}}</option>
@@ -481,7 +484,7 @@
                                                                                                href="#save-reword"
                                                                                                id="save-reword" onclick="postRewardForm();"
                                                                                                style="text-decoration: none; font-size: large;">
-                                                                                                {{ 'Enregistrer' }}
+                                                                                                {{ __('Enregistrer') }}
                                                                                             </a>
                                                                                             <span style="display: none;" id="loader"
                                                                                                 class="spinner-grow text-info"
@@ -491,16 +494,20 @@
 
                                                                                         </div>
                                                                                     </div>
+                                                                                    <span style="display: none" id="alert_length_code_error">
+                                                                                        {{__("Le code a exactement 8 caractères. L'insertion ou l'omission du caractère '-' n'a pas d'effet.")}}
+                                                                                    </span>
                                                                                 </fieldset>
-                                                                            @endif
+                                                                            {{--@endif--}}
                                                                         </div>
                                                                         <div class="modal-footer">
                                                                             <button type="button" class="btn btn-danger"
-                                                                                    data-bs-dismiss="modal">Annuler
+                                                                                    data-bs-dismiss="modal">{{__("Annuler")}}
+
                                                                             </button>
                                                                             <button type="submit"
-                                                                                    class="btn btn-success"> Confirmez
-                                                                                l'utilisation du bon
+                                                                                    class="btn btn-success">
+                                                                                {{__("Confirmez l'utilisation du bon")}}
                                                                             </button>
                                                                         </div>
                                                                         <script type="text/javascript">
@@ -516,7 +523,7 @@
                                                                                 }
                                                                                 var lengthiHeigt = codestr.length === 8;
                                                                                 if (lengthiHeigt === false) {
-                                                                                    alert('Le code a exactement 8 caracteres. L\'insertion ou l\'omission du caractere "-" n\'a pas d\'effet.');
+                                                                                    alert(document.getElementById("alert_length_code_error").innerHTML);
                                                                                     return false;
                                                                                 }
                                                                                 return true;
@@ -626,7 +633,7 @@
                                 </tbody>
                             </table>
                         @else
-                            <h5>Aucun bon trouve dans le systeme</h5>
+                            <h5>{{__("Pas de Bon disponible sur la plateforme !")}}</h5>
                         @endif
                     </div>
 

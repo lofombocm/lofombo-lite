@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\GuestController;
 use App\Jobs\ProcessSendEMailVoucherGeneratedJob;
 use App\Jobs\ProcessSendSMSVoucherUsageCodeJob;
 use App\Models\Client;
@@ -50,12 +51,11 @@ class VoucherControler extends Controller
         return redirect()->back()->with('error', json_encode($request->all()));*/
 
         $validator = Validator::make($request->all(), [
-            'clientid' => 'required|uuid|exists:clients,id',/*
-            'rewardid' => 'required|uuid|exists:rewards,id',
-            'conversionpointrewardid' => 'required|uuid|exists:conversion_point_rewards,id',
-            'thresholdid' => 'required|uuid|exists:thresholds,id',*/
+            'clientid' => 'required|uuid|exists:clients,id',
             'level' => 'required|string',
             'transactiontype' => 'required|string|min:2|max:255',
+        ],[
+            'level.required' => __('Le niveau de bon est requis'),
         ]);
 
         if($validator->fails()){
@@ -65,16 +65,16 @@ class VoucherControler extends Controller
 
         $client = Client::where('id', $request->get('clientid'))->where('active', true)->first();
         if ($client === null) {
-            session()->flash('error', 'Client desactive');
-            return redirect()->back()->with('error', 'Client desactive');
+            session()->flash('error', __("Code invalide"));
+            return redirect()->back()->with('error', __("Code invalide"));
         }
 
         $level = json_decode($request->get('level'));
         $configid = $level->config;
         $config = Config::where('id', $configid)->first();
         if ($config === null) {
-            session()->flash('error', 'Niveau non configure');
-            return redirect()->back()->with('error', 'Niveau non configure');
+            session()->flash('error', __("Une erreur est survenue, reessayez de nouveau."));
+            return redirect()->back()->with('error', __("Une erreur est survenue, reessayez de nouveau."));
         }
 
         //$reward = Reward::where('id', $request->get('rewardid'))->first();
@@ -135,8 +135,8 @@ class VoucherControler extends Controller
                 '\'. Niveau: ' . $niveau . ' Nombre de points: ' . $points . ', Montant: ' . $amount .
                 '. Pour le client: ' . $client->name . '.';*/
 
-            $transactionDetails = 'Generation de bon identifie par: \'' . $voucherid . '\'. Numero de serie: \'' . $serialnumber.
-                '\'. Niveau: ' . $niveau . ' Nombre de points: ' . $points . '. Pour le client: ' . $client->name . '.';
+            $transactionDetails = __("Génération d'un Bon de Fidélité") . __("identifié par") .' : \'' . $voucherid . '\'' . __("Numéro de série") . ': ' . $serialnumber.
+                '\'. '. __("Type de bon") . ': ' . $niveau . ' Points: ' . $points . '. ' . __("Pour le client") . ': ' . $client->name . '.';
 
             $transactionid = Str::uuid()->toString();
 
@@ -149,8 +149,11 @@ class VoucherControler extends Controller
                     'loyaltyaccountid' => $loyaltyAccount->id,
                     'configid' => $config->id,
                     'madeby' => Auth::check() ? '' . Auth::user()->id : (Auth::guard('client')->check() ? Auth::guard('client')->user()->id : 'UNKNOWN'),
-                    'reference' => 'GENERATION DE BON',
+                    'reference' => __("GENERATION DE BON"),
                     'amount' => $amount,
+                    'purchase_amount'  => 0,
+                    'gift_amount' => 0,
+                    'birthdate_amount' => 0,
                     'point' => $points,
                     'old_amount' => $loyaltyAmountBalance,
                     'old_point' => $loyaltyPointBalance,
@@ -164,22 +167,22 @@ class VoucherControler extends Controller
 
             $loyaltyAccount->update([
                     'amount_balance' =>  $loyaltyAccount->amount_balance - $amount,
-                    'point_balance' => $loyaltyAccount->point_balance - $points,
+                    'point_balance' => encrypt(strval(intval(strval(decrypt($loyaltyAccount->point_balance))) - $points)),
                     'current_point' => $loyaltyAccount->point_balance
                 ]);
 
-            $link = url('').'/client/'. $clientid . '/vouchers' ;
+            $link = url('/'.GuestController::getApplicationLocal().'/client/'. $clientid . '/vouchers');
 
             $smsData = [
                 'to' => '237' . $client->telephone,
-                'message' => 'Le numero de serie du bon genere est: ' . $serialnumber . ' et le code d\'utilisation est: ' . decrypt($voucherUsageCode->code),
+                'message' => __("Le numéro de série du bon généré est") . ': ' . $serialnumber . ' ' . __("et le code d'utilisation est") . ': ' . decrypt($voucherUsageCode->code),
             ];
             ProcessSendSMSVoucherUsageCodeJob::dispatch($smsData);
 
             //dd(Auth::check());
             if (Auth::check()) {
                 if ($client->email != null) {
-                    $message = [$client->gender . ' ' . $client->name . ', un bon de niveau ' . $voucher->level . ' a ete genere a votre compte.'];
+                    $message = [$client->gender . ' ' . $client->name . ', ' . __("un bon de type") . ' ' . $voucher->level . ' ' . __("a été généré à votre compte") . '.'];
                     $emaildata = ['email' =>$client->email, 'name' => $client->name, 'clientLoginUrl' => $link, 'level' => $voucher->level, 'msg' => $message,
                         'code' => decrypt($voucherUsageCode->code)];
                     //dd($emaildata);
@@ -187,7 +190,7 @@ class VoucherControler extends Controller
 
                     $notifid = Str::uuid()->toString();
                     $notifgenerator = '' . Auth::user()->id . '';
-                    $notifsubject = 'Generation de Bon';
+                    $notifsubject = __("Génération d'un Bon de Fidélité");
                     $notifsentat = Carbon::now();
                     $notifbody = json_encode($message);
                     $notifdata = json_encode($emaildata);
@@ -216,14 +219,14 @@ class VoucherControler extends Controller
                 }
                 $admins = User::where('is_admin', true)->get();
                 foreach ($admins as $admin) {
-                    $message = ['Mme/M. ' . ' ' .  $admin->name . ', le client ' .  $client->name . ' a genere un bon de niveau ' . $voucher->level . '.'];
+                    $message = ['Mme/M. ' . ' ' .  $admin->name . ', le client ' .  $client->name . ' ' . __("a généré") . ' '  . __("un bon de type") . ' '. $voucher->level . '.'];
                     $emaildata = ['email' =>$admin->email, 'name' =>  $admin->name, 'clientLoginUrl' => $link, 'level' => $voucher->level, 'msg' => $message];
                     //dd($emaildata);
                     ProcessSendEMailVoucherGeneratedJob::dispatch($emaildata);
 
                     $notifid = Str::uuid()->toString();
                     $notifgenerator =$client->id;
-                    $notifsubject = 'Generation de Bon';
+                    $notifsubject = __("Génération d'un Bon de Fidélité");
                     $notifsentat = Carbon::now();
                     $notifbody = json_encode($message);
                     $notifdata = json_encode($emaildata);
@@ -254,14 +257,14 @@ class VoucherControler extends Controller
 
                 $admins = User::where('is_admin', true)->get();
                 foreach ($admins as $admin) {
-                    $message = ['Mme/M. ' . ' ' .  $admin->name . ', le client ' .  $client->name . ' a genere un bon de niveau ' . $voucher->level . '.'];
+                    $message = ['Mme/M. ' . ' ' .  $admin->name . ', le client ' .  $client->name . ' ' . __("a généré un bon de type") . ' '. $voucher->level . '.'];
                     $emaildata = ['email' =>$admin->email, 'name' =>  $admin->name, 'clientLoginUrl' => $link, 'level' => $voucher->level, 'msg' => $message];
                     //dd($emaildata);
                     ProcessSendEMailVoucherGeneratedJob::dispatch($emaildata);
 
                     $notifid = Str::uuid()->toString();
                     $notifgenerator =$client->id;
-                    $notifsubject = 'Generation de Bon';
+                    $notifsubject = __("Génération d'un Bon de Fidélité");
                     $notifsentat = Carbon::now();
                     $notifbody = json_encode($message);
                     $notifdata = json_encode($emaildata);
@@ -290,7 +293,7 @@ class VoucherControler extends Controller
                 }
 
                 if ($client->email != null) {
-                    $message = [$client->gender . ' ' . $client->name . ', un bon de niveau ' . $voucher->level . ' a ete genere a votre compte.'];
+                    $message = [$client->gender . ' ' . $client->name . ', ' . __("un bon de type") . ' ' . $voucher->level . ' ' . __("a été généré à votre compte") .'.'];
                     $emaildata = ['email' =>$client->email, 'name' => $client->name, 'clientLoginUrl' => $link, 'level' => $voucher->level, 'msg' => $message,
                         'code' => decrypt($voucherUsageCode->code)];
                     //dd($emaildata);
@@ -298,7 +301,7 @@ class VoucherControler extends Controller
 
                     $notifid = Str::uuid()->toString();
                     $notifgenerator = '' . $client->id . '';
-                    $notifsubject = 'Generation de Bon';
+                    $notifsubject = __("Génération d'un Bon de Fidélité");
                     $notifsentat = Carbon::now();
                     $notifbody = json_encode($message);
                     $notifdata = json_encode($emaildata);
@@ -337,8 +340,9 @@ class VoucherControler extends Controller
 
         DB::commit();
 
-        session()->flash('status', 'Bon genere avec succes.');
-        return redirect()->back()->with('status', 'Bon genere avec succes.');
+        $msg = __('Bon généré avec succès.');
+        session()->flash('status', $msg);
+        return redirect()->back()->with('status', $msg);
     }
 
     public function generateVoucherSerialNumber():string

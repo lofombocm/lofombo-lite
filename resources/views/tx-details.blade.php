@@ -14,7 +14,7 @@
             <div class="col-md-9">
                 <div class="card">
                     <div class="card-header">
-                        <h5 style="display: inline;"><strong>{{ 'Details de la transaction  ' . $tx->id }}</strong></h5>
+                        <h5 style="display: inline;"><strong>{{ __("Détails de la transaction") . ' ' . $tx->id }}</strong></h5>
                     </div>
                     <div class="card-body">
                         @if (session('status'))
@@ -33,39 +33,39 @@
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
-                                    Date: &nbsp; &nbsp; {{$tx->date}}
+                                    {{__("Date")}}: &nbsp; &nbsp; {{$tx->date}}
                                 </h5>
                             </a>
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
-                                    Points: &nbsp; &nbsp; {{$tx->point}}
+                                    {{__("Points")}}: &nbsp; &nbsp; {{$tx->point}}
                                 </h5>
                             </a>
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
-                                    Montant: &nbsp; &nbsp; {{$tx->amount}}
+                                    {{__("Montant")}}: &nbsp; &nbsp; {{$tx->amount}}
                                 </h5>
                             </a>
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
-                                    Type de transaction: &nbsp; &nbsp; {{$tx->transactiontype}}
+                                    {{__("Type de Transaction")}}: &nbsp; &nbsp; {{$tx->transactiontype}}
                                 </h5>
                             </a>
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
-                                    Datails de la transaction: &nbsp; &nbsp; {{$tx->transactiondetail}}
+                                    {{__("Détails de la transaction")}}: &nbsp; &nbsp; {{$tx->transactiondetail}}
                                 </h5>
                             </a>
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
                                     Client: &nbsp; &nbsp; <br/>
-                                    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Nom: {{$client->name}} <br />
-                                    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Telephone: {{$client->telephone}}
+                                    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;{{__("Nom")}}: {{$client->name}} <br />
+                                    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;{{__("Téléphone")}}: {{$client->telephone}}
                                 </h5>
                             </a>
                             @if($tx->products != null)
@@ -84,7 +84,7 @@
                                                             //dd($product);
                                                             ?>
                                                         <li>
-                                                            Nom: {{$product->name}} &nbsp;&nbsp; Prix unitaire: {{$product->price}} &nbsp;&nbsp; Total: {{$product->others}}
+                                                            {{__("Article")}}: {{$product->name}} &nbsp;&nbsp; {{__("Prix Unitaire (TTC)")}}: {{$product->price}} &nbsp;&nbsp; {{__("Total")}}: {{$product->others}}
                                                         </li>
                                                     @endforeach
                                                 </ol>
@@ -98,11 +98,11 @@
                                                                 //dd($product);
                                                                 ?>
                                                             <li>
-                                                                Serie: {{$product->serialnumber}}</li>
-                                                            <li>Niveau: {{$product->level}} </li>
-                                                            <li>Point: {{$product->point}}</li>
-                                                            <li>Montant: {{$product->amount}}</li>
-                                                            <li>Expiration: {{Carbon::parse($product->expirationdate)->format('d-m-Y H:i:s')}}</li>
+                                                                {{__("N° Série")}}: {{$product->serialnumber}}</li>
+                                                            <li>{{__("Type")}}: {{$product->level}} </li>
+                                                            <li>{{__("Point")}}: {{$product->point}}</li>
+                                                            <li>{{__("Montant")}}: {{$product->amount}}</li>
+                                                            <li>{{__("Expiration")}}: {{Carbon::parse($product->expirationdate)->format('d-m-Y H:i:s')}}</li>
                                                         @endforeach
                                                     </ul>
                                                 @endif

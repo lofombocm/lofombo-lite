@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\SuperAdmin;
 use App\Models\User;
 use App\Models\UserFirstTimeConnection;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 
 class LoginController extends Controller
@@ -68,18 +72,28 @@ class LoginController extends Controller
      */
     public function postLogin(Request $request)
     {
+
+
         $request->validate([
             'username' => 'required|string|exists:users,username',
             'password' => 'required|string|min:8|max:20',
+        ], [
+            'username.exists' => __('Le système n\'a pas reconnu votre nom d\'utilisateur.'),
+            'username.required' => __('Le nom d\'utilisateur est obligatoire.'),
+            'password.required' => __('Le mot de passe est obligatoire.'),
+            'password.min' => __('Le mot de passe doit avoir au moins 8 caractères'),
+            'password.max' => __('Le mot de passe doit avoir au plus 20 caractères')
         ]);
+
+        //dd($request->all());
 
         $user = User::where('username', $request->get('username'))->first();
         $userFirstTimeConnection = UserFirstTimeConnection::where('id', $user->id)->first();
 
         if (!$user->active) {
-            session()->flash('error', 'Votre compte est inactif.');
+            session()->flash('error', __('Désolé, vous n\'avez pas l\'accès'));
             return back()->withErrors([
-                'error' => 'Votre compte est inactif.',
+                'error' => __('Désolé, vous n\'avez pas l\'accès'),
             ]);
         }
 
@@ -88,26 +102,84 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $request->remember)) {
 
             if (!$userFirstTimeConnection->has_been_connected){
-                session()->flash('status', 'Vous etes invite a choisir un nouveau mot de passe.');
+                //Session::flush();
+                Auth::logout();
+                session()->flash('status', __('Bien vouloir choisir un nouveau mot de passe'));
                 return view('auth.change-pwd',
-                    ['user'=>$user, 'status' => 'Vous etes invite a choisir un nouveau mot de passe.']);
+                    ['user'=>$user, 'status' => __('Bien vouloir choisir un nouveau mot de passe')]);
                 //return redirect()->route('login')->with(['status' => 'Vous etes invite a choisir un nouveau mot de passe.']);
             }
 
             $request->session()->regenerate();
-            session()->flash('status', 'Authentifie avec succes!');
+            session()->flash('status', __('Connexion réussie !'));
             //
             if (Auth::user()->is_admin) {
-                return redirect()->intended('/reports')->withSuccess('status', 'You have Successfully loggedin');
+                session()->flash('status', __('Connexion réussie !'));
+                return redirect()->route('reports.menu')->withSuccess('status', __('Connexion réussie !'));
             }else{
-                return redirect()->to('/home/purchases')->withSuccess('status', 'You have Successfully loggedin');
+                session()->flash('status', __('Connexion réussie !'));
+                return redirect()->route('home.purchases.index')->withSuccess('status', __('Connexion réussie !'));
             }
         }
 
         //return back()->withError('message', 'Invalid EMail/username or password');
+        $msg = __('Nom Utilisateur et/ou Mot de passe incorrects !');
+        session()->flash('error', $msg);
         return back()->withErrors([
-            'error' => 'The provided credentials do not match our records.',
+            'error' => $msg,
         ]);
+    }
+
+
+
+
+    public function postResetPasswordFirstConnection(Request $request)  {
+        //dd($request->all());
+        $validator = Validator::make($request->all(), [
+            'userid' => 'required|numeric|exists:users,id',
+            //'currentpassword' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:8', 'max:20', 'confirmed'],
+        ],[
+            'userid.required' => __('Utilisateur non reconnu!'),
+            'userid.exists' => __('Utilisateur non reconnu!'),
+            'password.required' => __('Le mot de passe est obligatoire.'),
+            'password.min' => __('Le mot de passe doit avoir au moins 8 caractères'),
+            'password.max' => __('Le mot de passe doit avoir au plus 20 caractères'),
+            'password.confirmed' => __('Les mots de passe ne correspondent pas'),
+        ]);
+
+        //dd($validator);
+
+        if($validator->fails()){
+            session()->flash('error', $validator->errors()->first());
+            return back()->withErrors(['error' => $validator->errors()->first()]);
+        }
+
+        $user = User::where('id', intval($request->get('userid')))->first();
+        $user->update(['password' => Hash::make($request->get('password'))]);
+        Session::flush();
+        Auth::logout();
+        //return Redirect('login');
+        $msg = __('Modification reussie !');
+        session()->flash('status', $msg);
+
+        $request->merge(['username' => $user->username]);
+
+        $credentials = $request->only('username', 'password');
+        if (Auth::attempt($credentials, $request->remember)) {
+            $request->session()->regenerate();
+            $msg = __('Modification reussie !');
+            session()->flash('status', $msg);
+            $userFirstTimeConnection = UserFirstTimeConnection::where('id', $user->id)->first();
+            $userFirstTimeConnection->update(['has_been_connected' => true]);
+            return redirect()->route('dashboard')->withSuccess('status', $msg);
+        }
+
+        //return back()->withError('message', 'Invalid EMail/username or password');
+        return back()->withErrors([
+            'error' => __('Nom Utilisateur et/ou Mot de passe incorrects !'),
+        ]);
+        //return redirect('/login')->with('message', 'Votre mot de passe a ete modifie avec succes!');
     }
 
 }

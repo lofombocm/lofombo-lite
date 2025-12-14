@@ -17,23 +17,23 @@
                         <h4 style="width: 100%; text-align: right; border-bottom: 0 black solid; text-decoration: underline;">
                             <i>Le {{Carbon::now()->format('d-m-Y')}}</i>
                         </h4>
-                        <span style="width: 100%; text-align: center; border-bottom: 0 black solid; font-size: x-large; margin-bottom: 30px;">
+                        <span style="width: 100%; text-align: center; border-bottom: 0 black solid; font-size: large; margin-bottom: 30px;">
                             @php
                                 if ($level == 'ALL'){
-                                    $level = 'tous';
+                                    $level = __('Tous');
                                 }
                                 if ($state == 'ALL'){
-                                    $state = 'tous';
+                                    $state = __('Tous');
                                 }
                             @endphp
-                            <span >{{'Niveau: ' . $level}} &nbsp; &nbsp; | &nbsp; &nbsp; {{'Etat: ' . $state}}</span><br>
+                            <span >{{__("Type") . ': ' . $level}} &nbsp; &nbsp; | &nbsp; &nbsp; {{ __("Etat") .': ' . $state}}</span><br>
                             @if(isset($from))
 
-                                {{ 'Bons de la periode du ' . Carbon::parse($from)->format('d-m-Y') .
-                                ' au ' . Carbon::parse($to)->format('d-m-Y')}}
+                                {{ __("Bons de la période du") . ' ' . Carbon::parse($from)->format('d-m-Y') .
+                                 __("au") . '  ' . Carbon::parse($to)->format('d-m-Y')}}
                             @else
-                                <span style="width: 100%; text-align: center; border-bottom: 0 black solid; font-size: x-large; margin-bottom: 30px;">
-                                     {{'Touts les Bons'}}
+                                <span style="width: 100%; text-align: center; border-bottom: 0 black solid; font-size: large; margin-bottom: 30px;">
+                                     {{ __('Touts les Bons')}}
                                 </span>
                             @endif
 
@@ -49,23 +49,23 @@
                                 </th>
 
                                 <th scope="col" style="vertical-align: middle;">
-                                    {{ 'Serie' }}
+                                    {{ __("N° Série") }}
                                 </th>
 
                                 <th scope="col" style="vertical-align: middle;">
-                                    {{ 'Client' }}
+                                    {{ __("Client") }}
                                 </th>
                                 <th scope="col" style="vertical-align: middle;">
-                                   {{ 'Niveau' }}
+                                   {{ __("Type") }}
                                 </th>
                                 <th scope="col">
-                                    {{ 'NB. Point' }}
+                                    {{ 'Point' }}
                                 </th>
                                 <th scope="col" style="vertical-align: middle;">
-                                    {{ 'Status' }}
+                                    {{ __("Etat") }}
                                 </th>
                                 <th scope="col" style="vertical-align: middle;">
-                                    {{ 'Date Exp.' }}
+                                    {{ __("Date Exp.") }}
                                 </th>
 
                                 </thead>
@@ -105,13 +105,13 @@
                                                 <?php
                                                 $state = '';
                                                 if (!$voucher->active && !$voucher->is_used){
-                                                    $state = 'GENERE';
+                                                    $state = __('GENERE');
                                                 }elseif($voucher->active && !$voucher->is_used){
-                                                    $state = 'ACTIVE';
+                                                    $state = __('ACTIVE');
                                                 }elseif($voucher->active && $voucher->is_used){
-                                                    $state = 'UTILISE';
+                                                    $state = __('UTILISE');
                                                 }elseif(!$voucher->active && $voucher->is_used){
-                                                    $state = 'INCOHERENT';
+                                                    $state = __('INCOHERENT');
                                                 }
 
                                                 ?>
@@ -128,96 +128,8 @@
                                 </tbody>
                             </table>
                             @else
-                            <h4>{{'Aucun bon trouve'}}</h4>
+                            <h4>{{ __('Aucun bon trouvé')}}</h4>
                         @endif
-                        {{--<div class="list-group list-group-flush alert alert-info" style="margin-top: -20px;">
-                            <a href="#" class="list-group-item list-group-item-action"
-                               style="margin-left: 15px; width: 98%; text-decoration: none; color: black;">
-                                <span>
-                                    No. de Serie: {{$voucher->serialnumber}}
-                                    <span style="display: inline; position: relative; float:right; color: #000000;">
-                                        {{ 'ID: ' }} {{$voucher->id}}
-                                    </span>
-                                </span>
-                                <br>
-                            </a>
-
-                            <a href="#" class="list-group-item list-group-item-action"
-                               style="margin-left: 15px; width: 98%; text-decoration: none; color: black;">
-                                <br>
-                                <span>
-                                    Porteur: {{$client->name}}
-                                    <span style="display: inline; position: relative; float:right; color: #000000;">
-                                        {{ 'Tel: ' }} {{$client->telephone}}
-                                    </span>
-                                </span>
-                                <br>
-                            </a>
-
-                            <a href="#" class="list-group-item list-group-item-action"
-                               style="margin-left: 15px; width: 98%; text-decoration: none; color: black;">
-                                <br>
-                                <span>
-                                    Point: {{$voucher->point}}
-                                </span>
-                                <br>
-                            </a>
-
-                            <a href="#" class="list-group-item list-group-item-action"
-                               style="margin-left: 15px; width: 98%; text-decoration: none; color: black;">
-                                <br>
-                                <span>
-                                    Emetteur: {{$voucher->enterprise}}
-                                </span>
-                                <br>
-                            </a>
-
-                            <a href="#" class="list-group-item list-group-item-action"
-                               style="margin-left: 15px; width: 98%; text-decoration: none; color: black;">
-                                <br>
-                                <span>
-                                    Emis le: &nbsp; &nbsp; {{\Illuminate\Support\Carbon::parse($voucher->created_at)->format('d-m-Y H:i:s')}}
-                                </span>
-                                <br>
-                            </a>
-
-                            <a href="#" class="list-group-item list-group-item-action"
-                               style="margin-left: 15px; width: 98%; text-decoration: none; color: black;">
-                                <br>
-                                <span>
-                                    Expire le: {{\Illuminate\Support\Carbon::parse($voucher->expirationdate)->format('d-m-Y H:i:s')}}
-                                </span>
-                                <br>
-                            </a>
-
-                            <a href="#" class="list-group-item list-group-item-action"
-                               style="margin-left: 15px; width: 98%; text-decoration: none;">
-                                <h5 style="display: inline; float: right; margin-top: -110px;">
-                                    <?php
-
-                                    $from = [255, 0, 0];
-                                    $to = [0, 0, 255];
-                                    $qrcode = QrCode::size(200)
-                                        ->style('dot')
-                                        ->eye('circle')
-                                        ->gradient($from[0], $from[1], $from[2], $to[0], $to[1], $to[2], 'diagonal')
-                                        ->margin(1)
-                                        ->generate($voucher->serialnumber);
-                                    ?>
-                                    <span style="float: right; text-align: center;">
-                                        {{$qrcode}}
-                                    </span>
-                                    <br>
-                                    <span style="float: right; text-align: center; margin-top: 50px; color: black;">
-                                        <span><b>{{$voucher->enterprise . ' Vous remercie de votre fidelite.'}}</b></span>
-                                    </span>
-                                </h5>
-                            </a>
-                            <br>
-
-                        </div>--}}
-
-
                     </div>
                 </div>
             </div>

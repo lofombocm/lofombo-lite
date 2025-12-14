@@ -35,6 +35,8 @@ class RewardController extends Controller
             'nature'               => 'required|string|in:MATERIAL,FINANCIAL,SERVICE',
             'level'                => 'required|string|max:255',
             'value'                  => 'required|numeric|min:1',
+        ],[
+
         ]);
     }
 
@@ -150,7 +152,7 @@ class RewardController extends Controller
                     'error' => 0,
                     'success'=>1,
                     'errorMessage' => '',
-                    'successMessage' =>'Recompense creee avec succes!',
+                    'successMessage' =>__('Récompense enregistée avec succès!'),
                     'result' => $reward
                 ], Response::HTTP_OK);
 
@@ -179,7 +181,7 @@ class RewardController extends Controller
      * @return \Illuminate\Http\RedirectResponse
      */
 
-    public function activateOrDeactivateReward(Request $request, string $rewardId)
+    public function activateOrDeactivateReward(Request $request, string $local, string $rewardId)
     {
         if (!Auth::check()) {
             session()->flash('error', 'Vous n\'etes pas autorise');

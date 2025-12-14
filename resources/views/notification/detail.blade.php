@@ -15,7 +15,6 @@
                                              bg-success border border-light
                                              rounded-circle badge">
                                     <span class="visually-hidden">
-                                        Notifications of newly launched courses
                                     </span>
                                 </span>
                             @else
@@ -25,7 +24,6 @@
                                              bg-danger border border-light
                                              rounded-circle badge">
                                     <span class="visually-hidden">
-                                        Notifications of newly launched courses
                                     </span>
                                 </span>
                             @endif
@@ -42,7 +40,7 @@
                                 </div>
                             @endif
                         <h3>
-                            {{ 'Disponibilite de recompenses au travers des bons' }}
+                            {{ __('Disponibilité de récompenses à travers les Bons de Fidélité') }}
                         </h3><br>
 
                         <?php /* dd($data);*/  ?>
@@ -58,23 +56,23 @@
                         </ul>
 
                         <p>
-                            Pour le faire vous devez vous connecter en cliquant sur le lien:
+                            {{__("Cliquez sur le lien suivant pour accéder à la plateforme")}}:
                             <a href="{{$data['clientLoginUrl']}}" class="btn btn-link"
                             onclick="return false;">{{'Cliquez ici pour vous connecter.'}}</a>
                         </p>
 
-                        <h5>Merci pour votre fidelite.</h5>
+                        <h5>{{ __("Merci pour votre Fidélité.") }}</h5>
                         @if(!$notification->read)
                             <form method="POST" action="{{ route('notifications.index.read-or-unread', $notification)}}">
                                 @csrf
                                 <input type="hidden" name="action" value="read">
-                                <button class="btn btn-link" type="submit" style="float: right;">Marquer comme lu</button>
+                                <button class="btn btn-link" type="submit" style="float: right;">{{__("Marquer comme lu")}}</button>
                             </form>
                         @else
                             <form method="POST" action="{{ route('notifications.index.read-or-unread', $notification)}}">
                                 @csrf
                                 <input type="hidden" name="action" value="unread">
-                                <button class="btn btn-link" type="submit" style="float: right;">Marquer comme non lu</button>
+                                <button class="btn btn-link" type="submit" style="float: right;">{{__("Marquer comme non lu")}}</button>
                             </form>
                         @endif
                         <button
@@ -82,7 +80,7 @@
                             type="submit"
                             style="float: left; "
                             onclick="history.back();"
-                        >Retour</button>
+                        >{{__("Retour")}}</button>
 
 
                     </div>

@@ -1,7 +1,7 @@
 @php
     use App\Models\Reward;use App\Models\Voucher
   ; use Illuminate\Support\Carbon
-  ;
+  ; use App\Http\Controllers\GuestController;
 @endphp
 @extends('layouts.app')
 
@@ -14,7 +14,7 @@
             <div class="col-md-9">
                 <div class="card">
                     <div class="card-header">
-                        <h5 style="display: inline;"><strong>{{ 'Details du client: ' . $client->name }}</strong></h5>
+                        <h5 style="display: inline;"><strong>{{ __("Détails du client") . ': ' . $client->name }}</strong></h5>
                     </div>
                     <div class="card-body">
                         @if (session('status'))
@@ -33,9 +33,9 @@
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
-                                    Nom: &nbsp; &nbsp; {{$client->name}}
+                                    {{__("Nom")}}: &nbsp; &nbsp; {{$client->name}}
                                     <strong style="display: inline; position: relative; float:right; color: darkred;">
-                                        {{ 'Solde: ' }} {{$loyaltyAccount->point_balance}}
+                                        {{ __('Solde Fidélité').': ' }} {{intval(strval(decrypt($loyaltyAccount->point_balance)))}}
                                         @if(\Illuminate\Support\Facades\Auth::user()->is_admin)
                                             {{'Points  (' . $loyaltyAccount->amount_balance . ' ' . $configuration->currency_name . ')'}}
                                         @endif
@@ -45,13 +45,13 @@
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
-                                    Telephone: &nbsp; &nbsp; {{$client->telephone}}
+                                  {{__("Numéro Tel")}}  : &nbsp; &nbsp; {{$client->telephone}}
                                 </h5>
                             </a>
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
-                                    Email: &nbsp;
+                                    {{__("Email")}}: &nbsp;
                                     @if($client->email == null)
                                        {{'N/D'}}
                                     @else
@@ -63,7 +63,7 @@
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
-                                    Date de Naissance: &nbsp;
+                                    {{__("Date de Naissance")}}: &nbsp;
                                     <?php
                                     $a = '00';
                                     $m = '00';
@@ -74,7 +74,7 @@
                                         $a = $ymd[0];
                                         $m = $ymd[1];
                                         $j = $ymd[2];
-                                        $annee = (intval($a) === 1900) ? 'XXXX' : $a;
+                                        $annee = (intval($a) === 1900) ? 'YYYY' : $a;
                                         $dateNaissance = $j . '-' . $m . '-' . $annee;
                                     }
                                     ?>
@@ -85,7 +85,7 @@
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
-                                    Civilite: &nbsp;&nbsp;
+                                    {{__('Civilité')}}: &nbsp;&nbsp;
                                     @if($client->gender == null)
                                         {{'N/D'}}
                                     @else
@@ -122,9 +122,21 @@
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
-                                    Enregistre par: &nbsp; &nbsp;{{ $user->name }}
+                                    {{__("Créé par")}}: &nbsp; &nbsp;{{ $user->name }}
                                 </h5>
                             </a>
+                            @if($client->was_invited)
+                                <a href="#" class="list-group-item list-group-item-action"
+                                   style="margin-left: 15px; width: 98%;">
+                                    <h5>
+                                        <?php
+                                         $inviter = \App\Models\Client::where('id', $client->invited_by)->first();
+                                         $invitation = \App\Models\FriendInvitatin::where('id', $client->invitation_id)->first();
+                                       ?>
+                                        {{__('Invité par')}}: &nbsp; &nbsp;{{ $inviter->name }}  ({{__("Le")}}: {{Carbon::parse($invitation->created_at)->format('d-m-Y H:i:s')}})
+                                    </h5>
+                                </a>
+                            @endif
                         </div>
 
                         <div class="alert alert-{{($client->active)?'success':'danger'}}"
@@ -135,10 +147,10 @@
                                     $maxLevel = $levels[0];
                                     $minLevel = $levels[0];
                                     foreach ($levels as $level){
-                                        if($level->point > $maxLevel->point && $loyaltyAccount->point_balance >= $level->point){
+                                        if($level->point > $maxLevel->point && intval(strval(decrypt($loyaltyAccount->point_balance))) >= $level->point){
                                             $maxLevel = $level;
                                         }
-                                        if($level->point < $minLevel->point && $loyaltyAccount->point_balance >= $level->point){
+                                        if($level->point < $minLevel->point && intval(strval(decrypt($loyaltyAccount->point_balance))) >= $level->point){
                                             $minLevel = $level;
                                         }
                                     }
@@ -151,10 +163,10 @@
                                     }
 
                                 @endphp
-                                @if($loyaltyAccount->point_balance >= $minLevel->point)
+                                @if(intval(strval(decrypt($loyaltyAccount->point_balance))) >= $minLevel->point)
                                     <button type="button" class="btn btn-success" data-bs-toggle="modal"
                                             data-bs-target="#generate-voucher-modal">
-                                        {{ 'Generer un bon' }}
+                                        {{ __('Générer'). ' ' . __('un bon') }}
                                     </button>
                                     <!-- Modal -->
                                     <div class="modal fade" id="generate-voucher-modal" data-bs-backdrop="static"
@@ -181,7 +193,7 @@
                                                 <div class="modal-header">
                                                     <h1 class="modal-title fs-5" id="staticBackdropLabel">Point cummule:
                                                         <strong
-                                                            style="color: darkred;">{{$loyaltyAccount->point_balance}}
+                                                            style="color: darkred;">{{intval(strval(decrypt($loyaltyAccount->point_balance)))}}
                                                             points</strong></h1>
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                             aria-label="Close"></button>
@@ -192,10 +204,9 @@
                                                             @foreach($possibleLevels as $level)
                                                                 <li>
                                                                     <h6>
-                                                                        Lorsque vous accumuler <strong> {{$level->point}} points</strong>
-                                                                        vous beneficiez d'un bon de type
-                                                                        <strong
+                                                                        {{__("Bon de Type")}}  <strong
                                                                             style="color: #495057;">{{$level->name}}</strong>
+                                                                         {{__("disponible pour")}} <strong> {{$level->point}} points</strong>
                                                                     </h6>
                                                                     @php
                                                                         $rewards = Reward::all();
@@ -209,7 +220,7 @@
                                                                     @endphp
                                                                     @if(count($selectedRewards) > 0)
                                                                         <h6>
-                                                                            Vous pouvez beneficier de :
+                                                                            {{__("Vous pouvez bénéficier de :")}}
                                                                         </h6>
                                                                         <ul>
                                                                             @foreach($selectedRewards as $theReward)
@@ -258,12 +269,12 @@
                                                                 <div class="row mb-3">
                                                                     {{--<input type="hidden" name="transactiontypeid"
                                                                            value="{{$transactiontype->id}}">--}}
-                                                                    <label for="level" class="col-md-4 col-form-label text-md-end">{{ 'Niveau du bon' }}</label>
+                                                                    <label for="level" class="col-md-4 col-form-label text-md-end">{{ __("Type de Bon") }}</label>
                                                                     <div class="col-md-6">
                                                                         <select id="level"
                                                                                 class="form-control form-select form-select-lg @error('level') is-invalid @enderror"
                                                                                 name="level" >
-                                                                            <option value=""> Choisissez ici </option>
+                                                                            <option value="">-- {{__("Sélectionnez ici")}} --</option>
                                                                             @foreach($possibleLevels as $level)
                                                                                 <option value="{{json_encode($level)}}">{{$level->name}}</option>
                                                                             @endforeach
@@ -319,7 +330,7 @@
                                                             <button type="button" class="btn btn-danger"
                                                                     data-bs-dismiss="modal">Annuler
                                                             </button>
-                                                            <button type="submit" class="btn btn-success">Generer
+                                                            <button type="submit" class="btn btn-success">{{__('Générer')}}
                                                             </button>
                                                         </div>
                                                     </form>
@@ -333,60 +344,68 @@
                                         </div>
                                     </div>
                                 @else
-                                    <div>Bien que vos points ne vous permettent pas encore de
+                                    {{--<div style="display: none;">Bien que vos points ne vous permettent pas encore de
                                         beneficier d'un bon, nous vous encourageons a plus d'effort <br></div><br>
+                                --}}
+
                                 @endif
-                                <button type="button" class="btn btn-danger" data-bs-toggle="modal"
-                                        data-bs-target="#confirm-deactivate-client-modal">
-                                    {{ 'Bloquer le client' }}
-                                </button>
 
-                                <div class="modal fade" id="confirm-deactivate-client-modal" data-bs-backdrop="static"
-                                     data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
-                                     aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h1 class="modal-title fs-5" id="staticBackdropLabel">Vous souhaitez
-                                                    desactiver le client <strong
-                                                        style="color: darkred;">{{$client->name}}</strong></h1>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                        aria-label="Close"></button>
-                                            </div>
-                                            <form method="POST"
-                                                  action="{{url('/client/' . $client->id . '/deactivate')}}"
-                                                  onsubmit="return true;">
-                                                <div class="modal-body">
+                                @if(\Illuminate\Support\Facades\Auth::user()->is_admin)
+                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal"
+                                            data-bs-target="#confirm-deactivate-client-modal">
+                                        {{ __('Bloquer') }}
+                                    </button>
 
-                                                    <input type="hidden" name="error" id="error"
-                                                           class="form-control @error('error') is-invalid @enderror">
-                                                    @error('error')
-                                                    <span class="invalid-feedback" role="alert"
-                                                          style="position: relative; width: 100%; text-align: center;">
+                                    <div class="modal fade" id="confirm-deactivate-client-modal" data-bs-backdrop="static"
+                                         data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+                                         aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h1 class="modal-title fs-5" id="staticBackdropLabel">
+                                                        {{__("Confirmez la désactivation du client")}}
+                                                        <strong
+                                                            style="color: darkred;">{{$client->name}}</strong></h1>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                            aria-label="Close"></button>
+                                                </div>
+                                                <form method="POST"
+                                                      action="{{url('/' . GuestController::getApplicationLocal() . '/client/' . $client->id . '/deactivate')}}"
+                                                      onsubmit="return true;">
+                                                    <div class="modal-body">
+
+                                                        <input type="hidden" name="error" id="error"
+                                                               class="form-control @error('error') is-invalid @enderror">
+                                                        @error('error')
+                                                        <span class="invalid-feedback" role="alert"
+                                                              style="position: relative; width: 100%; text-align: center;">
                                                                     <strong>{{ $message }}</strong>
                                                                 </span> <br/>
-                                                    @enderror
+                                                        @enderror
 
-                                                    @csrf
+                                                        @csrf
 
-                                                    <input type="hidden" name="clientid" value="{{$client->id}}">
+                                                        <input type="hidden" name="clientid" value="{{$client->id}}">
 
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-danger"
-                                                            data-bs-dismiss="modal">Annuler
-                                                    </button>
-                                                    <button type="submit" class="btn btn-success">Bloquer le client
-                                                    </button>
-                                                </div>
-                                            </form>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-danger"
+                                                                data-bs-dismiss="modal">Annuler
+                                                        </button>
+                                                        <button type="submit" class="btn btn-success">
+                                                            {{__("Bloquer")}}
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                @endif
+
 
                                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                                         data-bs-target="#confirm-update-client-modal">
-                                    {{ 'Modifier Client' }}
+                                    {{ __("Modifier Client") }}
                                 </button>
 
                                 <div class="modal fade modal-lg" id="confirm-update-client-modal" data-bs-backdrop="static"
@@ -395,14 +414,15 @@
                                     <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
                                         <div class="modal-content">
                                             <div class="modal-header">
-                                                <h1 class="modal-title fs-5" id="staticBackdropLabel">Vous souhaitez
-                                                    activer le client <strong
+                                                <h1 class="modal-title fs-5" id="staticBackdropLabel">
+                                                    {{__("Confirmez l'activation du client")}}
+                                                    <strong
                                                         style="color: darkred;">{{$client->name}}</strong></h1>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                         aria-label="Close"></button>
                                             </div>
-                                            <form method="POST" action="{{url('/client/' . $client->id . '/update')}}"
-                                                  onsubmit="return true;">
+                                            <form method="POST" action="{{url('/'.GuestController::getApplicationLocal().'/client/' . $client->id . '/update')}}"
+                                                  onsubmit="return verifyBirthDate();">
                                                 <div class="modal-body">
                                                     <input type="hidden" name="error" id="error"
                                                            class="form-control @error('error') is-invalid @enderror">
@@ -418,7 +438,7 @@
 
                                                     <div class="row mb-3">
                                                         <label for="name"
-                                                               class="col-md-4 col-form-label text-md-end">{{ 'Nom du Client' }}
+                                                               class="col-md-4 col-form-label text-md-end">{{ __('Nom') }}
                                                             <b class="" style="color: red;">*</b>
                                                         </label>
 
@@ -439,7 +459,7 @@
                                                     <div class="row mb-3">
                                                         <label for="telephone"
                                                                class="col-md-4 col-form-label text-md-end">
-                                                            {{ 'Telephone' }}
+                                                            {{ __("Téléphone") }}
                                                             <b class="" style="color: red;">*</b>
                                                         </label>
 
@@ -458,7 +478,7 @@
 
                                                     <div class="row mb-3">
                                                         <label for="email"
-                                                               class="col-md-4 col-form-label text-md-end">{{ 'E-Mail'}}</label>
+                                                               class="col-md-4 col-form-label text-md-end">{{ __("Email")}}</label>
 
                                                         <div class="col-md-6">
                                                             <input id="email" type="email"
@@ -476,7 +496,7 @@
 
                                                     <div class="row mb-3">
                                                         <label for="birthdate"
-                                                               class="col-md-4 col-form-label text-md-end"><br>{{ 'Date de Naissance' }}
+                                                               class="col-md-4 col-form-label text-md-end"><br>{{ __("Date de Naissance (Jour Mois Année)") }}
                                                         </label>
                                                             <?php
                                                             $date = Carbon::now();
@@ -496,9 +516,9 @@
                                                         <div class="col-md-6">
                                                             <div class="row">
                                                                 <div class="col-md-4">
-                                                                    <label for="day">Jour</label>
+                                                                    <label for="day">{{__("Jour")}}</label>
                                                                     <select class="form-select" id="day" name="day">
-                                                                        <option>--Choisir ici --</option>
+                                                                        <option value="">-- {{__("Sélectionnez ici")}} --</option>
                                                                         <option
                                                                             value="01" {{($day !== '00' ?  ($day === '01' ? 'selected' : ''): '')}}>
                                                                             01
@@ -627,65 +647,65 @@
 
                                                                 </div>
                                                                 <div class="col-md-4">
-                                                                    <label for="month">Mois</label>
-                                                                    <select class="form-select" id="month" name="month">
-                                                                        <option>--Choisir ici --</option>
+                                                                    <label for="month">{{__("Mois")}}</label>
+                                                                    <select class="form-select" id="month" name="month" onchange="verifyBirthDate();">
+                                                                        <option>-- {{__("Sélectionnez ici")}} --</option>
                                                                         <option
                                                                             value="01" {{($month !== '00' ?  ($month === '01' ? 'selected' : ''): '')}}>
-                                                                            Janvier
+                                                                            {{__("Janvier")}}
                                                                         </option>
                                                                         <option
                                                                             value="02" {{($month !== '00' ?  ($month === '02' ? 'selected' : ''): '')}}>
-                                                                            Fevrier
+                                                                            {{__("Févier")}}
                                                                         </option>
                                                                         <option
                                                                             value="03" {{($month !== '00' ?  ($month === '03' ? 'selected' : ''): '')}}>
-                                                                            Mars
+                                                                            {{__("Mars")}}
                                                                         </option>
                                                                         <option
                                                                             value="04" {{($month !== '00' ?  ($month === '04' ? 'selected' : ''): '')}}>
-                                                                            Avril
+                                                                            {{__("Avril")}}
                                                                         </option>
                                                                         <option
                                                                             value="05" {{($month !== '00' ?  ($month === '05' ? 'selected' : ''): '')}}>
-                                                                            Mai
+                                                                            {{__("Mai")}}
                                                                         </option>
                                                                         <option
                                                                             value="06" {{($month !== '00' ?  ($month === '06' ? 'selected' : ''): '')}}>
-                                                                            Juin
+                                                                            {{__("Juin")}}
                                                                         </option>
                                                                         <option
                                                                             value="07" {{($month !== '00' ?  ($month === '07' ? 'selected' : ''): '')}}>
-                                                                            Juillet
+                                                                            {{__("Juillet")}}
                                                                         </option>
                                                                         <option
                                                                             value="08" {{($month !== '00' ?  ($month === '08' ? 'selected' : ''): '')}}>
-                                                                            Aout
+                                                                            {{__("Août")}}
                                                                         </option>
                                                                         <option
                                                                             value="09" {{($month !== '00' ?  ($month === '09' ? 'selected' : ''): '')}}>
-                                                                            Septembre
+                                                                            {{__("Septembre")}}
                                                                         </option>
                                                                         <option
                                                                             value="10" {{($month !== '00' ?  ($month === '10' ? 'selected' : ''): '')}}>
-                                                                            Octobre
+                                                                            {{__("Octobre")}}
                                                                         </option>
                                                                         <option
                                                                             value="11" {{($month !== '00' ?  ($month === '11' ? 'selected' : ''): '')}}>
-                                                                            Novembre
+                                                                            {{__("Novembre")}}
                                                                         </option>
                                                                         <option
                                                                             value="12" {{($month !== '00' ?  ($month === '12' ? 'selected' : ''): '')}}>
-                                                                            Decembre
+                                                                            {{__("Décembre")}}
                                                                         </option>
                                                                     </select>
 
                                                                 </div>
 
                                                                 <div class="col-md-4">
-                                                                    <label for="year">Annee</label>
+                                                                    <label for="year">{{__("Année")}}</label>
                                                                     <select class="form-select" id="year" name="year">
-                                                                        <option>--Choisir ici --</option>
+                                                                        <option>-- {{__("Sélectionnez ici")}} --</option>
                                                                         @for($i = $thisyear; $i >= 1900; $i--)
                                                                             <option
                                                                                 value="{{$i}}" {{($year !== '00' ?  ($year === (''. $i) ? 'selected' : ''): '')}}>{{$i}}</option>
@@ -707,24 +727,24 @@
 
                                                     <div class="row mb-3">
                                                         <label for="gender"
-                                                               class="col-md-4 col-form-label text-md-end">{{ 'Civilite' }}</label>
+                                                               class="col-md-4 col-form-label text-md-end">{{__('Civilité')}}</label>
 
                                                         <div class="col-md-6">
                                                             <select id="gender"
                                                                     class="form-control form-select form-select-lg @error('gender') is-invalid @enderror"
                                                                     name="gender">
-                                                                <option value="">Choisissez ici</option>
+                                                                <option value="">-- {{__("Sélectionnez ici")}} --</option>
                                                                 <option
                                                                     value="MONSIEUR" {{$client->gender === 'MONSIEUR' ? 'selected' : ''}}>
-                                                                    Monsieur
+                                                                    {{__("Monsieur")}}
                                                                 </option>
                                                                 <option
                                                                     value="MADAME" {{$client->gender === 'MADAME' ? 'selected' : ''}}>
-                                                                    Madame
+                                                                    {{__("Madame")}}
                                                                 </option>
                                                                 <option
                                                                     value="MADEMOISELLE" {{$client->gender === 'MADEMOISELLE' ? 'selected' : ''}}>
-                                                                    Mademoiselle
+                                                                    {{__("Mademoiselle")}}
                                                                 </option>
                                                             </select>
 
@@ -738,7 +758,7 @@
 
                                                     <div class="row mb-3">
                                                         <label for="city"
-                                                               class="col-md-4 col-form-label text-md-end">{{ 'Ville' }}</label>
+                                                               class="col-md-4 col-form-label text-md-end">{{ __('Ville') }}</label>
 
                                                         <div class="col-md-6">
                                                             <input id="city" type="text"
@@ -756,7 +776,7 @@
 
                                                     <div class="row mb-3">
                                                         <label for="quarter"
-                                                               class="col-md-4 col-form-label text-md-end">{{ 'Quartier' }}</label>
+                                                               class="col-md-4 col-form-label text-md-end">{{ __('Lieu de résidence') }}</label>
 
                                                         <div class="col-md-6">
                                                             <input id="quarter" type="text"
@@ -778,17 +798,32 @@
                                                     <button type="button" class="btn btn-danger"
                                                             data-bs-dismiss="modal">Annuler
                                                     </button>
-                                                    <button type="submit" class="btn btn-success">Ajourner le client
+                                                    <button type="submit" class="btn btn-success">
+                                                        {{__("Modifier Client")}}
                                                     </button>
                                                 </div>
+
+                                                <script type="text/javascript">
+                                                    function verifyBirthDate(){
+                                                        var day = parseInt(document.getElementById('day').value);
+                                                        console.log(day);
+                                                        var month = parseInt(document.getElementById('month').value);
+                                                        console.log(month);
+                                                        if(month === 2 && day > 29){
+                                                            alert('Invalid date.');
+                                                            return false;
+                                                        }
+                                                        return true;
+                                                    }
+                                                </script>
                                             </form>
                                         </div>
                                     </div>
                                 </div>
 
                                 @if(count(Voucher::where('clientid', $client->id)->get()) > 0)
-                                    <a class="btn btn-warning" href="{{url('/client/' . $client->id . '/vouchers')}}">
-                                        {{ 'voir les bons' }}
+                                    <a class="btn btn-warning" href="{{url('/'.GuestController::getApplicationLocal().'/client/' . $client->id . '/vouchers')}}">
+                                        {{ __('Voir les Bons') }}
                                     </a>
                                 @endif
 
@@ -796,7 +831,7 @@
                                 <span>Client desactive</span> &nbsp;&nbsp;&nbsp;&nbsp;
                                 <button type="button" class="btn btn-success" data-bs-toggle="modal"
                                         data-bs-target="#confirm-activate-client-modal">
-                                    {{ 'Debloquer le client' }}
+                                    {{ __('Débloquer le Client') }}
                                 </button>
 
                                 <div class="modal fade" id="confirm-activate-client-modal" data-bs-backdrop="static"
@@ -805,13 +840,13 @@
                                     <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
                                         <div class="modal-content">
                                             <div class="modal-header">
-                                                <h1 class="modal-title fs-5" id="staticBackdropLabel">Vous souhaitez
-                                                    activer le client <strong
+                                                <h1 class="modal-title fs-5" id="staticBackdropLabel">
+                                                    {{__("Confirmez le Débloquage du client")}} <strong
                                                         style="color: darkred;">{{$client->name}}</strong></h1>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                         aria-label="Close"></button>
                                             </div>
-                                            <form method="POST" action="{{url('/client/' . $client->id . '/activate')}}"
+                                            <form method="POST" action="{{url('/'.GuestController::getApplicationLocal().'/client/' . $client->id . '/activate')}}"
                                                   onsubmit="return true;">
                                                 <div class="modal-body">
                                                     <input type="hidden" name="error" id="error"
@@ -827,9 +862,10 @@
                                                 </div>
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-danger"
-                                                            data-bs-dismiss="modal">Annuler
+                                                            data-bs-dismiss="modal">{{__("Annuler")}}
                                                     </button>
-                                                    <button type="submit" class="btn btn-success">Debloquer le client
+                                                    <button type="submit" class="btn btn-success">
+                                                        {{__("Débloquer le Client")}}
                                                     </button>
                                                 </div>
                                             </form>
@@ -841,7 +877,7 @@
 
                                 <a class="btn btn-link" style="float: right;"
                                    href="{{ route('home.loyaltytransactions.client', $client->id)}}">
-                                    {{ 'Liste des transactions' }}
+                                    {{ __("Transactions") }}
                                 </a>
 
                             {{--<form id="generate-voucher-form" action="{{ route('vouchers.post') }}" method="POST"

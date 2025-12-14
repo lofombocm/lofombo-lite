@@ -8,7 +8,7 @@
 
             <div class="col-md-9">
                 <div class="card">
-                    <div class="card-header">{{ 'Enregistrer un Achat' }}</div>
+                    <div class="card-header"><h5>{{ __('Enregistrer un Achat') }}</h5></div>
                     <div class="card-body">
                         @if (session('status'))
                             <div class="alert alert-success" role="alert">
@@ -18,7 +18,7 @@
 
                             <form method="POST" action="{{ route('purchases.index.post') }}">
                                 @csrf
-                                <div><h5>Les champs marques par <b class="" style="color: red;">*</b> sont obligatoires</h5></div>
+                                <div><h5>{{__('Les champs marqués par ')}} <b class="" style="color: red;">*</b> {{__('sont obligatoires')}}</h5></div>
                                 <br>
 
                                 <input type="hidden" name="error" id="error" class="form-control @error('error') is-invalid @enderror">
