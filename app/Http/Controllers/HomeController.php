@@ -9,6 +9,7 @@ use App\Models\Config;
 use App\Models\FriendInvitatin;
 use App\Models\Loyaltyaccount;
 use App\Models\Loyaltytransaction;
+use App\Models\Product;
 use App\Models\Voucher;
 use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Http\RedirectResponse;
@@ -110,7 +111,7 @@ class HomeController extends Controller
         if(Auth::check()){
             if (Auth::user()->is_admin){
 
-                return redirect()->route('reports.menu')->withSuccess('status', __("Connexion réussie !"));
+                return redirect()->route('bi.menu')->withSuccess('status', __("Connexion réussie !"));
             }else{
 
                 return redirect()->route('home.purchases.index')->withSuccess('status', __("Connexion réussie !"));
@@ -143,8 +144,10 @@ class HomeController extends Controller
     public function showLoyaltyTransactions(string $locale, string $clientId)
     {
         $loyaltyAccount = Loyaltyaccount::where('holderid', $clientId)->first();
+        $client = Client::where('id', $clientId)->first();
         return view('tx-list',
-            ['txs' => Loyaltytransaction::where('loyaltyaccountid', $loyaltyAccount->id)->orderBy('created_at', 'desc')->get(),'clientid' => $clientId]);
+            ['txs' => Loyaltytransaction::where('loyaltyaccountid', $loyaltyAccount->id)->where('point', '>', 0)->orderBy('created_at', 'desc')->get(),
+                'clientid' => $clientId, 'client' => $client]);
     }
 
     public function showLoyaltyTransactionsClientSearch(Request $request, string $locale, string $clientId){
@@ -152,7 +155,9 @@ class HomeController extends Controller
         $loyaltyAccount = Loyaltyaccount::where('holderid', $clientId)->first();
         $q = $request->get('q');
 
-        $all = Loyaltytransaction::where('loyaltyaccountid', $loyaltyAccount->id)->orderBy('created_at', 'desc')->get();
+        $client = Client::where('id', $clientId)->first();
+
+        $all = Loyaltytransaction::where('loyaltyaccountid', $loyaltyAccount->id)->where('point', '>', 0)->orderBy('created_at', 'desc')->get();
         $txs = [];
         foreach ($all as $tx) {
             $date = Carbon::parse($tx->date)->format('d-m-Y H:i:s');
@@ -167,7 +172,7 @@ class HomeController extends Controller
             }
         }
 
-        return view('tx-list', ['txs' => $txs, 'q' => $q, 'clientid' => $clientId]);
+        return view('tx-list', ['txs' => $txs, 'q' => $q, 'clientid' => $clientId, 'client' => $client]);
         //return view('welcome')->withDetails($user)->withQuery ( $q );
         //else return view ('welcome')->withMessage('No Details found. Try to search again !');
     }
@@ -175,12 +180,12 @@ class HomeController extends Controller
 
     public function showLoyaltyTransactionsAll()
     {
-        return view('tx-list-all', ['txs' => Loyaltytransaction::orderBy('created_at', 'desc')->get()]);
+        return view('tx-list-all', ['txs' => Loyaltytransaction::where('point', '>', 0)->orderBy('created_at', 'desc')->get()]);
     }
 
     public function showLoyaltyTransactionsDetails(string $locale, string $txid)
     {
-        $tx = Loyaltytransaction::where('id', $txid)->first();
+        $tx = Loyaltytransaction::where('id', $txid)->where('point', '>', 0)->first();
         $client = Client::where('id', $tx->clientid)->first();
         return view('tx-details', ['tx' => $tx, 'client' => $client]);
     }
@@ -196,7 +201,7 @@ class HomeController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();*/
 
-        $all = Loyaltytransaction::orderBy('created_at', 'desc')->get();
+        $all = Loyaltytransaction::where('point', '>', 0)->orderBy('created_at', 'desc')->get();
         $txs = [];
         foreach ($all as $tx) {
             $date = Carbon::parse($tx->date)->format('d-m-Y H:i:s');
@@ -216,7 +221,7 @@ class HomeController extends Controller
         //else return view ('welcome')->withMessage('No Details found. Try to search again !');
     }
 
-    public function reportPage()
+    public function biPage()
     {
         if(Auth::check()){
             $configs = Config::all();
@@ -239,13 +244,14 @@ class HomeController extends Controller
                 $premium_threshold = 80;
                 $gold_threshold = 120;*/
                 $voucher_duration_in_month = 3;
+                $trusted_email = '';
                 $password_recovery_request_duration = 60*24;
                 $enterprise_name = "LOFOMBO";
                 $enterprise_email = 'contact@gmail.com';
                 $enterprise_phone = '691179154';
                 $enterprise_website = url('/');
                 //$enterprise_address = '';
-                $enterprise_logo = 'images/logo.png';
+                $enterprise_logo = 'images/logo.jpeg';
 
                 $data = [
                     'id' => $configid,
@@ -257,6 +263,7 @@ class HomeController extends Controller
                     'premium_threshold' => $request->get('premium_threshold'),
                     'gold_threshold' => $request->get('gold_threshold'),*/
                     'voucher_duration_in_month' => $voucher_duration_in_month,
+                    'trusted_email' => $trusted_email,
                     'password_recovery_request_duration' => $password_recovery_request_duration,
                     'enterprise_name' => $enterprise_name,
                     'enterprise_email' => $enterprise_email,
@@ -278,6 +285,14 @@ class HomeController extends Controller
         $config = Config::where('is_applicable', true)->first();
         return view('reports-menu', ['config' => $config]);
     }
+
+    public function reports()
+    {
+        //$txs = Loyaltytransaction::all();
+        $config = Config::where('is_applicable', true)->first();
+        return view('reports', ['config' => $config]);
+    }
+
 
     public function reportTxs(Request $request)
     {
@@ -326,7 +341,7 @@ class HomeController extends Controller
         }
 
         //dd($from, $to, $txType);
-        $txs = Loyaltytransaction::where('transactiontype', 'LIKE', '%' . $txType . '%')->whereBetween('created_at', [$from, $to])->orderBy('created_at', 'desc')->get();
+        $txs = Loyaltytransaction::where('transactiontype', 'LIKE', '%' . $txType . '%')->where('point', '>', 0)->whereBetween('created_at', [$from, $to])->orderBy('created_at', 'desc')->get();
         return Pdf::view('reports-templates.txs-templates.txs-template',
             ['txs' => $txs, 'from' => $from, 'to' => $to, 'config' => $config, 'purchase_total' => $txs->sum('purchase_amount'),
                 'gift_total' => $txs->sum('gift_amount'), 'birthdate_total'=> $txs->sum('birthdate_amount'), 'total' => $txs->sum('amount'),])
@@ -1085,6 +1100,50 @@ class HomeController extends Controller
     public function showClientAcceptedInvitaionsDetails(string $locale, string $invitationId){
         $invitation = FriendInvitatin::where('id', $invitationId)->first();
         return view('client.invitation.invitation-details',['invitation' => $invitation]);
+    }
+
+    public function productForm(Request $request, string $locale)
+    {
+        return view('purchase.product-form', ['locale' => $locale]);
+    }
+
+    public function registerProduct(Request $request, string $locale)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255|min:2|unique:products,name',
+            'unit_price' => 'required|numeric',
+        ],[
+            'name.required' => __("Le nom du produit est obligatoire."),
+            'name.max' => __("Le nom est trop long."),
+            'name.min' => __("Le nom est trop court."),
+            'unit_price' => __("Le prix unitaire est obligatoire."),
+            'unit_price.numeric' => __("Le prix unitaire est invalide."),
+            'name.unique'=>__("Produit déja enregistré")
+        ]);
+
+        if($validator->fails()){
+            session()->flash('error', $validator->errors()->first());
+            return back()->withErrors(['error' => $validator->errors()->first()]);
+        }
+
+        $name = strtoupper($request->get('name'));
+        $product = Product::where('name', $name)->first();
+        if($product !== null){
+            $msg = __("Produit déja enregistré");
+            session()->flash('error', $msg);
+            return back()->withErrors(['error' => $msg]);
+        }
+
+        Product::create([
+            'id' => Str::uuid()->toString(),
+            'name' => $name,
+            'price' => $request->get('unit_price'),
+            'others' => ''
+        ]);
+
+        $msg = __("Produit enregistrée avec succès");
+        session()->flash('status', $msg);
+        return back()->with('status', $msg);
     }
 
 }

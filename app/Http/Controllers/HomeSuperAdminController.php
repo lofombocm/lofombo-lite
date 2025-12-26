@@ -175,7 +175,7 @@ class HomeSuperAdminController extends Controller
 
 
 
-        $msg = 'Bien! la license a ete enregistre avec succes.';
+        $msg = __("Licence enregistrée avec succès");
         session()->flash('status', $msg);
 
         return back()->with('status', $msg);//->withSuccess('status', 'Great! You have Successfully Registered.');
@@ -258,7 +258,7 @@ class HomeSuperAdminController extends Controller
     {
         $loyaltyAccount = Loyaltyaccount::where('holderid', $clientId)->first();
         return view('tx-list',
-            ['txs' => Loyaltytransaction::where('loyaltyaccountid', $loyaltyAccount->id)->orderBy('created_at', 'desc')->get(),'clientid' => $clientId]);
+            ['txs' => Loyaltytransaction::where('loyaltyaccountid', $loyaltyAccount->id)->where('point', '>', 0)->orderBy('created_at', 'desc')->get(),'clientid' => $clientId]);
     }
 
     public function showLoyaltyTransactionsClientSearch(Request $request, string $clientId){
@@ -266,7 +266,7 @@ class HomeSuperAdminController extends Controller
         $loyaltyAccount = Loyaltyaccount::where('holderid', $clientId)->first();
         $q = $request->get('q');
 
-        $all = Loyaltytransaction::where('loyaltyaccountid', $loyaltyAccount->id)->orderBy('created_at', 'desc')->get();
+        $all = Loyaltytransaction::where('loyaltyaccountid', $loyaltyAccount->id)->where('point', '>', 0)->orderBy('created_at', 'desc')->get();
         $txs = [];
         foreach ($all as $tx) {
             $date = Carbon::parse($tx->date)->format('d-m-Y H:i:s');
@@ -289,12 +289,12 @@ class HomeSuperAdminController extends Controller
 
     public function showLoyaltyTransactionsAll()
     {
-        return view('tx-list-all', ['txs' => Loyaltytransaction::orderBy('created_at', 'desc')->get()]);
+        return view('tx-list-all', ['txs' => Loyaltytransaction::where('point', '>', 0)->orderBy('created_at', 'desc')->get()]);
     }
 
     public function showLoyaltyTransactionsDetails(string $local, string $txid)
     {
-        $tx = Loyaltytransaction::where('id', $txid)->first();
+        $tx = Loyaltytransaction::where('id', $txid)->where('point', '>', 0)->first();
         $client = Client::where('id', $tx->clientid)->first();
         return view('tx-details', ['tx' => $tx, 'client' => $client]);
     }
@@ -310,7 +310,7 @@ class HomeSuperAdminController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();*/
 
-        $all = Loyaltytransaction::orderBy('created_at', 'desc')->get();
+        $all = Loyaltytransaction::where('point', '>', 0)->orderBy('created_at', 'desc')->get();
         $txs = [];
         foreach ($all as $tx) {
             $date = Carbon::parse($tx->date)->format('d-m-Y H:i:s');
@@ -353,13 +353,14 @@ class HomeSuperAdminController extends Controller
                 $premium_threshold = 80;
                 $gold_threshold = 120;*/
                 $voucher_duration_in_month = 3;
+                $trusted_email = '';
                 $password_recovery_request_duration = 60;
                 $enterprise_name = "LOFOMBO";
                 $enterprise_email = 'contact@gmail.com';
                 $enterprise_phone = '0123456789';
                 $enterprise_website = url('/' . GuestController::getApplicationLocal());
                 //$enterprise_address = '';
-                $enterprise_logo = 'images/logo.png';
+                $enterprise_logo = 'images/logo.jpeg';
 
                 $data = [
                     'id' => $configid,
@@ -371,6 +372,7 @@ class HomeSuperAdminController extends Controller
                     'premium_threshold' => $request->get('premium_threshold'),
                     'gold_threshold' => $request->get('gold_threshold'),*/
                     'voucher_duration_in_month' => $voucher_duration_in_month,
+                    'trusted_email' => $trusted_email,
                     'password_recovery_request_duration' => $password_recovery_request_duration,
                     'enterprise_name' => $enterprise_name,
                     'enterprise_email' => $enterprise_email,
@@ -440,7 +442,7 @@ class HomeSuperAdminController extends Controller
         }
 
         //dd($from, $to, $txType);
-        $txs = Loyaltytransaction::where('transactiontype', 'LIKE', '%' . $txType . '%')->whereBetween('created_at', [$from, $to])->orderBy('created_at', 'desc')->get();
+        $txs = Loyaltytransaction::where('transactiontype', 'LIKE', '%' . $txType . '%')->where('point', '>', 0)->whereBetween('created_at', [$from, $to])->orderBy('created_at', 'desc')->get();
         return Pdf::view('reports-templates.txs-templates.txs-template',
             ['txs' => $txs, 'from' => $from, 'to' => $to, 'config' => $config, 'purchase_total' => $txs->sum('purchase_amount'),
                 'gift_total' => $txs->sum('gift_amount'), 'birthdate_total'=> $txs->sum('birthdate_amount'), 'total' => $txs->sum('amount'),])

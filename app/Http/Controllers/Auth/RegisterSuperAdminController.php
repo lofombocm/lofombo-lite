@@ -186,7 +186,7 @@ class RegisterSuperAdminController extends Controller
 
         DB::commit();
         //Auth::login($user);
-        $msg = 'Bien! l\'utilisateur ' . $request->get('name') . ' a ete enregistre avec succes.';
+        $msg = __("Utilisateur enregistré avec succès !");
         session()->flash('status', $msg);
 
         return back()->with('status', $msg);//->withSuccess('status', 'Great! You have Successfully Registered.');
@@ -219,16 +219,16 @@ class RegisterSuperAdminController extends Controller
         if (trim($request->get('operation')) == 'remove') {
             $user->is_admin = false;
             $user->save();
-            $msg = 'Bien! l\'utilisateur ' . $user->name . ' a ete retire du role administrateur avec succes.';
+            $msg = __("Utilisateur retiré avec succès.");
         }else{
             $users = User::where('is_admin', true)->get();
             if (count($users) >= 3) {
-                session()->flash('error', 'Desole vous ne pouvez plus ajouter d\'administrateur. ');
-                return back()->withErrors(['error' => 'Desole vous ne pouvez plus ajouter d\'administrateur. ']);
+                session()->flash('error', __("Désolé vous ne pouvez plus ajouter d'administrateur."));
+                return back()->withErrors(['error' => __("Désolé vous ne pouvez plus ajouter d'administrateur.")]);
             }
             $user->is_admin = true;
             $user->save();
-            $msg = 'Bien! l\'utilisateur ' . $user->name . ' a ete ajoute au role administrateur avec succes.';
+            $msg = __("Utilisateur ajouté avec succès.");
         }
 
         session()->flash('status', $msg);
@@ -252,8 +252,11 @@ class RegisterSuperAdminController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|min:2',
             'email' => 'required|string|email|max:255',
-            'telephone' => 'required|string|max:255|min:8',
+            'telephone' => 'required|phone|max:255|min:8',
             //'is_admin' => 'required|string|in:on,off'
+        ],[
+            'telephone.required' => __('Le numéro de téléphone est obligatoire'),
+            'telephone.phone' => __("Le numéro de téléphone est invalide"),
         ]);
 
         //session()->flash('error', $request->get('is_admin'));
@@ -305,7 +308,7 @@ class RegisterSuperAdminController extends Controller
 
 
         //Auth::login($user);
-        $msg = 'Bien! l\'utilisateur ' . $superAdmin->name . ' a ete modifier avec succes.';
+        $msg = __("Utilisateur enregistré avec succès !");
         session()->flash('status', $msg);
 
         return back()->with('status', $msg);//->withSuccess('status', 'Great! You have Successfully Registered.');
@@ -392,7 +395,7 @@ class RegisterSuperAdminController extends Controller
             ]
         );
 
-        $msg = 'Bien! l\'utilisateur ' . $request->get('name') . ' a ete invite avec succes.';
+        $msg = __("Utilisateur invité avec succès");
         session()->flash('status', $msg);
         return back()->with('status', $msg);
 

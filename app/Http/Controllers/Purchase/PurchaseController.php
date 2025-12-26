@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Purchase;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\GuestController;
+use App\Jobs\ProcessSendEMailPurchaseMadeJob;
 use App\Jobs\ProcessSendEMailVoucherAvailableJob;
 use App\Models\Client;
 use App\Models\Config;
@@ -42,182 +43,6 @@ class PurchaseController extends Controller
         return view('purchase.purchases-products');
     }
 
-    public function registerPurchaseBackup(Request $request){
-
-        $validator = Validator::make($request->all(), [
-            'clientid' => 'required|string|max:255|min:2|exists:clients,telephone',
-            'amount' => 'required|numeric|min:1',
-            'transactiontypeid' => 'required|string|min:2|max:255',
-        ]);
-
-        if($validator->fails()){
-            return back()->withErrors(['error' => $validator->errors()->first()]);
-        }
-
-        $purchaseDetails = 'Achat d\'un montant de: ' . $request->get('amount');
-
-        $amount = floatval(trim($request->get('amount')));
-
-        $theclient = Client::where('telephone', $request->get('clientid'))->where('active', true)->first();
-        if(!$theclient){
-            return back()->withErrors(['error' => 'Aucun client avec le numero ' . $request->get('clientid') . ' n\'existe pas dans le systeme']);
-        }
-
-        $clientId = $theclient->id;
-        $clientBithDate = $theclient->birthdate;
-        $clientEmail = $theclient->email;
-        $clientName = $theclient->name;
-
-        $loyaltyaccount = Loyaltyaccount::where('holderid', $theclient->id)->first();
-        $loyaltyPointBalance = $loyaltyaccount->point_balance;
-        $loyaltyId = $loyaltyaccount->id;
-        $loyaltyAmountBalance = $loyaltyaccount->amount_balance;
-        //$loyaltyAccontBalance = $loyaltyaccount->point_balance;
-
-        $conversionAmountPoint = ConversionAmountPoint::where('is_applicable', true)->first();
-        $birthdate_rate = $conversionAmountPoint->birthdate_rate;
-        $minAmount = $conversionAmountPoint->min_amount;
-        $conversionAmountPointId = $conversionAmountPoint->id;
-
-        $threshold = Threshold::where('is_applicable', true)->first();
-        $thresholdGold = $threshold->gold_threshold;
-        $thresholdPremium = $threshold->premium_threshold;
-        $thresholdClassic = $threshold->classic_threshold;
-
-        $transactiontype = Transactiontype::where('id', $request->get('transactiontypeid'))->where('active', true)->first();
-        if(!$transactiontype){
-            return back()->withErrors(['error' => 'Aucun type de transaction avec l\'ID  \'' . $request->get('transactiontypeid') . '\'.']);
-        }
-
-        $signe = intval($transactiontype->signe);
-
-        /*
-             $fp = fopen('signe.txt', 'w');
-            fwrite($fp, $signe);
-            fclose($fp);
-         */
-
-        $purchaseId = Str::uuid()->toString();
-
-        $purchaseData = [
-            'id' => $purchaseId,
-            'clientid' =>$clientId,
-            'amount' => $amount,
-            'receiptnumber' => $request->get('receiptnumber'),
-            'products' => json_encode([])
-        ];
-
-        /*session()->flash('error', json_encode($theclient));
-        return back()->withErrors(['error' => json_encode($theclient)]);*/
-
-        DB::beginTransaction();
-        try {
-            //dd($purchaseData);
-            $purchase = Purchase::create($purchaseData);
-
-            $purchaseAmount = $purchase->amount;
-
-            $isApplicableBirthdate = false;
-
-            if ($clientBithDate != null) {
-                $birthdate = Carbon::parse($clientBithDate);
-                $birthdateMonth = $birthdate->month;
-                $birthdateDay = $birthdate->day;
-                $maintenant = Carbon::now();
-                $maintenantMonth = $maintenant->month;
-                $maintenantDay = $maintenant->day;
-
-                if($birthdateMonth == $maintenantMonth && $birthdateDay == $maintenantDay){
-                    $isApplicableBirthdate = true;
-                }
-            }
-            $rate = 1;
-            if($isApplicableBirthdate){
-                $rate = $birthdate_rate;
-                if($rate < 1){
-                    $rate = 1;
-                }
-            }
-
-            $pointToBeAdded = ($loyaltyAmountBalance === (double)0) ? $loyaltyPointBalance : 0;
-            $totalPoint = floor($rate * intdiv($purchaseAmount + $loyaltyAmountBalance, $minAmount)) + $pointToBeAdded; // applique pour ne pas avoir quelqu'un qui a un solde de montant eleve et n'a pas de points
-            $point = floor($rate * intdiv($purchaseAmount, $minAmount));
-
-            //$totalPoint = $loyaltyPointBalance + $signe * $point;
-
-            if ($totalPoint > $thresholdGold){
-                /// TODO: Send SMS and email notification to client.
-                $link = url('/'.GuestController::getApplicationLocal().'/auth/client');
-                if ($clientEmail){
-                    $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'GOLD'];
-                    ProcessSendEMailVoucherAvailableJob::dispatch($data);
-                }
-                $data = ['email' => Auth::user()->email, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'GOLD'];
-                ProcessSendEMailVoucherAvailableJob::dispatch($data);
-
-                /// TODO: Generate voucher.
-
-            }
-
-            if ($totalPoint < $thresholdGold && $totalPoint >= $thresholdPremium){
-                /// TODO: Send SMS and email notification to client.
-                $link = url('/'.GuestController::getApplicationLocal().'/auth/client') ;
-                if ($clientEmail){
-                    $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'PREMIUM'];
-                    ProcessSendEMailVoucherAvailableJob::dispatch($data);
-                }
-                $data = ['email' => Auth::user()->email, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'PREMIUM'];
-                ProcessSendEMailVoucherAvailableJob::dispatch($data);
-            }
-
-            if ($totalPoint < $thresholdPremium && $totalPoint >= $thresholdClassic){
-                /// TODO: Send SMS and email notification to client.
-                $link = url('/'.GuestController::getApplicationLocal().'/auth/client');
-                if ($clientEmail){
-                    $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'CLASSIC'];
-                    ProcessSendEMailVoucherAvailableJob::dispatch($data);
-                }
-                $data = ['email' => Auth::user()->email, 'name' => $clientName, 'clientLoginUrl' => $link, 'type' => 'CLASSIC'];
-                ProcessSendEMailVoucherAvailableJob::dispatch($data);
-            }
-
-            $transactionid = Str::uuid()->toString();
-            Loyaltytransaction::create(
-                [   'id' => $transactionid,
-                    'date' => Carbon::now(),
-                    'loyaltyaccountid' => $loyaltyId,
-                    'conversionid' => $conversionAmountPointId,
-                    'sellerid' => Auth::user()->id,
-                    'purchaseid' => $purchaseId,
-                    'amount' => $purchaseAmount,
-                    'point' => $point,
-                    'old_point' => $loyaltyPointBalance,
-                    'transactiontypeid' => $request->get('transactiontypeid'), //env('TRANSACTIONTYPEID_PURCHASE'),
-                    'transactiondetail' => $purchaseDetails,
-                    'clienttransactionid' => $clientId
-                ]
-            );
-
-            $loyaltyaccount->update(
-                [
-                    'amount_balance' => $loyaltyAmountBalance + $signe * $purchaseAmount,
-                    'point_balance' => $totalPoint,
-                    'current_point' => $loyaltyPointBalance
-                ]);
-
-        }catch (\Exception $exception){
-            DB::rollback();
-            return back()->withErrors(['error' => $exception->getMessage() . '   ' . $exception->getLine()]);
-            //return back()->withErrors(['error' => $e->getMessage()]);
-        }
-        //Auth::guard('client')->login($client);
-        DB::commit();
-
-        session()->flash('status', 'Achat enregistre avec succes!');
-        return redirect("/home");//->withSuccess(['status' => 'Achat enregistre avec succes.', 'purchase' => $purchase]);
-
-    }
-
 
     public function registerPurchase(Request $request){
         //return json_encode($request->all());
@@ -225,7 +50,7 @@ class PurchaseController extends Controller
         //return back()->withErrors(['error' => $request->get('clientid')]);
         //dd($request->all());
         $validator = Validator::make($request->all(), [
-            'clientid' => 'required|string|max:255|min:2|exists:clients,telephone',
+            'clientid' => 'required|phone|max:255|min:2|exists:clients,telephone',
             'amount' => 'required|numeric|min:1',
             'transactiontype' => 'required|string|min:2|max:255',
             //'receiptnumber' => 'required|string|max:255|min:2|unique:purchases,receiptnumber',
@@ -299,7 +124,9 @@ class PurchaseController extends Controller
         //dd($sum);
         $now = Carbon::now();
 
-        $purchaseDetails .= __(" des produits : ") . join(', ', $noms) . '. ' . __("Pour un montant total de: ") . $sum . '. ' . __("Enregistré le: ") . $now;
+        if ($numitem > 0){
+            $purchaseDetails .= __(" des produits : ") . join(', ', $noms) . '. ' . __("Pour un montant total de: ") . $sum . '. ' . __("Enregistré le: ") . $now;
+        }
         $amount = doubleval(trim($request->get('amount')));
         if ($numitem > 0){
             //dd(['numitem' => $numitem, 'items' => $items, 'amount' => $amount, 'sum' => $sum]);
@@ -324,6 +151,9 @@ class PurchaseController extends Controller
         $loyaltyaccount = Loyaltyaccount::where('holderid', $theclient->id)->where('active', true)->first();
 
         $config = Config::where('is_applicable', true)->first();
+        $transactions = Loyaltytransaction::where('clientid', $theclient->id)->get();
+
+
 
         //$threshold = Threshold::where('is_applicable', true)->first();
 
@@ -335,17 +165,7 @@ class PurchaseController extends Controller
         $clientName = $theclient->name;
 
         //$loyaltyaccount = Loyaltyaccount::where('holderid', $theclient->id)->where('active', true)->first();
-        $loyaltyPointBalance = $loyaltyaccount->point_balance;
-        $loyaltyId = $loyaltyaccount->id;
-        $loyaltyAmountBalance = $loyaltyaccount->amount_balance;
-        //$loyaltyAccontBalance = $loyaltyaccount->point_balance;
-
-        //$conversionAmountPoint = ConversionAmountPoint::where('is_applicable', true)->first();
-        $birthdate_rate = $config->birthdate_bonus_rate;
-        $amount_per_point = $config->amount_per_point;
-        //$conversionAmountPointId = $conversionAmountPoint->id;
-
-        $levels = json_decode($config->levels); //Threshold::where('is_applicable', true)->first();
+         //Threshold::where('is_applicable', true)->first();
         //$thresholdGold = $threshold->gold_threshold;
         //$thresholdPremium = $threshold->premium_threshold;
         //$thresholdClassic = $threshold->classic_threshold;
@@ -408,6 +228,55 @@ class PurchaseController extends Controller
 
             $purchase->save();
 
+
+            if (count($transactions) === 0){
+                $p_balance  = $config->initial_loyalty_points;
+                $a_balance = $config->amount_per_point * $p_balance;
+                $txid = Str::uuid()->toString();
+
+                Loyaltytransaction::create([
+                    'id' => $txid,
+                    'date' => Carbon::now(),
+                    'loyaltyaccountid' => $loyaltyaccount->id,
+                    'configid' => $config->id,
+                    'madeby' => Auth::user()->id,
+                    'reference' => 'Transaction Initiale donnant les points initiaux au client',
+                    'amount' => $a_balance,
+                    'purchase_amount'  => 0,
+                    'gift_amount' => $a_balance,
+                    'birthdate_amount' => 0,
+                    'point' => $p_balance,
+                    'old_amount' => 0.0,
+                    'old_point' => "0",
+                    'transactiontype' => 'INITIALISATION COMPTE CLIENT',
+                    'transactiondetail' => 'Transaction Initiale donnant les points initiaux au client',
+                    'clientid' =>  $theclient->id,
+                    'products' => '[]'
+                ]);
+
+                $loyaltyaccount->amount_balance = $a_balance;
+                $loyaltyaccount->gift_amount_balance = $a_balance;
+                $loyaltyaccount->point_balance = encrypt($p_balance);
+                $loyaltyaccount->current_point = encrypt(0);
+                $loyaltyaccount->save();
+
+            }
+
+            $loyaltyaccount = Loyaltyaccount::where('holderid', $theclient->id)->where('active', true)->first();
+
+            $loyaltyPointBalance = $loyaltyaccount->point_balance;
+            $loyaltyId = $loyaltyaccount->id;
+            $loyaltyAmountBalance = $loyaltyaccount->amount_balance;
+            //$loyaltyAccontBalance = $loyaltyaccount->point_balance;
+
+            //$conversionAmountPoint = ConversionAmountPoint::where('is_applicable', true)->first();
+            $birthdate_rate = $config->birthdate_bonus_rate;
+            $amount_per_point = $config->amount_per_point;
+            //$conversionAmountPointId = $conversionAmountPoint->id;
+
+            $levels = json_decode($config->levels);
+
+
             $purchaseAmount = $purchase->amount;
 
             $isApplicableBirthdate = false;
@@ -435,7 +304,7 @@ class PurchaseController extends Controller
 
             //$pointToBeAdded = ($loyaltyAmountBalance === (double)0) ? $loyaltyPointBalance : 0;
             //$amount_per_point
-            $birthdateAmount = 0;
+            //$birthdateAmount = 0;
 
             $birthdateAmount = ($rate - 1) * $purchaseAmount;
             $giftAmount = 0;
@@ -474,12 +343,13 @@ class PurchaseController extends Controller
                     'birthdate_amount_balance' => $loyaltyaccount->birthdate_amount_balance + $birthdateAmount,
                     'point_balance' => encrypt($totalPoint),
                     'current_point' => $loyaltyPointBalance
-                ]);
+                ]
+            );
 
 
-            $configuration = Config::where('is_applicable', true)->first();
+            //$configuration = Config::where('is_applicable', true)->first();
 
-            $levels = json_decode($configuration->levels);
+            $levels = json_decode($config->levels);
             $maxLevel = $levels[0];
             $minLevel = $levels[0];
             foreach ($levels as $level){
@@ -504,18 +374,54 @@ class PurchaseController extends Controller
                 $level = json_decode($reward->level);
                 $rewardPoint = $level->point;
                 if ($totalPoint >= $rewardPoint){
-                    array_push($possibleRewards, $reward);
+                    $possibleRewards[] = $reward;
                 }
             }
 
             $link = url('/'.GuestController::getApplicationLocal().'/auth/client');
-            $message = [$theclient->gender . ' '. $theclient->name. ' Vous avez atteint un niveau de points vous permettant de beneficier des recompenses:'];
+            $messagePurchaseMade = [($theclient->gender === 'M' ? __("Monsieur") : __("Madame")) . ' '. $theclient->name. ' ' . __("un") . ' ' . __("achat") . ' ' . __("d'un montant") . ' ' . __("de") . ' ' . $purchaseAmount . ' ' . __("a été enregistré à votre compte")];
+
+            if ($clientEmail){
+                $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'msg' => $messagePurchaseMade];
+                ProcessSendEMailPurchaseMadeJob::dispatch($data);
+
+                $notifid = Str::uuid()->toString();
+                $notifgenerator = Auth::user()->id;
+                $notifsubject = __('Enregistrement Achat');
+                $notifsentat = Carbon::now();
+                $notifbody = json_encode($messagePurchaseMade);
+                $notifdata = json_encode($data);
+                $notifsender = Auth::user()->name;
+                $notifrecipient = $clientId;
+                $notifsenderaddress = Auth::user()->email;
+                $notifrecipientaddress = $clientEmail;
+
+                //dd($notifdata);
+                Notification::create(
+                    [
+                        'id' => $notifid,
+                        'generator' => $notifgenerator,
+                        'subject' => $notifsubject,
+                        'sent_at' => $notifsentat,
+                        'body' => $notifbody,
+                        'data' => $notifdata,
+                        'sender' => $notifsender,
+                        'recipient' => $notifrecipient,
+                        'sender_address' => $notifsenderaddress,
+                        'recipient_address' => $notifrecipientaddress,
+                        'read' => false,
+                    ]
+                );
+
+            }
+
+            $message = [($theclient->gender === 'M' ? __("Monsieur") : __("Madame")) . ' '. $theclient->name. ' ' . __("Vous avez atteint un niveau de points vous permettant de bénéficier des récompenses:")];
             //$data = [];
             if ($totalPoint >= $minLevel->point){
                 /// TODO: Send SMS and email notification to client.
                 foreach ($possibleRewards as $possibleReward){
                     $level = json_decode($possibleReward->level);
-                    array_push($message,  '"' . $possibleReward->name . ' ' . __("pour") . '"' . __("un bon de type") . ' "' . $level->name . '" correspondant a ' . $level->point. ' points ');
+                    array_push($message,  '"' . $possibleReward->name . ' ' . __("pour") . '"' . __("un bon de type") . ' "' . $level->name . '" ' . __("correspondant à") . ' ' . $level->point. ' points ');
                 }
                 if ($clientEmail){
                     $data = ['email' => $clientEmail, 'name' => $clientName, 'clientLoginUrl' => $link, 'msg' => $message];
@@ -531,7 +437,7 @@ class PurchaseController extends Controller
                     $notifrecipient = $clientId;
                     $notifsenderaddress = Auth::user()->email;
                     $notifrecipientaddress = $clientEmail;
-                    $notifread = false;
+                    //$notifread = false;
 
                     //dd($notifdata);
                     Notification::create(
@@ -546,7 +452,7 @@ class PurchaseController extends Controller
                             'recipient' => $notifrecipient,
                             'sender_address' => $notifsenderaddress,
                             'recipient_address' => $notifrecipientaddress,
-                            'read' => $notifread,
+                            'read' => false,
                         ]
                     );
 

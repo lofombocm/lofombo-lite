@@ -28,7 +28,11 @@ class ConfigController extends Controller
      */
     public function setSystemConfiguration(Request $request): RedirectResponse
     {
-        //
+        if (!Auth::user()->is_admin){
+            $msg = __("Désolé, vous n'avez pas l'accès");
+            session()->flash('error', $msg);
+            return back()->withErrors(['error' => $msg]);
+        }
         //session()->flash('error', $request->get('amount_per_point'));
         //session()->flash('request', json_encode($request->all()));
         //return back()->withErrors(['error' => $request->get('amount_per_point')]);
@@ -91,12 +95,17 @@ class ConfigController extends Controller
         $path = '';
         if ($request->file('enterprise_logo') != null){
             $logoRule = [
-                'enterprise_logo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:10240|dimensions:min_width=25,max_width=500,min_height=25,max_height=500',
+                'enterprise_logo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:500000|dimensions:min_width=25,max_width=700,min_height=25,max_height=700',
             ];
 
             $logoRules = array_merge($validatorRules, $logoRule);
             //dd($logoRules);
-            $logoValidator = Validator::make($request->all(), $logoRules);
+            $logoValidator = Validator::make($request->all(), $logoRules, [
+                'enterprise_logo.required'=> __("Le logo est obligatoire"),
+                'enterprise_logo.image' => __("Le logo doit être une image"),
+                'enterprise_logo.mimes' => __("Les formats acceptés: jpeg, png, jpg, gif, svg"),
+                'enterprise_logo.dimensions'=>__("Taille maximale du fichier : 500kb. Largeur minimal: 25px, largeur maximal: 700px. Hauteur minimal: 25px, hauteur maximal: 700px"),
+            ]);
             //dd($logoValidator->fails());
             if($logoValidator->fails()){
                 session()->flash('error', $logoValidator->errors()->first());
@@ -105,6 +114,23 @@ class ConfigController extends Controller
             }
 
             $path = $request->file('enterprise_logo')->store('images', 'public');
+        }
+
+        if ($request->filled('trusted_email')){
+            $trustedEmailvalidator = Validator::make($request->all(), [
+                'trusted_email' => 'required|email',
+            ],[
+                'email.required' => __("L'adresse E-Mail de confiance est obligatoire."),
+                'email.email' => __("L'adresse E-Mail de confiance n'est pas valide"),
+                'email.max' => __('E-Mail invalide'),
+            ]);
+
+            //dd($request->all());
+
+            if($trustedEmailvalidator->fails()){
+                session()->flash('error', $trustedEmailvalidator->errors()->first());
+                return back()->withErrors(['error' => $trustedEmailvalidator->errors()->first()]);
+            }
         }
 
         DB::beginTransaction();
@@ -126,6 +152,7 @@ class ConfigController extends Controller
                 'currency_name' => $request->get('currency_name'),
                 'levels' => json_encode($levels),
                 'voucher_duration_in_month' => intval($request->get('voucher_duration_in_month')),
+                'trusted_email' => $request->get('trusted_email'),
                 'password_recovery_request_duration' => $numMinute,
                 'enterprise_name' => $request->get('enterprise_name'),
                 'enterprise_email' => $request->get('enterprise_email'),
@@ -149,7 +176,7 @@ class ConfigController extends Controller
         DB::commit();
 
         //Auth::login($user);
-        $msg = 'Bien! la configuration a ete enregistree avec succes.';
+        $msg = 'Configuration enregistrée avec succès !';
         session()->flash('status', $msg);
         session()->flash('logo', $path);
         return back()->with('status', $msg);//->withSuccess('status', 'Great! You have Successfully Registered.');

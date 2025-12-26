@@ -71,11 +71,11 @@
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
-                                    {{ __('Civilité') }}: &nbsp;&nbsp;
+                                    {{ __('Sexe') }}: &nbsp;&nbsp;
                                     @if($invitationData->gender == null)
                                         {{'N/D'}}
                                     @else
-                                        {{$invitationData->gender}}
+                                        {{$invitationData->gender === 'M' ? __("Masculin") : __("Féminin")}}
                                     @endif
 
                                 </h5>

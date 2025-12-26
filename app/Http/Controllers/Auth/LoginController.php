@@ -115,7 +115,7 @@ class LoginController extends Controller
             //
             if (Auth::user()->is_admin) {
                 session()->flash('status', __('Connexion réussie !'));
-                return redirect()->route('reports.menu')->withSuccess('status', __('Connexion réussie !'));
+                return redirect()->route('bi.menu')->withSuccess('status', __('Connexion réussie !'));
             }else{
                 session()->flash('status', __('Connexion réussie !'));
                 return redirect()->route('home.purchases.index')->withSuccess('status', __('Connexion réussie !'));
@@ -135,6 +135,13 @@ class LoginController extends Controller
 
     public function postResetPasswordFirstConnection(Request $request)  {
         //dd($request->all());
+        if ($request->filled('password')) {
+            if ($request->get('password') === '12345678'){
+                $msg = __("Le mot de passe doit être obligatoirement modifié.");
+                session()->flash('error', $msg);
+                return back()->withErrors(['error' => $msg]);
+            }
+        }
         $validator = Validator::make($request->all(), [
             'userid' => 'required|numeric|exists:users,id',
             //'currentpassword' => ['required', 'string'],

@@ -6,7 +6,7 @@
         @include('layouts.menu')
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header">{{ __("Mes Paramètres") }}</div>
+                <div class="card-header"><h5>{{ __("Mes Paramètres") }}</h5></div>
                 <div class="card-body">
                     <form method="POST" action="{{ route('user.update-parameter.index.put', $user->id) }}" enctype="multipart/form-data">
                         @csrf

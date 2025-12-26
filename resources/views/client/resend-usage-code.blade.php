@@ -23,7 +23,7 @@
                                 </div>
                             @endif
 
-                            <div class="row mb-3">
+                            {{--<div class="row mb-3">
                                 <label for="serialnumber" class="col-md-5 col-form-label text-md-end">
                                     {{ __("N° Série") }}
                                     <b class="" style="color: red;">*</b>
@@ -44,7 +44,8 @@
                                     </span>
                                     @enderror
                                 </div>
-                            </div>
+                            </div>--}}
+                            <input type="hidden" name="serialnumber" value="{{$serial_number}}">
 
                             <div class="row mb-3">
                                 <label for="email" class="col-md-5 col-form-label text-md-end">
@@ -57,7 +58,7 @@
                                         id="email"
                                         type="email"
                                         class="form-control @error('email') is-invalid @enderror"
-                                        name="email" value="{{ old('email') }}" required autocomplete="email">
+                                        name="email" value="{{ $client->email }}" required autocomplete="email">
 
                                     @error('email')
                                     <span class="invalid-feedback" role="alert">

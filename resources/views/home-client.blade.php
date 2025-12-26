@@ -29,7 +29,7 @@
                         <div class="card-header">
                             <h5>{{ __('Accueil') }}</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body" style="border: 0 red solid;">
                             @if (session('status'))
                                 <div class="alert alert-success" role="alert">
                                     {{ session('status') }}
@@ -41,9 +41,11 @@
                                 </div>
                             @endif
                             <div class="row justify-content-center">
-
-                                <h5><br>{{__("BONS DE FIDELITE DISPONIBLES:")}}</h5>
-                                <div class="col-md-12 alert alert-light">
+                                <h4 style="font-size: 1.8em; font-weight: bold; color: #164fa9; margin-bottom: 20px; width: 100%; text-align: center;">
+                                    <br>{{__("BONS DE FIDELITE DISPONIBLES")}}
+                                </h4>
+                                <h5></h5>
+                                <div class="col-md-12" style="border: 0 red solid;">
 
                                     <?php
                                     $totalLength = count($levels);
@@ -106,7 +108,7 @@
                             </div>
 
                             <div class="row justify-content-center">
-                                <h5><br>{{ __("RECOMPENSES DISPONIBLES:") }}</h5>
+                                {{--<h5><br>{{ __("RECOMPENSES DISPONIBLES") }}</h5>--}}
 
                                 @include('reward.list-card')
                                 {{--<div class="col-md-12 alert alert-light">
@@ -281,36 +283,40 @@
                                                                             @endif
                                                                         </span>
                                                                     </div>
-                                                                    <div class="dropdown">
-                                                                        <a class="btn btn-link dropdown-toggle"
-                                                                           href="#" role="button"
-                                                                           id="dropdownMenuLink"
-                                                                           style="text-decoration: none;"
-                                                                           data-bs-toggle="dropdown"
-                                                                           aria-haspopup="true" aria-expanded="false" >
-                                                                            <img src="{{asset('images/icons8-menu-vertical-24.png')}}" alt="^" />
-                                                                        </a>
 
-                                                                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuLink">
-                                                                            @if(!$voucher->is_used)
-                                                                                <a class="dropdown-item btn btn-link" href="{{route('vouchers.resend.usage.code', $voucher->id)}}"
+                                                                    @if(!$voucher->is_used)
+                                                                        <div class="dropdown">
+                                                                            <a class="btn btn-link dropdown-toggle"
+                                                                               href="#" role="button"
+                                                                               id="dropdownMenuLink"
+                                                                               style="text-decoration: none;"
+                                                                               data-bs-toggle="dropdown"
+                                                                               aria-haspopup="true" aria-expanded="false" >
+                                                                                <img src="{{asset('images/icons8-menu-vertical-24.png')}}" alt="^" />
+                                                                            </a>
+
+                                                                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuLink">
+                                                                                @if(!$voucher->is_used)
+                                                                                    <a class="dropdown-item btn btn-link" href="{{route('vouchers.resend.usage.code', $voucher->id)}}"
+                                                                                       style="text-decoration: none;">
+                                                                                        <img src="{{asset('images/icons8-transfer-gras-26.png')}}" alt="">
+                                                                                        {{ __("Renvoyer le code d'utilisation") }}
+                                                                                    </a>
+                                                                                @endif
+                                                                                <a class="dropdown-item btn btn-link" href="{{route('vouchers.download', $voucher->id)}}"
                                                                                    style="text-decoration: none;">
-                                                                                    <img src="{{asset('images/icons8-transfer-gras-26.png')}}" alt="">
-                                                                                    {{ __("Renvoyer le code d'utilisation") }}
+                                                                                    <img src="{{asset('images/icons8-downloading-updates-20.png')}}" alt="{{__('Télécharger')}}">
+                                                                                    {{ __("Télécharger") }}
                                                                                 </a>
-                                                                            @endif
-                                                                            <a class="dropdown-item btn btn-link" href="{{route('vouchers.download', $voucher->id)}}"
-                                                                                style="text-decoration: none;">
-                                                                                <img src="{{asset('images/icons8-downloading-updates-20.png')}}" alt="{{__('Télécharger')}}">
-                                                                                {{ __("Télécharger") }}
-                                                                            </a>
-                                                                            <a class="dropdown-item btn btn-link" href="#"
-                                                                               style="text-decoration: none;">
-                                                                                <img src="{{asset('images/icons8-print-20.png')}}" alt="">
-                                                                                {{ __("Imprimer") }}
-                                                                            </a>
+                                                                                <a class="dropdown-item btn btn-link" href="#"
+                                                                                   style="text-decoration: none;">
+                                                                                    <img src="{{asset('images/icons8-print-20.png')}}" alt="">
+                                                                                    {{ __("Imprimer") }}
+                                                                                </a>
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
+                                                                    @endif
+
                                                                 </td>
                                                             </tr>
 

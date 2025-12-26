@@ -80,6 +80,7 @@ return new class extends Migration
             $table->boolean('active')->default(true);
             $table->bigInteger('registered_by')->nullable(false);
             $table->foreign('registered_by')->references('id')->on('users')->onDelete('cascade');
+            $table->text('image')->nullable();
             $table->timestamps();
         });
 
@@ -129,6 +130,7 @@ return new class extends Migration
             $table->integer('premium_threshold')->nullable(false)->default(80);
             $table->integer('gold_threshold')->nullable(false)->default(120);*/
             $table->integer('voucher_duration_in_month')->nullable(false)->default(3);
+            $table->string('trusted_email')->nullable();
             $table->integer('password_recovery_request_duration')->nullable(false)->default(1440);
             $table->string('enterprise_name')->nullable(false)->default('ENTREPRISE TEST');
             $table->string('enterprise_email')->nullable(false)->default('contact@gmail.com');

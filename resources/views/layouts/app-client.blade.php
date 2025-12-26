@@ -5,6 +5,8 @@
   ; use Illuminate\Support\Carbon;use Illuminate\Support\Facades\Auth
   ; use App\Http\Controllers\GuestController
   ;
+     $configuration = Config::where('is_applicable', true)->first();
+
 @endphp
     <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -15,7 +17,13 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    {{--<title>{{ config('app.name', 'Laravel') }}</title>--}}
+
+    @if($configuration !== null)
+        <title>{{ $configuration->enterprise_name }}</title>
+    @else
+        <title>{{ config('app.name', 'Laravel') }}</title>
+    @endif
 
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
@@ -59,7 +67,7 @@
             $incompleteProfileMsg .= ', ' . __("Date de naissance (Jour et Mois)");
         }
         if (Auth::guard('client')->user()->gender == null){
-            $incompleteProfileMsg .= ', ' . __('Civilité');
+            $incompleteProfileMsg .= ', ' . __('Sexe');
         }
         if (Auth::guard('client')->user()->quarter == null){
             $incompleteProfileMsg .= ', ' . __('Lieu de résidence');
@@ -73,7 +81,7 @@
     }
     ?>
 
-    <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
+    <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm sticky-top">
         <div class="container">
             <a class="navbar-brand" href="{{ url('/') }}">
                 @if(count(Config::all()) > 0)
@@ -81,21 +89,30 @@
                         $config = Config::where('is_applicable', true)->first();
                     @endphp
                     @if($config != null)
-                        <img src="{{asset('storage/' .$config->enterprise_logo)}}"
+                        <img src="{{asset('storage/' . $config->enterprise_logo)}}"
+                             height="70" width="300"
+                             alt="">
+                        {{--<img src="{{asset('storage/' .$config->enterprise_logo)}}"
                              style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;" height="65" width="65"
                              alt=""> &nbsp;
-                        &nbsp;<strong>{{ $config->enterprise_name }}</strong>
+                        &nbsp;<strong>{{ $config->enterprise_name }}</strong>--}}
                     @else
-                        <img src="{{asset('images/logo.png')}}"
+                        {{--<img src="{{asset('images/logo.png')}}"
                              style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;"
                              height="65"
-                             width="65" alt=""> &nbsp; &nbsp;<strong>{{ config('app.name', 'Laravel') }}</strong>
+                             width="65" alt=""> &nbsp; &nbsp;<strong>{{ config('app.name', 'Laravel') }}</strong>--}}
+                        <img src="{{asset('images/logo.jpeg')}}"
+                             height="70" width="300"
+                             alt="">
                     @endif
 
                 @else
-                    <img src="{{asset('images/logo.png')}}"
+                    {{--<img src="{{asset('images/logo.png')}}"
                          style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;" height="65"
-                         width="65" alt=""> &nbsp; &nbsp;<strong>{{ config('app.name', 'Laravel') }}</strong>
+                         width="65" alt=""> &nbsp; &nbsp;<strong>{{ config('app.name', 'Laravel') }}</strong>--}}
+                    <img src="{{asset('images/logo.jpeg')}}"
+                         height="70" width="300"
+                         alt="">
                 @endif
 
             </a>
@@ -118,10 +135,10 @@
                 @if(Auth::guard('client')->check())
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="list-group-item list-group-item-action nav-link"
+                            {{--<a class="list-group-item list-group-item-action nav-link"
                                href="{{ route('clients.notifs.index', Auth::guard('client')->user()->id) }}"
                                style="font-size: initial; display: inline;">
-                               {{--data-bs-toggle="modal" data-bs-target="#notifications-modal"--}}
+                               --}}{{--data-bs-toggle="modal" data-bs-target="#notifications-modal"--}}{{--
                                 {{ __('Notifications') }} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                 <span class="badge bg-success position-absolute top|start-*"
                                       style="
@@ -133,7 +150,7 @@
                                             text-align: center;
                                             margin-top: -10px;"
                                 >{{$unreadMsgNum}}</span>
-                            </a>
+                            </a>--}}
 
                             @if($incompleteProfile)
                                 &nbsp;&nbsp;&nbsp;&nbsp;
@@ -219,19 +236,29 @@
                 <ul class="navbar-nav ms-auto">
 
                     <li class="nav-item">
-                        <select class="form-control" name="language" onchange="submitLanguageForm(this.value);"
-                                id="language_selector">
-                            @foreach(config('app.available_locales') as $locale)
-                                <option value="{{ $locale }}"
-                                    {{$locale === Request::segment(1) ? 'selected' : ''}}>
-                                    {{ strtoupper($locale) }}{{-- - {{Request::segment(1)}} - {{$locale}}--}}
-                                </option>
-                            @endforeach
-                        </select>
+                        <div class="form-row align-items-center">
+                            <div class="col-auto">
+                                <div class="input-group mb-2">
+                                    <div class="input-group-prepend">
+                                        <div class="">
+                                            <img src="{{asset('images/fr.svg')}}" alt="" height="25" width="25" id="flag" style="margin-top: 5px;"> &nbsp;
+                                        </div>
+                                    </div>
+                                    <select class="form-control" name="language" onchange="submitLanguageForm(this.value);"
+                                            id="language_selector" style="display: inline; border: 0 white solid; background-color: #FFFFFF; font-size: 1em; font-weight: bolder;">
+                                        @foreach(config('app.available_locales') as $locale)
+                                            <option value="{{ $locale }}"
+                                                {{$locale === Request::segment(1) ? 'selected' : ''}}>
+                                                {{ strtoupper($locale) === 'FR' ? "Français" : (strtoupper($locale) === 'EN' ? "English" : "Français") }}{{-- - {{Request::segment(1)}} - {{$locale}}--}}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
 
                         <form method="GET" action="" id="select_language_form">
                             {{--@csrf--}}
-
                         </form>
 
                         <script type="text/javascript">
@@ -253,6 +280,27 @@
                                     form.submit();
                                 }
                             }
+
+                            function setFlag(){
+                                let path = window.location.pathname;
+                                if(path.length > 0){
+                                    let pathWitoutTrailingSlash = path.substring(1, path.length);
+                                    let pathArray = pathWitoutTrailingSlash.split('/');
+                                    let  locale = pathArray[0];
+                                    console.log("Local from url = " + locale);
+                                    let language = locale.toUpperCase();
+                                    let flagImg = document.getElementById("flag");
+                                    let flagFile = "";
+                                    if(language === "FR"){
+                                        flagFile = "fr.svg";
+                                    }else{
+                                        flagFile = "gb.svg";
+                                    }
+                                    let imgsrc = window.location.protocol + "//" + window.location.host + "/images/" + flagFile;
+                                    flagImg.setAttribute('src', imgsrc);
+                                }
+                            }
+                            setFlag();
                         </script>
 
                     </li>
@@ -275,29 +323,40 @@
                             $loyaltyaccount = Loyaltyaccount::where('holderid', $client->id)->first();
 
                             ?>
+                        <li>
+                            <button class="btn btn-primary" style="background-color:white; border: #164fa9; color: #164fa9;">
+                                <strong
+                                    style="
+                                    font-weight: bold;
+                                    font-size: 1.7em;
+                                    color: #164fa9;
+                                    ">{{__('Solde Fidélité')}}: {{decrypt($loyaltyaccount->point_balance)}} points
+                                </strong>
+                            </button>
+
+                        </li>
+
                         <li class="nav-item dropdown">
                             <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button"
                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                <strong>{{__('Solde Fidélité')}}: {{decrypt($loyaltyaccount->point_balance)}} points
-                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                                </strong>
                                 <strong>{{ Auth::guard('client')->user()->name }}</strong>
                             </a>
 
-                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown"
+                                 style="border: 2px #164fa9 solid; font-weight: bold; font-size: 1em;">
 
                                 <a class="dropdown-item"
                                    href="{{ route('clients.form.update.client', Auth::guard('client')->user()->id)}}">
-                                    {{__('Mes Paramètres')}}
+                                    <strong>{{__('Mes Paramètres')}}</strong>
                                 </a>
                                 <a class="dropdown-item" href="{{ url('/'.GuestController::getApplicationLocal().'/password-reset-client')}}">
-                                    Modifier mot de passe
+                                    <strong>{{__("Modifier mot de passe")}}</strong>
                                 </a>
 
                                 <a class="dropdown-item" href="{{ route('deconnexion') }}"
                                    onclick="event.preventDefault();
                                                      document.getElementById('deconnexion-client-form').submit();">
-                                    {{__("Déconnexion")}}
+                                    <strong>{{__("Déconnexion")}}</strong>
                                 </a>
 
                                 <form id="deconnexion-client-form" action="{{ route('deconnexion.client') }}"

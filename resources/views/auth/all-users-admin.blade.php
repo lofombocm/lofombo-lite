@@ -197,6 +197,107 @@
                                                 </div>
 
                                             @endif
+
+                                                @if($user->active)
+                                                    <a class="btn btn-sm btn-link" href="#" data-bs-toggle="modal"
+                                                       data-bs-target="#confirm-block-user-modal" style="text-decoration: none;">
+                                                        <b style="color: red;">{{ __('Bloquer') }}</b>
+                                                    </a>
+                                                    <div class="modal fade" id="confirm-block-user-modal"
+                                                         data-bs-backdrop="static"
+                                                         data-bs-keyboard="false" tabindex="-1"
+                                                         aria-labelledby="staticBackdropLabel"
+                                                         aria-hidden="true">
+                                                        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h1 class="modal-title fs-5" id="staticBackdropLabel">
+                                                                        {{__("Bloquer l'utilisateur")}}: {{$user->name}}
+                                                                    </h1>
+                                                                    <button type="button" class="btn-close"
+                                                                            data-bs-dismiss="modal"
+                                                                            aria-label="Close"></button>
+                                                                </div>
+                                                                <form method="POST"
+                                                                      action="{{route('utilisateurs.admin.deactivate', $user->id)}}"
+                                                                      onsubmit="return true;">
+                                                                    <div class="modal-body">
+
+                                                                        <input type="hidden" name="error" id="error"
+                                                                               class="form-control @error('error') is-invalid @enderror">
+                                                                        @error('error')
+                                                                        <span class="invalid-feedback" role="alert"
+                                                                              style="position: relative; width: 100%; text-align: center;">
+                                                                    <strong>{{ $message }}</strong>
+                                                                </span> <br/>
+                                                                        @enderror
+
+                                                                        @csrf
+                                                                    </div>
+                                                                    <div class="modal-footer">
+                                                                        <button type="button" class="btn btn-danger"
+                                                                                data-bs-dismiss="modal">Annuler
+                                                                        </button>
+                                                                        <button type="submit" class="btn btn-success">
+                                                                            {{__("Confirmer")}}
+                                                                        </button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @else
+
+                                                    <a class="btn btn-sm btn-link" href="#" data-bs-toggle="modal"
+                                                       data-bs-target="#confirm-block-user-modal" style="text-decoration: none;">
+                                                        <b style="color: limegreen;">{{ __("Débloquer") }}</b>
+                                                    </a>
+                                                    <div class="modal fade" id="confirm-block-user-modal"
+                                                         data-bs-backdrop="static"
+                                                         data-bs-keyboard="false" tabindex="-1"
+                                                         aria-labelledby="staticBackdropLabel"
+                                                         aria-hidden="true">
+                                                        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h1 class="modal-title fs-5" id="staticBackdropLabel">
+                                                                        {{__("Débloquer l'utilisateur")}}: {{$user->name}}
+                                                                    </h1>
+                                                                    <button type="button" class="btn-close"
+                                                                            data-bs-dismiss="modal"
+                                                                            aria-label="Close"></button>
+                                                                </div>
+                                                                <form method="POST"
+                                                                      action="{{route('utilisateurs.admin.activate', $user->id)}}"
+                                                                      onsubmit="return true;">
+                                                                    <div class="modal-body">
+
+                                                                        <input type="hidden" name="error" id="error"
+                                                                               class="form-control @error('error') is-invalid @enderror">
+                                                                        @error('error')
+                                                                        <span class="invalid-feedback" role="alert"
+                                                                              style="position: relative; width: 100%; text-align: center;">
+                                                                    <strong>{{ $message }}</strong>
+                                                                </span> <br/>
+                                                                        @enderror
+
+                                                                        @csrf
+                                                                    </div>
+                                                                    <div class="modal-footer">
+                                                                        <button type="button" class="btn btn-danger"
+                                                                                data-bs-dismiss="modal">Annuler
+                                                                        </button>
+                                                                        <button type="submit" class="btn btn-success">
+                                                                            {{__("Confirmer")}}
+                                                                        </button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                @endif
+
                                         </td>
                                     </tr>
                                 @endforeach

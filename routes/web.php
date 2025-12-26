@@ -27,8 +27,6 @@ use App\Http\Middleware\EnsureUserIsAdministrator;
 use App\Http\Middleware\EnsureUserIsSuperAdministrator;
 use App\Http\Middleware\EnsureUserOrClientAreConnected;
 use App\Models\Reward;
-use App\Models\SuperAdmin;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -163,6 +161,7 @@ Route::prefix('{locale}')->where(['locale' => '[a-zA-Z]{2}'])->middleware([Ensur
         Route::get('/home/rewards/lists', [RewardController::class, 'indexRewardList'])->name('rewards.index.list');
         Route::post('/home/rewards', [RewardController::class, 'registerReward'])->name('rewards.index.post');
         Route::get('/home/rewards/{rewardid}/activate-deactivate', [RewardController::class, 'activateOrDeactivateReward'])->name('rewards.activate.deactivate');
+        Route::post('/home/rewards/{rewardid}/delete', [RewardController::class, 'deleteReward'])->name('rewards.delete');
 
 
         Route::get('/home/conversions-point-rewards', [ConversionController::class, 'indexPointReward'])->name('conversions-point-rewards.index');
@@ -233,13 +232,11 @@ Route::prefix('{locale}')->where(['locale' => '[a-zA-Z]{2}'])->middleware([Ensur
     Route::middleware([EnsureClientIsActivated::class])->group(function () {
         Route::get('home-client', [HomeClientController::class, 'dashboard'])->name('home.client');
         Route::get('/client/voucher', [VoucherControler::class, 'getVoucherView'])->name('vouchers.index');
+        Route::get('/client/{id}/client-vouchers', [VoucherControler::class, 'getVouchers'])->name('clients.get.vouchers');
         Route::get('/client/{clientid}/friend-invitations', [HomeClientController::class, 'getFriendInvitationForm'])->name('client.friend-invitations.index');
         Route::post('/client/{clientid}/friend-invitations', [HomeClientController::class, 'postFriendInvitationForm'])->name('client.friend-invitations.index.post');
         Route::get('/client/{clientid}/friend-invitations-list', [HomeClientController::class, 'getFriendInvitationList'])->name('client.friend-invitations.list');
 
-
-
-        //Route::post('/client/voucher', [VoucherControler::class, 'postGenVoucher'])->name('vouchers.post');
         Route::post('deconnexion-client', [HomeClientController::class, 'logout'])->name('deconnexion.client');
         Route::post('/client/{id}/update-client', [HomeClientController::class, 'updateClient'])->name('clients.post.update.client');
         Route::get('/client/{id}/update-client', [HomeClientController::class, 'updateClientForm'])->name('clients.form.update.client');
@@ -271,8 +268,15 @@ Route::prefix('{locale}')->where(['locale' => '[a-zA-Z]{2}'])->middleware([Ensur
         Route::get('/home/admin/configs', [ConfigController::class, 'showConfigForm'])->name('configs.index');
         Route::post('/home/admin/configs', [ConfigController::class, 'setSystemConfiguration'])->name('configs.post');
         Route::get('/home/admin/users', [RegisterController::class, 'getAllUserForadministrationm'])->name('utilisateurs.admin');
+        Route::post('/home/admin/users/{user_id}/activate', [RegisterController::class, 'activateUser'])->name('utilisateurs.admin.activate');
+        Route::post('/home/admin/users/{user_id}/deactivate', [RegisterController::class, 'deActivateUser'])->name('utilisateurs.admin.deactivate');
         Route::post('/home/admin/users/{userid}/remove-add-to-admin-role', [RegisterController::class, 'removeOrAddToAdminRole'])->name('utilisateurs.admin.ad.or.remove.role');
-        Route::get('/reports', [HomeController::class, 'reportPage'])->name('reports.menu');
+        Route::get('/bi', [HomeController::class, 'biPage'])->name('bi.menu');
+        Route::get('/home/reports', [HomeController::class, 'reports'])->name('home.reports');
+        Route::get('/home/products-form', [HomeController::class, 'productForm'])->name('home.products.index');
+        Route::post('/home/products', [HomeController::class, 'registerProduct'])->name('home.products.index.post');
+
+
         Route::get('/reports/txs', [HomeController::class, 'reportTxs'])->name('reports.txs');
         Route::get('/reports/vouchers', [HomeController::class, 'reportVouchers'])->name('reports.vouchers');
         Route::get('/reports/clients', [HomeController::class, 'reportClients'])->name('reports.clients');
@@ -282,11 +286,7 @@ Route::prefix('{locale}')->where(['locale' => '[a-zA-Z]{2}'])->middleware([Ensur
         Route::get('/home/client-invitations/{invitationid}', [HomeController::class, 'showClientAcceptedInvitaionsDetails'])->name('client.invitations.accepted.details');
         Route::post('/home/client-invitations/{invitationid}', [ClientController::class, 'confirmClientAcceptedInvitaions'])->name('client.invitations.accepted.confirm');
         Route::post('/home/client-invitations-refuse/{invitationid}', [ClientController::class, 'confirmClientAcceptedInvitaionsRefuse'])->name('client.invitations.accepted.refuse');
-
     });
-
-
-
 });
 
 Route::prefix('{locale}')->where(['locale' => '[a-zA-Z]{2}'])->group(function () {

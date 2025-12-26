@@ -76,8 +76,12 @@ class LoginSuperAdminController extends Controller
     public function postLoginClientView(Request $request): RedirectResponse
     {
         $request->validate([
-            'telephone' => 'required|string|exists:clients,telephone',
+            'telephone' => 'required|phone|exists:clients,telephone',
             'password' => 'required|string|min:8',
+        ],[
+            'telephone.phone' => __("Le numéro de téléphone est invalide"),
+            'telephone.required' => __("Le numéro de téléphone est obligatoire"),
+            'telephone.exists' => __("Numéro de téléphone non reconnu")
         ]);
 
         $client = Client::where('telephone', $request->get('telephone'))->first();
@@ -123,8 +127,12 @@ class LoginSuperAdminController extends Controller
     public function postForgotPassword(Request $request){
         //return json_encode($request);
         $request->validate([
-            'telephone' => 'required|string|exists:clients,telephone',
+            'telephone' => 'required|phone|exists:clients,telephone',
             'email' => 'required|email|max:255',
+        ],[
+            'telephone.phone' => __("Le numéro de téléphone est invalide"),
+            'telephone.required' => __("Le numéro de téléphone est obligatoire"),
+            'telephone.exists' => __("Numéro de téléphone non reconnu")
         ]);
 
         $client = Client::where('telephone', $request->get('telephone'))->first();

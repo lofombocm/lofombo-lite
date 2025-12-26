@@ -6,22 +6,31 @@
 $rewards =\App\Models\Reward::where('active', true)->get();
 @endphp
 @if(count($rewards) > 0)
-    <h1 style="font-size: xx-large;">
-        @if(count($rewards) > 0) {{__('Nos Récompenses')}}@endif
-    </h1>
+    <br>
+    <h4 style="font-size: 1.8em; font-weight: bold; color: #164fa9; margin-bottom: 20px; width: 100%; text-align: center;">
+        <br>
+        @if(count($rewards) > 0) {{__('RECOMPENSES DISPONIBLES')}}@endif
+    </h4>
+    <br>
     <br>
             <?php
             $totalLength = count($rewards);
             $j = 0;
             ?>
         @while($j < $totalLength)
-            @php $level = json_decode($rewards[$j]->level,true); @endphp
             <ul class="product-plans row">
                 @php $i = 0; @endphp
                 @while($i < 3 && $j + $i < $totalLength)
+                    @php $level = json_decode($rewards[$j + $i]->level,true); @endphp
                     <li class="product-plan col-md-3">
                         <div class="title"><h5>{{$rewards[$j + $i]->name}}</h5></div>
                         <div class="price"><strong>Point: {{$level['point']}}</strong></div>
+                        <div style="margin-top: -40px;">
+                            @if($rewards[$j + $i]->image)
+                                <img src="{{asset('storage/' . $rewards[$j + $i]->image)}}" alt=""
+                                height="70" width="70">
+                            @endif
+                        </div>
                         <ul class="features">
                             <li class="check">
                                 {{__("Nature")}}:
@@ -46,6 +55,7 @@ $rewards =\App\Models\Reward::where('active', true)->get();
                                          style="position: relative; top: -40px; right: -140px;">
                                 @endif
                             </li>
+
 
                             @if(\Illuminate\Support\Facades\Auth::check() && \Illuminate\Support\Facades\Auth::user()->is_admin)
                                 <li class="{{$rewards[$j + $i]->active ? 'check' : 'cross'}}">

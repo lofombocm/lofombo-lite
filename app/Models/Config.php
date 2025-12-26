@@ -20,6 +20,7 @@ class Config extends Model
         , 'currency_name'
         , 'levels'
         , 'voucher_duration_in_month'
+        , 'trusted_email'
         , 'password_recovery_request_duration'
         , 'enterprise_name'
         , 'enterprise_email'
@@ -31,4 +32,6 @@ class Config extends Model
         , 'is_applicable'
         , 'birthdate_bonus_rate'
     ];
+
+
 }

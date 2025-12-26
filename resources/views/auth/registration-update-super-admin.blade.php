@@ -6,7 +6,7 @@
         @include('layouts.super-admin-menu')
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header">{{ __("Mes Paramètres") }}</div>
+                <div class="card-header"><h5>{{ __("Mes Paramètres") }}</h5></div>
                 <div class="card-body">
                     <form method="POST" action="{{ route('super_admin.update-parameter.index.put', $superadmin->id) }}" enctype="multipart/form-data">
                         @csrf

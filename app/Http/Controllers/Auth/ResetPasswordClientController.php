@@ -20,11 +20,12 @@ class ResetPasswordClientController extends Controller
 
     public function postResetPassword(Request $request)  {
         $validator = Validator::make($request->all(), [
-            'telephone' => 'required|string|max:255|exists:clients,telephone',
+            'telephone' => 'required|phone|exists:clients,telephone',
             'currentpassword' => 'required|string|min:8|max:20',
             'password' => 'required|string|min:8|max:20|confirmed',
         ],[
             'telephone.required' => __('Le numéro de téléphone est obligatoire'),
+            'telephone.phone' => __("Le numéro de téléphone est invalide"),
             'telephone.exists' => __('Numéro de téléphone non reconnu'),
             'currentpassword.required' => __('Le mot de passe actuel est obligatoire'),
             'password.required' => __('Le mot de passe est obligatoire'),

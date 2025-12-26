@@ -75,10 +75,12 @@ class LoginClientController extends Controller
     public function postLoginClientView(Request $request): RedirectResponse
     {
         $request->validate([
-            'telephone' => 'required|string|exists:clients,telephone',
+            'telephone' => 'required|phone|exists:clients,telephone',
             'password' => 'required|string|min:8|max:20',
         ], [
             'telephone.required' => __('Le numéro de téléphone est obligatoire'),
+            'telephone.phone' => __("Le numéro de téléphone est invalide"),
+            'telephone.exists' => __("Le numéro de téléphone n'est pas reconnu"),
             'password.required' => __('Le mot de passe est obligatoire'),
             'password.min' => __('Le mot de passe doit avoir au moins 8 caractères'),
             'password.max' => __('Le mot de passe doit avoir au plus 20 caractères')
@@ -130,10 +132,11 @@ class LoginClientController extends Controller
     public function postForgotPassword(Request $request){
         //return json_encode($request);
         $request->validate([
-            'telephone' => 'required|string|exists:clients,telephone',
+            'telephone' => 'required|phone|exists:clients,telephone',
             'email' => 'required|email|max:255',
         ],[
             'telephone.required' => __('Le numéro de téléphone est obligatoire'),
+            'telephone.phone' => __("Le numéro de téléphone est invalide"),
             'email.required' => __('L\'adresse E-Mail est obligatoire'),
             'telephone.exists' => __('Numéro de téléphone non reconnu')
         ]);

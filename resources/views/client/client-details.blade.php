@@ -85,11 +85,11 @@
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
-                                    {{__('Civilité')}}: &nbsp;&nbsp;
+                                    {{__('Sexe')}}: &nbsp;&nbsp;
                                     @if($client->gender == null)
                                         {{'N/D'}}
                                     @else
-                                        {{$client->gender}}
+                                        {{$client->gender === 'M' ? __("Masculin") : __("Féminin")}}
                                     @endif
 
                                 </h5>
@@ -191,7 +191,7 @@
 
                                                     ?>
                                                 <div class="modal-header">
-                                                    <h1 class="modal-title fs-5" id="staticBackdropLabel">Point cummule:
+                                                    <h1 class="modal-title fs-5" id="staticBackdropLabel">{{__("Point cumulé")}}:
                                                         <strong
                                                             style="color: darkred;">{{intval(strval(decrypt($loyaltyAccount->point_balance)))}}
                                                             points</strong></h1>
@@ -727,7 +727,7 @@
 
                                                     <div class="row mb-3">
                                                         <label for="gender"
-                                                               class="col-md-4 col-form-label text-md-end">{{__('Civilité')}}</label>
+                                                               class="col-md-4 col-form-label text-md-end">{{__('Sexe')}}</label>
 
                                                         <div class="col-md-6">
                                                             <select id="gender"
@@ -735,17 +735,17 @@
                                                                     name="gender">
                                                                 <option value="">-- {{__("Sélectionnez ici")}} --</option>
                                                                 <option
-                                                                    value="MONSIEUR" {{$client->gender === 'MONSIEUR' ? 'selected' : ''}}>
-                                                                    {{__("Monsieur")}}
+                                                                    value="M" {{$client->gender === 'M' ? 'selected' : ''}}>
+                                                                    {{__("Masculin")}}
                                                                 </option>
                                                                 <option
-                                                                    value="MADAME" {{$client->gender === 'MADAME' ? 'selected' : ''}}>
-                                                                    {{__("Madame")}}
+                                                                    value="F" {{$client->gender === 'F' ? 'selected' : ''}}>
+                                                                    {{__("Féminin")}}
                                                                 </option>
-                                                                <option
+                                                                {{--<option
                                                                     value="MADEMOISELLE" {{$client->gender === 'MADEMOISELLE' ? 'selected' : ''}}>
                                                                     {{__("Mademoiselle")}}
-                                                                </option>
+                                                                </option>--}}
                                                             </select>
 
                                                             @error('gender')

@@ -3,6 +3,7 @@
   ; use App\Models\Loyaltyaccount
   ; use App\Models\Reward
   ; use Illuminate\Support\Facades\Auth
+  ; use App\Models\Notification
   ;
 @endphp
 <div class="col-md-3">
@@ -12,6 +13,53 @@
             <div class="list-group list-group-flush">
                 @if(Auth::guard('client')->check() && Auth::guard('client')->user()->active)
                     @php
+
+                        if (Auth::guard('client')->check()) {
+                            $notifications0 = Notification:: where('recipient_address', Auth::guard('client')->user()->telephone)->where('read', false)->get();
+                            $notifications = [];
+                            foreach ($notifications0 as $notification){
+                                array_push($notifications, $notification);
+                            }
+
+                            if(Auth::guard('client')->user()->email != null){
+                                $notifications1 = Notification::
+                                where('recipient_address', Auth::guard('client')->user()->email)->orWhere('recipient_address', Auth::guard('client')->user()->email)->where('read', false)->get();
+                                foreach ($notifications1 as $notification){
+                                    array_push($notifications, $notification);
+                                }
+                            }
+
+                            //$birthdate = (Auth::guard('client')->user()->birthdate != null) ? Carbon::parse(Auth::guard('client')->user()->birthdate)
+                            $incompleteProfile = false;
+                            if(Auth::guard('client')->user()->email == null
+                                || Auth::guard('client')->user()->birthdate == null
+                                || Auth::guard('client')->user()->gender == null
+                                || Auth::guard('client')->user()->quarter == null
+                                || Auth::guard('client')->user()->city == null){
+                                $incompleteProfile = true;
+                            }
+                            $incompleteProfileMsg = 'Les donnees suivantes sont a completer: ';
+                            if (Auth::guard('client')->user()->email == null){
+                                $incompleteProfileMsg .= __('Email');
+                            }
+                            if (Auth::guard('client')->user()->birthdate == null){
+                                $incompleteProfileMsg .= ', ' . __("Date de naissance (Jour et Mois)");
+                            }
+                            if (Auth::guard('client')->user()->gender == null){
+                                $incompleteProfileMsg .= ', ' . __('Sexe');
+                            }
+                            if (Auth::guard('client')->user()->quarter == null){
+                                $incompleteProfileMsg .= ', ' . __('Lieu de résidence');
+                            }
+                            if (Auth::guard('client')->user()->city == null){
+                                $incompleteProfileMsg .= ', ' . __('Ville');
+                            }
+                            $unreadMsgNum = count($notifications);
+
+                            $loyaltyaccount =  Loyaltyaccount::where('holderid', Auth::guard('client')->user()->id)->first();
+                        }
+
+
                         $configuration = Config::where('is_applicable', true)->first();
                         $levels = json_decode($configuration->levels);
                         $client = Auth::guard('client')->user();
@@ -46,6 +94,14 @@
                            id="lien-pour-transaction-enregistres">
                             <h6><img src="{{asset('images/icons8-transaction-25.png')}}" alt=""> &nbsp;{{ __('Transactions') }}</h6>
                         </a>
+
+                        @if(count(\App\Models\Voucher::all()) > 0)
+                            <a class="list-group-item list-group-item-action btn btn-link"
+                               href="{{ route('clients.get.vouchers', Auth::guard('client')->user()->id)}}">
+                                <h6><img src="{{asset('images/icons8-loyalty-card-25.png')}}" alt="">
+                                    &nbsp;{{ __('Bons de Fidélité') }}</h6>
+                            </a>
+                        @endif
                         <a class="list-group-item list-group-item-action" href="{{ route('rewards.list.view') }}">
                             <h6><img src="{{asset('images/icons8-reward-25.png')}}" alt=""> &nbsp;{{ __('Récompenses') }}</h6>
                         </a>
@@ -65,7 +121,7 @@
                                 <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h1 class="modal-title fs-5" id="staticBackdropLabel">Point cummule:
+                                            <h1 class="modal-title fs-5" id="staticBackdropLabel">{{__("Point cumulé")}}:
                                                 <strong
                                                     style="color: darkred;">{{intval(strval(decrypt($loyaltyAccount->point_balance)))}}
                                                     points</strong></h1>
@@ -198,14 +254,22 @@
                                 </div>
                             </div>
                         @endif
-                        <a class="list-group-item list-group-item-action"
-                           href="{{ route('client.friend-invitations.index', Auth::guard('client')->user()->id) }}">
-                            <h6><img src="{{asset('images/icons8-share-25.png')}}" alt=""> &nbsp;{{ __('Inviter un ami') }}</h6>
-                        </a>
+
                         <a class="list-group-item list-group-item-action"
                            href="{{ route('client.friend-invitations.list', Auth::guard('client')->user()->id) }}">
                             <h6><img src="{{asset('images/icons8-list-24.png')}}" alt=""> &nbsp;{{ __('Mes invitations') }}</h6>
                         </a>
+
+                        @if(Auth::guard('client')->check())
+                            <a class="list-group-item list-group-item-action btn-link"
+                               href="{{ route('clients.notifs.index', Auth::guard('client')->user()->id) }}">
+                                <h6><img src="{{asset('images/icons8-notification-25.png')}}" alt=""> &nbsp;{{ __('Notifications') }}
+                                    <span class="badge bg-primary position-absolute top|start-*"
+                                          style="position: relative; right: 0; padding-top: 7px;">{{$unreadMsgNum}}</span></h6>
+
+                            </a>
+                        @endif
+
                     @endif
 
                 @else

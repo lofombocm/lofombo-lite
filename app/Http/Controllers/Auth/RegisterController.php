@@ -133,15 +133,17 @@ class RegisterController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|min:2',
-            'email' => 'required|string|email|max:255|unique:users',
+            //'email' => 'required|string|email|max:255|unique:users',
             'username' => 'required|string|max:255|unique:users',
             //'password' => 'required|string|min:8|max:20|confirmed',
             'is_admin' => 'required|string|in:on,off'
         ],[
             'name.required' => __('Le nom est obligatoire.'),
-            'email.required' => __('L\'adresse E-Mail est obligatoire.'),
-            'email.email' => __('L\'adresse E-Mail n\'est pas valide'),
-            'email.unique' => __('E-Mail déja utilisé.'),
+            'name.min' => __("Le nom est invalide."),
+            'name.max' => __("Le nom est invalide."),
+            //'email.required' => __('L\'adresse E-Mail est obligatoire.'),
+            //'email.email' => __('L\'adresse E-Mail n\'est pas valide'),
+            //'email.unique' => __('E-Mail déja utilisé.'),
             'username.required' => __('Le nom d\'utilisateur est obligatoire.'),
             'username.unique' => __('Nom d\'utilisateur déja utilisé.'),
         ]);
@@ -151,6 +153,23 @@ class RegisterController extends Controller
         if($validator->fails()){
             session()->flash('error', $validator->errors()->first());
             return back()->withErrors(['error' => $validator->errors()->first()]);
+        }
+
+        if ($request->file('email')) {
+            $emailvalidator = Validator::make($request->all(), [
+                'email' => 'required|email|max:255',
+            ],[
+                'email.required' => __('L\'adresse E-Mail est obligatoire.'),
+                'email.email' => __('L\'adresse E-Mail n\'est pas valide'),
+                'email.max' => __('E-Mail invalide'),
+            ]);
+
+            //dd($request->all());
+
+            if($emailvalidator->fails()){
+                session()->flash('error', $emailvalidator->errors()->first());
+                return back()->withErrors(['error' => $emailvalidator->errors()->first()]);
+            }
         }
 
         $config = Config::where('is_applicable', true)->first();
@@ -168,7 +187,6 @@ class RegisterController extends Controller
             return back()->withErrors(['error' => $msg]);
         }
 
-
         $request->merge([
             'password' => '12345678',
         ]);
@@ -181,12 +199,12 @@ class RegisterController extends Controller
                 'has_been_connected' => false,
             ]);
 
-
-            $link = url('/' . GuestController::getApplicationLocal() .'/auth') ;
-
-            $emaildata = ['email' => $request->get('email'), 'name' => $request->get('name'), 'login_url' => $link, 'enterprise' => $config->enterprise_name,];
-
-            ProcessSendEMailUserRegisteredJob::dispatch($emaildata);
+            if ($request->filled('email')){
+                $link = url('/' . GuestController::getApplicationLocal() .'/auth') ;
+                $emaildata = ['email' => $request->get('email'), 'name' => $request->get('name'),
+                    'login_url' => $link, 'enterprise' => $config->enterprise_name, 'pseudo' => $user->username,];
+                ProcessSendEMailUserRegisteredJob::dispatch($emaildata);
+            }
 
             $checkLicenses = SuperAdminController::checkLicences();
             $valid_licenses = $checkLicenses['valid_licenses'];
@@ -196,7 +214,6 @@ class RegisterController extends Controller
                     SuperAdminController::addUserToLicence($user, $license);
                 }
             }
-
         }catch (\Exception $exception){
             DB::rollBack();
             session()->flash('error', $exception->getMessage());
@@ -207,7 +224,6 @@ class RegisterController extends Controller
         //Auth::login($user);
         $msg = __('Utilisateur enregistré avec succès !');
         session()->flash('status', $msg);
-
         return back()->with('status', $msg);//->withSuccess('status', 'Great! You have Successfully Registered.');
     }
 
@@ -255,7 +271,40 @@ class RegisterController extends Controller
         return back()->with('status', $msg);
     }
 
+    public function activateUser(Request $request, string $locale, string $userid): RedirectResponse
+    {
 
+        $user =User::where('id', $userid)->first();
+        if ($user == null) {
+            $msg = __("Utilisateur non reconnu!");
+            session()->flash('error', );
+            return back()->withErrors(['error' => $msg]);
+        }
+
+        $user->active = true;
+        $user->save();
+        $msg = __("Utilisateur débloqué avec succès !");
+
+        session()->flash('status', $msg);
+        return back()->with('status', $msg);
+    }
+
+    public function deActivateUser(Request $request, string $locale, string $userid): RedirectResponse
+    {
+        $user =User::where('id', $userid)->first();
+        if ($user == null) {
+            $msg = __("Utilisateur non reconnu!");
+            session()->flash('error', );
+            return back()->withErrors(['error' => $msg]);
+        }
+
+        $user->active = false;
+        $user->save();
+        $msg = __("Utilisateur bloqué avec succès !");
+
+        session()->flash('status', $msg);
+        return back()->with('status', $msg);
+    }
 
     public function putRegistration(Request $request, string $locale, string $userid): RedirectResponse
     {
@@ -325,9 +374,8 @@ class RegisterController extends Controller
 
         $user->update($data);
 
-
         //Auth::login($user);
-        $msg = 'Bien! l\'utilisateur ' . $user->name . ' a ete modifier avec succes.';
+        $msg = __("Utilisateur enregistré avec succès !");
         session()->flash('status', $msg);
 
         return back()->with('status', $msg);//->withSuccess('status', 'Great! You have Successfully Registered.');

@@ -12,7 +12,16 @@ use Illuminate\Support\Facades\Validator;
 
 class NotificationController extends Controller
 {
+    public function __construct()
+    {
+        //$this->middleware('auth');
+    }
+
     public function showNotificationView(string $locale, string $notificationid){
+        if (!Auth::check() && !Auth::guard('client')->check()) {
+            session()->flash('error', __("Désolé, vous n'avez pas l'accès"));
+            return back()->withErrors(['error' => __("Désolé, vous n'avez pas l'accès")]);
+        }
         $notification = Notification::where('id', $notificationid)->first();
         return view('notification.detail', ['notification' => $notification, 'data' => json_decode($notification->data, true)]);
     }
@@ -51,6 +60,8 @@ class NotificationController extends Controller
         }
 
         Notification::where('id', $notificationid)->update(['read' => $read]);
+        $notification->read = $read;
+        $notification->save();
 
         $msg = 'Notification marquée comme ' . ($read ? ' lue ' : ' non lue') . ' avec succes!';
         session()->flash('status', $msg);
@@ -61,7 +72,7 @@ class NotificationController extends Controller
     {
         $user = Auth::user();
         if ($user === null) {
-            return redirect()->route('authentification');
+            return redirect()->route('authentification')->with('error',__("Access Denied"));
         }
         $utilsateur = User::where('id', $userid)->first();
         if ($utilsateur == null) {
@@ -85,12 +96,17 @@ class NotificationController extends Controller
 
     public function showClientNotifs(string $locale, String  $clientid)
     {
+        if (!Auth::guard('client')->check()) {
+            return redirect()->route('authentification.client')->with('error',__("Access Denied"));
+        }
+
         $client = Auth::guard('client')->user();
         $customer = Client::where('id', $clientid)->first();
         if ($customer == null) {
             $msg = __("Une erreur est survenue, reessayez de nouveau.");
             session()->flash('error', $msg);
-            return back()->with(['error' => $msg]);
+            return redirect()->route('authentification.client')->with(['error' => $msg]);
+            //return back()->with(['error' => $msg]);
         }
 
         if ($client->id !== $customer->id) {

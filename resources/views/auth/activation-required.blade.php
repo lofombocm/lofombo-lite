@@ -5,7 +5,7 @@
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header">{{ __('Attention!') }}</div>
+                    <div class="card-header"><h3 style="color: red;">{{ __('Attention!') }}</h3> </div>
 
                     <div class="card-body">
                         {{--@if(session('error'))

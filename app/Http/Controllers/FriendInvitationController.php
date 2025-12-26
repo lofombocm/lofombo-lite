@@ -70,11 +70,12 @@ class FriendInvitationController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|min:2',
-            'telephone' => 'required|string|max:255|unique:clients',
+            'telephone' => 'required|phone|unique:clients',
         ],[
             'telephone.required' => __('Le numéro de téléphone est obligatoire'),
             'name.required' => __('Le nom est obligatoire.'),
-            'telephone.unique'=> __('Téléphone déja utilisé.')
+            'telephone.unique'=> __('Téléphone déja utilisé.'),
+            'telephone.phone' => __("Le numéro de téléphone est invalide"),
         ]);
 
         if($validator->fails()){
@@ -128,7 +129,7 @@ class FriendInvitationController extends Controller
 
         if ($request->filled('gender')){
             $validatorGender = Validator::make($request->all(), [
-                'gender' => 'required|string|in:MONSIEUR,MADAME,MADEMOISELLE',
+                'gender' => 'required|string|in:M,F,',
             ],[
                 'gender.required' => __('Le sexe est obligatoire.'),
                 'gender.in' => __("Le sexe est invalide."),

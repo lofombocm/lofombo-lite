@@ -41,14 +41,20 @@
                                     <th scope="col">
                                         {{ '#' }}
                                     </th>
+                                    <th scope="col">
+                                        {{__("Client")}}
+                                    </th>
 
                                     <th scope="col">
                                         {{ __('Date') }}
                                     </th>
 
-                                    <th scope="col">
-                                        {{ __('Montant') }}
-                                    </th>
+                                    @if(\Illuminate\Support\Facades\Auth::check())
+                                        <th scope="col">
+                                            {{ __('Montant') }}
+                                        </th>
+                                    @endif
+
                                     <th scope="col">
                                         {{ __("Nbre Points") }}
                                     </th>
@@ -67,16 +73,25 @@
                                                 <h5 >{{$index}}</h5>
                                             </th>
 
+                                            <td>
+                                                {{$client->name}}
+                                            </td>
+
                                             <td >
                                                 <h5 >{{\Illuminate\Support\Carbon::parse($tx->date)->format('d-m-Y H:i:s')}}</h5>
                                             </td>
 
-                                            <td >
-                                                <h5 style="">{{$tx->amount}}</h5>
-                                            </td>
+                                            @if(\Illuminate\Support\Facades\Auth::check())
+                                                <td>
+                                                    <h5 style="">{{$tx->amount}}</h5>
+                                                </td>
+                                            @endif
+
 
                                             <td >
-                                                <h5 style="">{{$tx->point}}</h5>
+                                                <h5 style="">
+                                                    {{$tx->transactiontype === 'GENERATION DE BON' ? '-' : '+'}}{{$tx->point}}
+                                                </h5>
                                             </td>
 
                                             <td >

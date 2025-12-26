@@ -39,15 +39,18 @@
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>
-                                    {{__("Points")}}: &nbsp; &nbsp; {{$tx->point}}
+                                    {{__("Points")}}: &nbsp; &nbsp; {{$tx->transactiontype === 'GENERATION DE BON' ? '-' : '+'}}{{$tx->point}}
                                 </h5>
                             </a>
-                            <a href="#" class="list-group-item list-group-item-action"
-                               style="margin-left: 15px; width: 98%;">
-                                <h5>
-                                    {{__("Montant")}}: &nbsp; &nbsp; {{$tx->amount}}
-                                </h5>
-                            </a>
+                            @if(\Illuminate\Support\Facades\Auth::check())
+                                <a href="#" class="list-group-item list-group-item-action"
+                                   style="margin-left: 15px; width: 98%;">
+                                    <h5>
+                                        {{__("Montant")}}: &nbsp; &nbsp; {{$tx->amount}}
+                                    </h5>
+                                </a>
+                            @endif
+
                             <a href="#" class="list-group-item list-group-item-action"
                                style="margin-left: 15px; width: 98%;">
                                 <h5>

@@ -54,6 +54,7 @@
                                 $premium_threshold = 80;
                                 $gold_threshold = 120;*/
                                 $voucher_duration_in_month = 3;
+                                $trusted_email = '';
                                 $password_recovery_request_duration = 60*24;
                                 $enterprise_name = "LOFOMBO";
                                 $enterprise_email = 'contact@gmail.com';
@@ -72,6 +73,7 @@
                                     $premium_threshold = $config->premium_threshold;
                                     $gold_threshold = $config->gold_threshold;
                                     $voucher_duration_in_month = $config->voucher_duration_in_month;
+                                    $trusted_email = $config->trusted_email;
                                     $password_recovery_request_duration = $config->password_recovery_request_duration;
                                     $enterprise_name = $config->enterprise_name;
                                     $enterprise_email = $config->enterprise_email;
@@ -412,6 +414,25 @@
                             </div>
 
                             <div class="row mb-3">
+                                <label for="trusted_email" class="col-md-5 col-form-label text-md-end">
+                                    {{ __("Email de confiance (pour code d'utilisation de bon)") }}</label>
+                                <div class="col-md-7">
+                                    <input id="trusted_email" type="email"
+                                           class="form-control @error('trusted_email') is-invalid @enderror"
+                                           name="trusted_email"
+                                           value="{{$trusted_email}}"
+                                           autocomplete="trusted_email"
+                                           autofocus>
+                                    @error('trusted_email')
+                                    <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
+                                </div>
+                            </div>
+
+
+                            <div class="row mb-3">
                                 <label for="password_recovery_request_duration"
                                        class="col-md-5 col-form-label text-md-end">
                                     {{ __("Durée de la demande de changement du mot de passe par le Client (Nombre d'heures)")  }}</label>
@@ -533,7 +554,7 @@
                                         @php $config0 = Config::where('is_applicable', true)->get()[0]; @endphp
                                         @if(strlen($config0->enterprise_logo) > 0)
                                             <br><img src="{{asset('storage/' .$config0->enterprise_logo)}}"
-                                                     style="margin-top: 0; margin-bottom: 0;" height="65" width="65"
+                                                     style="margin-top: 0; margin-bottom: 0;" height="70" width="300"
                                                      alt="">
                                         @endif
                                     @endif

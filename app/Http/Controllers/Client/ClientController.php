@@ -121,11 +121,12 @@ class ClientController extends Controller
     public function registerClient(Request $request){
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|min:2',
-            'telephone' => 'required|string|max:255|unique:clients',
+            'telephone' => 'required|phone|unique:clients',
         ],[
             'telephone.required' => __('Le numéro de téléphone est obligatoire'),
             'name.required' => __('Le nom est obligatoire.'),
-            'telephone.unique'=> __('Téléphone déja utilisé.')
+            'telephone.unique'=> __('Téléphone déja utilisé.'),
+            'telephone.phone' => __("Le numéro de téléphone est invalide"),
         ]);
 
         if($validator->fails()){
@@ -193,7 +194,7 @@ class ClientController extends Controller
 
         if ($request->filled('gender')){
             $validatorGender = Validator::make($request->all(), [
-                'gender' => 'required|string|in:MONSIEUR,MADAME,MADEMOISELLE',
+                'gender' => 'required|string|in:M,F',
             ],[
                 'gender.required' => __('Le sexe est obligatoire.'),
                 'gender.in' => __("Le sexe est invalide."),
@@ -285,11 +286,10 @@ class ClientController extends Controller
             $loyaltyaccountnumber = $this->generateLoyaltyAccountNumber();
             $holder = $client->id;
 
-
             $config = $configs[0];
 
-            $point_balance = $config->initial_loyalty_points;
-            $amount_balance = $config->amount_per_point * $point_balance;
+            //$point_balance  = $config->initial_loyalty_points;
+            //$amount_balance = $config->amount_per_point * $point_balance;
             /*$amount_from_converted_point = $this->convertPointToAmount($point_balance);
             if ($amount_from_converted_point == null){
                 DB::rollback();
@@ -306,13 +306,13 @@ class ClientController extends Controller
                 'id' => $loyaltyaccountId,
                 'loyaltyaccountnumber' => $loyaltyaccountnumber,
                 'holderid' => $holder,
-                'amount_balance' => $amount_balance,
+                'amount_balance' => 0,// $amount_balance,
                 'purchase_amount_balance' => 0,
-                'gift_amount_balance' => $amount_balance,
+                'gift_amount_balance' => 0, //$amount_balance,
                 'birthdate_amount_balance' => 0,
-                'point_balance' => encrypt($point_balance),
+                'point_balance' => encrypt(0), // encrypt($point_balance),
                 //'amount_from_converted_point' => $amount_from_converted_point,
-                'current_point' => encrypt($current_point),
+                'current_point' => encrypt(0), //encrypt($current_point),
                 'photo' => $photo,
                 'issuer' => $issuer,
                 'active' => true,
@@ -330,7 +330,7 @@ class ClientController extends Controller
                 'active' => true,
             ]);
 
-            $transactionid = Str::uuid()->toString();
+            /*$transactionid = Str::uuid()->toString();
 
             Loyaltytransaction::create([
                 'id' => $transactionid,
@@ -350,17 +350,17 @@ class ClientController extends Controller
                 'transactiondetail' => 'Transaction Initiale donnant les points initiaux au client',
                 'clientid' => $client->id,
                 'products' => '[]'
-            ]);
+            ]);*/
 
             if (strlen($clientEmail)){
                 /// TODO: Send SMS and email notification to client.
-                $message = [ __("Enregistrement à la plateforme de fidélité de") . ' ' . $config->enterprise_name . __("de") . ' ' . $client->gender. ' ' . $client->name,
+                $message = [ __("Enregistrement à la plateforme de fidélité de") . ' ' . $config->enterprise_name . __("de") . ' ' . ($client->gender === 'M' ? __("Monsieur") : __("Madame")) . ' ' . $client->name,
                     __("Vous avez été enregistré avec succès dans la plateforme de fidélité") . ' ' . $config->enterprise_name,
                     __("Vous pouvez accéder au système en utilisant les identifiants suivants") . ': ', __("Téléphone") . ': ' . $client->telephone,
                     __('Mot de passe'). ': '. $secret];
                 $link = url('/' . GuestController::getApplicationLocal() .'/auth/client') ;
                 $data = ['email' => $clientEmail, 'name' => $client->name, 'clientLoginUrl' => $link, 'telephone' => $client->telephone, 'secret' => $secret,
-                    'enterprise' => $config->enterprise_name, 'gender' => $client->gender, 'msg' => $message];
+                    'enterprise' => $config->enterprise_name, 'gender' => $client->gender === 'M' ? __("Monsieur") : __("Madame"), 'msg' => $message];
                 ProcessSendEMailClientCredentialsJob::dispatch($data);
 
                 $notifid = Str::uuid()->toString();
@@ -407,18 +407,24 @@ class ClientController extends Controller
     public function updateClient(Request $request, string $locale, string $clientId){
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|min:2',
-            'telephone' => 'required|string|max:255',
+            'telephone' => 'required|phone',
+        ],[
+            'telephone.phone' => __("Le numéro de téléphone est invalide"),
+            'telephone.required' => __("Le numéro de téléphone est obligatoire"),
+            'name.required' => __("Le nom est obligatoire."),
+            'name.max' => __("Le nom est invalide."),
+            'name.min' => __("Le nom est invalide")
         ]);
 
         if($validator->fails()){
-            session()->flash('error', $validator->errors()->all());
+            session()->flash('error', $validator->errors()->first());
             return redirect()->back()->withErrors(['error' => $validator->errors()->first()]);
         }
 
         $client = Client::where('id', $clientId)->first();
         if(!$client){
-            session()->flash();
-            return redirect()->back()->withErrors(['error' => 'Client introuvable']);
+            session()->flash(__("Client inconnu"));
+            return redirect()->back()->withErrors(['error' => __("Client inconnu")]);
         }
 
         $otherClient = Client::where('telephone', $request->get('telephone'))->first();
@@ -439,40 +445,44 @@ class ClientController extends Controller
             $client->email = $request->get('email');
         }
 
-        $secret = null;
-        $birthdate = "";
-        if (!$request->filled('day') || !$request->filled('month')){
-            //$secret = "12345678";
-        }else{
-
-            $validatorBirthdate = Validator::make($request->all(), [
-                'day' => 'string|in:01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31',
-                'month' => 'string|in:01,02,03,04,05,06,07,08,09,10,11,12',
-                //'year' => 'integer|between:1900,'.date('Y'),
-            ]);
-            if($validatorBirthdate->fails()){
-                session()->flash('error', $validatorBirthdate->errors()->first());
-                return redirect()->back()->withErrors(['error' => $validatorBirthdate->errors()->first()]);
-            }
-
-            if (!$request->filled('year')){
-                $year = 1900;
-            }else{
-                $year = intval(trim($request->get('year')));
-                if (!($year >= 1900 && $year <= Carbon::now()->year)){
-                    $year = 1900;
+        /*if ($client->canUpdateBirthdate()){
+            if ($request->filled('day') && $request->filled('month')){
+                $validatorBirthdate = Validator::make($request->all(), [
+                    'day' => 'string|in:01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31',
+                    'month' => 'string|in:01,02,03,04,05,06,07,08,09,10,11,12',
+                    //'year' => 'integer|between:1900,'.date('Y'),
+                ]);
+                if($validatorBirthdate->fails()){
+                    session()->flash('error', $validatorBirthdate->errors()->first());
+                    return redirect()->back()->withErrors(['error' => $validatorBirthdate->errors()->first()]);
                 }
+
+                if (!$request->filled('year')){
+                    $year = 1900;
+                }else{
+                    $year = intval(trim($request->get('year')));
+                    if (!($year >= 1900 && $year <= Carbon::now()->year)){
+                        $year = 1900;
+                    }
+                }
+                $birthdate = $year . '-'.trim($request->get('month')).'-'.trim($request->get('day'));
+                //$birthdate = $request->get('year').'-'.$request->get('month').'-'.$request->get('day');
+                //$birthdateFormatedArr = explode('-', $birthdate);
+                //$secret = $birthdateFormatedArr[2] . $birthdateFormatedArr[1] . $birthdateFormatedArr[0];
+                $client->birthdate = $birthdate;
             }
-            $birthdate = $year . '-'.trim($request->get('month')).'-'.trim($request->get('day'));
-            //$birthdate = $request->get('year').'-'.$request->get('month').'-'.$request->get('day');
-            //$birthdateFormatedArr = explode('-', $birthdate);
-            //$secret = $birthdateFormatedArr[2] . $birthdateFormatedArr[1] . $birthdateFormatedArr[0];
-            $client->birthdate = $birthdate;
+        }*/
+
+        $retVal = $client->updateBirthdate($request);
+        if($retVal['success'] === false){
+            $msg = $retVal['message'];
+            session()->flash('error', $msg);
+            return redirect()->back()->withErrors(['error' => $msg]);
         }
 
         if ($request->filled('gender')){
             $validatorGender = Validator::make($request->all(), [
-                'gender' => 'required|string|in:MONSIEUR,MADAME,MADEMOISELLE',
+                'gender' => 'required|string|in:M,F',
             ]);
             if($validatorGender->fails()){
                 session()->flash('error', $validatorGender->errors()->first());
@@ -804,7 +814,7 @@ class ClientController extends Controller
                 /// TODO Send email and SMS to client
 
                 if ($client->email !== null) {
-                    $message = [$client->gender . ' ' . $client->name . ', ' . __("votre bon ayant le numéro de série") . ' ' . $voucher->serialnumber . ' ' . __("a été utilisé le") . ' ' . (Carbon::now()->format('d-m-Y H:i:s')) . '.'];
+                    $message = [($client->gender === 'M' ? __("Monsieur") : __("Madame"))  . ' ' . $client->name . ', ' . __("votre bon ayant le numéro de série") . ' ' . $voucher->serialnumber . ' ' . __("a été utilisé le") . ' ' . (Carbon::now()->format('d-m-Y H:i:s')) . '.'];
                     $emaildata = ['email' =>$client->email, 'name' => $client->name, 'clientLoginUrl' => url('/' . GuestController::getApplicationLocal() . '/home-client'), 'level' => $voucher->level, 'msg' => $message,
                          'config' => $config, 'subject' => $subjec];
                     //dd($emaildata);

@@ -71,7 +71,7 @@
                         <h6><img src="{{asset('images/icons8-user-25.png')}}" alt=""> &nbsp;{{ 'Utilisateurs' }}</h6>
                     </a>
 
-                    <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('reports.menu')}}">
+                    <a class="list-group-item list-group-item-action btn btn-link"  href="{{ route('bi.menu')}}">
                         <h6><img src="{{asset('images/icons8-report-file-25.png')}}" alt=""> &nbsp;{{ 'Rapports' }}</h6>
                     </a>
 

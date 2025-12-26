@@ -48,10 +48,10 @@ if (count(SuperAdmin::all()) === 0) {
 <div id="app">
     <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="{{ url('/'.GuestController::getApplicationLocal()) }}">
-                <img src="{{asset('images/super_admin_logo.jpg')}}"
-                     style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;" height="65" width="65"
-                     alt=""> &nbsp; &nbsp;<strong>{{ config('app.name', 'Laravel') }}</strong>
+            <a class="navbar-brand" href="{{ url('/') }}">
+                <img src="{{asset('images/logo.jpeg')}}"
+                     height="70" width="300"
+                     alt="">
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                     data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"

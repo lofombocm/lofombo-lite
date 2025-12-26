@@ -8,6 +8,8 @@
    ;use Illuminate\Support\Facades\Auth
    ;use App\Models\Notification
    ;use App\Http\Controllers\GuestController;
+
+   $configuration = Config::where('is_applicable', true)->first();
 @endphp
     <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -18,7 +20,13 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    {{--<title>{{ config('app.name', 'Laravel') }}</title>--}}
+    @if($configuration !== null)
+        <title>{{ $configuration->enterprise_name }}</title>
+    @else
+        <title>{{ config('app.name', 'Laravel') }}</title>
+    @endif
+
 
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
@@ -26,20 +34,21 @@
 
     <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/js/app.js'/*, 'resources/css/card.css'*/])
+    <script type="text/javascript" src="{{asset('js/chart.min.js')}}"></script>
 
 </head>
-<body style="font-size: initial; font-family: 'DejaVu Sans Light';">
+<body style="font-size: initial; font-family: 'DejaVu Sans Light'; margin: 0; padding: 0;">
 
 
 <?php
     if (Auth::check()) {
-        $notifications = Notification::where('sender_address', Auth::user()->email)->where('read', false)->orWhere('recipient_address', Auth::user()->email)->get();
-        $unreadMsgNum = count($notifications);
+        //$notifications = Notification::where('sender_address', Auth::user()->email)->where('read', false)->orWhere('recipient_address', Auth::user()->email)->get();
+        //$unreadMsgNum = count($notifications);
         $userFirstTimeConnection = UserFirstTimeConnection::where('id', Auth::user()->id)->first();
     }
 ?>
 <div id="app">
-    <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
+    <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm sticky-top">
         <div class="container">
             <a class="navbar-brand" href="{{ url('/') }}">
                 @if(count(Config::all()) > 0)
@@ -47,18 +56,24 @@
                         $config = Config::where('is_applicable', true)->first();
                     @endphp
                     @if($config != null && $config->enterprise_logo)
+                        {{--<img src="{{asset('storage/' . $config->enterprise_logo)}}"
+                             style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;" height="65" width="65"
+                             alt=""> &nbsp; &nbsp;<strong>{{ $config->enterprise_name }}</strong>--}}
                         <img src="{{asset('storage/' . $config->enterprise_logo)}}"
-                             style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;" height="65" width="65"
-                             alt=""> &nbsp; &nbsp;<strong>{{ $config->enterprise_name }}</strong>
+                             height="70" width="300"
+                             alt="">
                     @else
-                        <img src="{{asset('images/logo.png')}}"
-                             style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;" height="65" width="65"
-                             alt=""> &nbsp; &nbsp;<strong>{{ $config->enterprise_name != null ? $config->enterprise_name : config('app.name', 'Laravel') }}</strong>
+                        <img src="{{asset('images/logo.jpeg')}}"
+                             height="70" width="300"
+                             alt=""> {{--&nbsp; &nbsp;<strong>{{ $config->enterprise_name != null ? $config->enterprise_name : config('app.name', 'Laravel') }}</strong>--}}
                     @endif
                 @else
-                    <img src="{{asset('images/logo.png')}}"
+                    <img src="{{asset('images/logo.jpeg')}}"
+                         height="70" width="300"
+                         alt="">
+                    {{--<img src="{{asset('images/logo.png')}}"
                          style="margin-top: -20px; margin-bottom: -20px; border-radius: 50%;" height="65" width="65"
-                         alt=""> &nbsp; &nbsp;<strong>{{ config('app.name', 'Laravel') }}</strong>
+                         alt=""> &nbsp; &nbsp;<strong>{{ config('app.name', 'Laravel') }}</strong>--}}
                 @endif
 
             </a>
@@ -77,12 +92,12 @@
             @endif
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <!-- Left Side Of Navbar -->
-                @if(Auth::check())
+                {{--@if(Auth::check())
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
                             <a class="list-group-item list-group-item-action nav-link"
                                href="{{route('notifs.index', Auth::user()->id)}}"
-                               {{--data-bs-toggle="modal" data-bs-target="#notifications-modal"--}}
+                               --}}{{--data-bs-toggle="modal" data-bs-target="#notifications-modal"--}}{{--
                                style="font-size: initial;">
                                 {{ __('Notifications') }} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                 <span class="badge bg-success position-absolute top|start-*"
@@ -98,24 +113,36 @@
                             </a>
                         </li>
                     </ul>
-                @endif
+                @endif--}}
 
                 <ul class="navbar-nav ms-auto">
 
                     <li class="nav-item">
-                        <select class="form-control" name="language" onchange="submitLanguageForm(this.value);"
-                            id="language_selector">
-                            @foreach(config('app.available_locales') as $locale)
-                                <option value="{{ $locale }}"
-                                        {{$locale === Request::segment(1) ? 'selected' : ''}}>
-                                    {{ strtoupper($locale) }}{{-- - {{Request::segment(1)}} - {{$locale}}--}}
-                                </option>
-                            @endforeach
-                        </select>
+                        <div class="form-row align-items-center">
+                            <div class="col-auto">
+                                <div class="input-group mb-2">
+                                    <div class="input-group-prepend">
+                                        <div class="">
+                                            <img src="{{asset('images/fr.svg')}}" alt="" height="25" width="25" id="flag" style="margin-top: 5px;"> &nbsp;
+                                        </div>
+                                    </div>
+                                    <select class="form-control" name="language" onchange="submitLanguageForm(this.value);"
+                                            id="language_selector" style="display: inline; border: 0 white solid; background-color: #FFFFFF; font-size: 1em; font-weight: bolder;" >
+                                        @foreach(config('app.available_locales') as $locale)
+                                            <option value="{{ $locale }}"
+                                                {{$locale === Request::segment(1) ? 'selected' : ''}}>
+                                                {{ strtoupper($locale) === 'FR' ? "Français" : (strtoupper($locale) === 'EN' ? "English" : "Français") }}{{-- - {{Request::segment(1)}} - {{$locale}}--}}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+
 
                         <form method="GET" action="" id="select_language_form">
                             {{--@csrf--}}
-
                         </form>
 
                         <script type="text/javascript">
@@ -127,7 +154,6 @@
                                     var pathWitoutTrailingSlash = path.substring(1, path.length);
                                     var pathArray = pathWitoutTrailingSlash.split('/');
                                     pathArray[0] = locale;
-
                                     var newPathname = "";
                                     for (i = 0; i < pathArray.length; i++) {
                                         newPathname += "/";
@@ -135,8 +161,31 @@
                                     }
                                     form.action = window.location.protocol + "//" + window.location.host + newPathname;
                                     form.submit();
+
+
                                 }
                             }
+
+                            function setFlag(){
+                                let path = window.location.pathname;
+                                if(path.length > 0){
+                                    let pathWitoutTrailingSlash = path.substring(1, path.length);
+                                    let pathArray = pathWitoutTrailingSlash.split('/');
+                                    let  locale = pathArray[0];
+                                    console.log("Local from url = " + locale);
+                                    let language = locale.toUpperCase();
+                                    let flagImg = document.getElementById("flag");
+                                    let flagFile = "";
+                                    if(language === "FR"){
+                                        flagFile = "fr.svg";
+                                    }else{
+                                        flagFile = "gb.svg";
+                                    }
+                                    let imgsrc = window.location.protocol + "//" + window.location.host + "/images/" + flagFile;
+                                    flagImg.setAttribute('src', imgsrc);
+                                }
+                            }
+                            setFlag();
                         </script>
 
                     </li>
@@ -165,27 +214,27 @@
                             <li class="nav-item dropdown">
                                 <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button"
                                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                    {{ Auth::user()->name }}
+                                    <strong>{{ Auth::user()->name }}</strong>
                                 </a>
 
-                                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown"
+                                     style="border: 2px #164fa9 solid; font-weight: bold; font-size: 1em;">
 
                                     <a class="dropdown-item" href="{{ url('/'.GuestController::getApplicationLocal().'/password-reset')}}">
-                                        {{ __('Modifier mot de passe') }}
+                                        <strong>{{ __('Modifier mot de passe') }}</strong>
                                     </a>
+
 
                                     <a class="dropdown-item"
                                        href="{{ route('user.update-parameter.index', Auth::user()->id)}}">
-                                        {{ __('Mes Paramètres') }}
+                                        <strong>{{ __('Mes Paramètres') }}</strong>
                                     </a>
-
-
 
                                     <a class="dropdown-item" href="#"
                                        onclick="event.preventDefault();
                                                      document.getElementById('deconnexion-form').submit();"
                                        id="deconnexion-link">
-                                        {{ __('Déconnexion') }}
+                                        <strong>{{ __('Déconnexion') }}</strong>
                                     </a>
 
                                     <form id="deconnexion-form" action="{{ route('deconnexion') }}" method="POST"

@@ -11,7 +11,19 @@
             @include('layouts.menu')
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header"><h5>{{ __("Article de la plateforme") }}</h5></div>
+                    <div class="card-header">
+                        <h5 style="display: inline;">{{ __("Article de la plateforme") }}</h5>
+                        <h5 style="display: inline; float: right;">
+                            @if(count(Config::where('is_applicable', true)->get()) > 0)
+                                <a href="{{ route('home.products.index')}}"
+                                   style="text-decoration: none; font-size: x-large; color: green;"
+                                   title="{{__('Ajouter un client')}}">
+                                    <strong><span class="glyphicon glyphicon-plus">+</span></strong>
+                                    <span style="font-size: initial;">{{ __('Ajouter') }}</span>
+                                </a>
+                            @endif
+                        </h5>
+                    </div>
 
                     <div class="card-body">
                             @php

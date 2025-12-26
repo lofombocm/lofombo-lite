@@ -56,8 +56,9 @@ class HomeClientController extends Controller
         if(Auth::guard('client')->check()){
             return view('home-client');
         }
+        return redirect()->route('authentification.client')->with('message', __("Désolé, vous n'avez pas l'accès"));
 
-        return redirect("auth/clent")->withError('Opps! You do not have access');
+        //return redirect()->withError(__("Désolé, vous n'avez pas l'accès"));
     }
 
     public function updateClientForm(string $locale, string $clientid)
@@ -66,23 +67,26 @@ class HomeClientController extends Controller
         if(Auth::guard('client')->check()){
             if ($clientid !== Auth::guard('client')->user()->id) {
                 session()->flash('error', $msg);
-                return redirect("auth/clent")->withError($msg);
+                return redirect()->route('authentification.client')->with('message', $msg);
+                //return redirect("auth/client")->withError($msg);
             }
             return view('client.update-client-form', ['client' =>  Auth::guard('client')->user()]);
         }
 
         session()->flash('error', $msg);
-        return redirect("auth/client")->withError($msg);
+        return redirect()->route('authentification.client')->with('message', $msg);
+        //return redirect("auth/client")->withError($msg);
     }
 
 
     public function updateClient(Request $request, string $locale, string $clientId){
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|min:2',
-            'telephone' => 'required|string|max:255',
+            'telephone' => 'required|phone',
         ],
             [
                 'telephone.required' => __('Le numéro de téléphone est obligatoire'),
+                'telephone.phone' => __("Le numéro de téléphone est invalide"),
                 'name.required' => __('Le nom est obligatoire.'),
             ]);
 
@@ -119,53 +123,44 @@ class HomeClientController extends Controller
             $client->email = $request->get('email');
         }
 
-        $secret = null;
-        $birthdate = "";
-        if (!$request->filled('day') || !$request->filled('month')){
-            //$secret = "12345678";
-        }else{
-            //dd($request->all());
-            $validatorBirthdate = Validator::make($request->all(), [
-                'day' => 'string|in:01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31',
-                'month' => 'string|in:01,02,03,04,05,06,07,08,09,10,11,12',
-                //'year' => 'integer|between:1900,'.date('Y'),
-            ],[
-                'day.required' => __('Jour obligatoire.'),
-                'day.in' => __("Jour invalide"),
-                'month.required' => __('Mois obligatoire.'),
-                'month.in' => __("Mois invalide"),
-            ]);
-            if($validatorBirthdate->fails()){
-                session()->flash('error', $validatorBirthdate->errors()->first());
-                return back()->withErrors(['error' => $validatorBirthdate->errors()->first()]);
-            }
-
-            if (intval(strval($request->get('month'))) == 2 && intval(strval($request->get('day'))) > 29) {
-                //if($validatorBirthdate->fails()){
-                    session()->flash('error', __('Date invalide'));
-                    return redirect()->back()->withErrors(['error' => __('Date invalide')]);
-                //}
-            }
-
-            if (!$request->filled('year')){
-                $year = 1900;
-            }else{
-                $year = intval(trim($request->get('year')));
-                if (!($year >= 1900 && $year <= Carbon::now()->year)){
-                    $year = 1900;
+        /*if ($client->canUpdateBirthdate()){
+            if ($request->filled('day') && $request->filled('month')){
+                $validatorBirthdate = Validator::make($request->all(), [
+                    'day' => 'string|in:01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31',
+                    'month' => 'string|in:01,02,03,04,05,06,07,08,09,10,11,12',
+                    //'year' => 'integer|between:1900,'.date('Y'),
+                ]);
+                if($validatorBirthdate->fails()){
+                    session()->flash('error', $validatorBirthdate->errors()->first());
+                    return redirect()->back()->withErrors(['error' => $validatorBirthdate->errors()->first()]);
                 }
-            }
-            $birthdate = $year . '-'.trim($request->get('month')).'-'.trim($request->get('day'));
 
-            //$birthdate = $request->get('year').'-'.$request->get('month').'-'.$request->get('day');
-            //$birthdateFormatedArr = explode('-', $birthdate);
-            //$secret = $birthdateFormatedArr[2] . $birthdateFormatedArr[1] . $birthdateFormatedArr[0];
-            $client->birthdate = $birthdate;
+                if (!$request->filled('year')){
+                    $year = 1900;
+                }else{
+                    $year = intval(trim($request->get('year')));
+                    if (!($year >= 1900 && $year <= Carbon::now()->year)){
+                        $year = 1900;
+                    }
+                }
+                $birthdate = $year . '-'.trim($request->get('month')).'-'.trim($request->get('day'));
+                //$birthdate = $request->get('year').'-'.$request->get('month').'-'.$request->get('day');
+                //$birthdateFormatedArr = explode('-', $birthdate);
+                //$secret = $birthdateFormatedArr[2] . $birthdateFormatedArr[1] . $birthdateFormatedArr[0];
+                $client->birthdate = $birthdate;
+            }
+        }*/
+
+        $retVal = $client->updateBirthdate($request);
+        if($retVal['success'] === false){
+            $msg = $retVal['message'];
+            session()->flash('error', $msg);
+            return redirect()->back()->withErrors(['error' => $msg]);
         }
 
         if ($request->filled('gender')){
             $validatorGender = Validator::make($request->all(), [
-                'gender' => 'string|in:MONSIEUR,MADAME,MADEMOISELLE',
+                'gender' => 'string|in:M,F',
             ],[
                 'gender.required' => __('Le sexe est obligatoire.'),
                 'gender.in' => __("Le sexe est invalide."),
@@ -237,7 +232,7 @@ class HomeClientController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();*/
 
-        $all = Loyaltytransaction::where('loyaltyaccountid', $loyaltyAccount->id)->orderBy('created_at', 'desc')->get();
+        $all = Loyaltytransaction::where('loyaltyaccountid', $loyaltyAccount->id)->where('point', '>', 0)->orderBy('created_at', 'desc')->get();
         $txs = [];
         foreach ($all as $tx) {
             $date = Carbon::parse($tx->date)->format('d-m-Y H:i:s');
@@ -252,7 +247,9 @@ class HomeClientController extends Controller
             }
         }
 
-        return view('tx-list-client', ['txs' => $txs, 'q' => $q, 'clientid' => $clientId]);
+        $client = Client::where('id', $clientId)->first();
+
+        return view('tx-list-client', ['txs' => $txs, 'q' => $q, 'clientid' => $clientId, 'client' => $client]);
         //return view('welcome')->withDetails($user)->withQuery ( $q );
         //else return view ('welcome')->withMessage('No Details found. Try to search again !');
     }
@@ -260,8 +257,10 @@ class HomeClientController extends Controller
     public function showLoyaltyTransactionsAllPerClient(string $locale, string $clientId)
     {
         $loyaltyAccount = Loyaltyaccount::where('holderid', $clientId)->first();
+        $client = Client::where('id', $clientId)->first();
         return view('tx-list-client',
-            ['txs' => Loyaltytransaction::where('loyaltyaccountid', $loyaltyAccount->id)->orderBy('created_at', 'desc')->get(), 'clientid' => $clientId]);
+            ['txs' => Loyaltytransaction::where('loyaltyaccountid', $loyaltyAccount->id)->where('point', '>', 0)->orderBy('created_at', 'desc')->get(),
+                'clientid' => $clientId, 'client' => $client]);
     }
 
     public function downloadVoucher(string $locale, string $voucherId){
@@ -293,7 +292,7 @@ class HomeClientController extends Controller
             session()->flash('error', 'Bon inexistant.');
             return back()->withErrors(['error' =>  'Bon inexistant.']);
         }
-        return view('client.resend-usage-code', ['voucherid' => $voucherId]);
+        return view('client.resend-usage-code', ['voucherid' => $voucherId, 'serial_number' => $voucher->serialnumber, 'client' => $client]);
 
         //$config = Config::where('is_applicable', true)->first();
         /*$voucher = Voucher::where('id', $voucherId)->first();
@@ -365,7 +364,7 @@ class HomeClientController extends Controller
 
         $link = url('/'.GuestController::getApplicationLocal().'/client/'. $client->id . '/vouchers') ;
         $config = Config::where('is_applicable', true)->first();
-        $message = [$client->gender . ' ' . $client->name . ', ' . __("vous avez demander à la plateforme de fidélité") . ' ' . $config->enterprise_name .
+        $message = [($client->gender === 'M' ? __("Monsieur") : __("Madame")) . ' ' . $client->name . ', ' . __("vous avez demander à la plateforme de fidélité") . ' ' . $config->enterprise_name . ' ' .
          __("de vous envoyer un code d'utilisation d'un bon. Si jamais vous n'avez pas fait cette demande, nous vous prions de bien vouloir ignorer ce message")  .  '.'];
         $emaildata = ['email' =>trim($request->get('email')), 'name' => $client->name, 'clientLoginUrl' => $link, 'msg' => $message,
             'code' => decrypt($voucher_usage_code->code)];
@@ -380,7 +379,7 @@ class HomeClientController extends Controller
 
     public function showLoyaltyTransactionsDetails(string $locale, string $txid)
     {
-        $tx = Loyaltytransaction::where('id', $txid)->first();
+        $tx = Loyaltytransaction::where('id', $txid)->where('point', '>', 0)->first();
         $client = Client::where('id', $tx->clientid)->first();
         $rewards = Reward::where('active', true)->get();
         return view('tx-client-details', ['tx' => $tx, 'client' => $client, 'rewards' => $rewards]);

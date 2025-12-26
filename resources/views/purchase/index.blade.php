@@ -11,11 +11,10 @@
                     <div class="card-header"><h5>{{ __('Enregistrer un Achat') }}</h5></div>
                     <div class="card-body">
 
-
                             <span  id="produits" style="display: none; height: 0; width: 0;">{{json_encode(\App\Models\Product::all())}}</span>
                             <form method="POST"
                                   action="{{ route('purchases.index.post') }}"
-                                  enctype="multipart/form-data" onsubmit="return onSubmitPurchse();">
+                                  enctype="multipart/form-data" onsubmit="return onSubmitPurchse();" id="purchase_form">
                                 @csrf
                                 <div><h5>{{__('Les champs marqués par ')}} <b class="" style="color: red;">*</b> {{__('sont obligatoires')}}</h5></div>
                                 <br>
@@ -60,9 +59,9 @@
                                         </div>
 
                                         @error('client_id')
-                                        <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
+                                            <span class="invalid-feedback" role="alert">
+                                                <strong>{{ $message }}</strong>
+                                            </span>
                                         @enderror
                                     </div>
                                 </div>
@@ -90,12 +89,24 @@
                                     </label>
 
                                     <div class="col-md-9">
-                                        <input id="receiptnumber" type="text" class="form-control @error('receiptnumber') is-invalid @enderror" name="receiptnumber" value="{{ old('receiptnumber') }}" required autocomplete="receiptnumber">
 
-                                        @error('receiptnumber')
-                                        <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
+                                        <input id="receiptnumber" type="hidden"  name="receiptnumber" value="">
+                                        <input list="receiptnumbers" id="receipt_number" name="receipt_number" class="form-control @error('receipt_number') is-invalid @enderror"
+                                               value="{{ old('receipt_number') }}" required autocomplete="receipt_number" autofocus
+                                               onchange="setReceiptNumber(this.value);"/>
+
+                                        <datalist id="receiptnumbers" class="@error('receiptnumbers') is-invalid @enderror" >
+                                            @foreach(\App\Models\Purchase::all() as $purchase)
+                                                <option value="{{$purchase->receiptnumber}}" label="" data-value="{{$purchase->receiptnumber}}">{{$purchase->receiptnumber}}</option>
+                                            @endforeach
+                                        </datalist>
+
+                                        {{--<input id="receiptnumber" type="text" class="form-control @error('receiptnumber') is-invalid @enderror" name="receiptnumber" value="{{ old('receiptnumber') }}" required autocomplete="receiptnumber">--}}
+
+                                        @error('receipt_number')
+                                            <span class="invalid-feedback" role="alert">
+                                                <strong>{{ $message }}</strong>
+                                            </span>
                                         @enderror
                                         @if(session('purchase'))
                                             <small style="color: red; font-size: x-small;">
@@ -103,7 +114,7 @@
                                                 <?php
                                                     $clientReceipt = \App\Models\Client::where('id', session('purchase')->clientid)->first();
                                                 ?>
-                                                {{__("a nom du client")}}: {{$clientReceipt->name}}, {{__("Montant")}}: {{session('purchase')->amount}}
+                                                {{__("au nom du client")}}: {{$clientReceipt->name}}, {{__("Montant")}}: {{session('purchase')->amount}}
                                                 (ID: {{session('purchase')->id}})
                                             </small>
                                         @endif
@@ -124,7 +135,7 @@
                                 </div>--}}
 
                                 <input  id="transactiontype" name="transactiontype" value="ENREGISTREMENT ACHAT" type="hidden"/>
-                                <input id="montant" type="hidden" name="montant" id="montant">
+                                <input id="montant" type="hidden" name="montant" >
 
                                 <div class="row mb-3" id="product-content" {{--style="display: none;"--}}>
                                     <input type="hidden" id="numitem" name="numitem" value="0">
@@ -153,6 +164,14 @@
                                 <span style="display: none;" id="label_quantity">{{__("QTE")}}</span>
                                 <span style="display: none;" id="label_item_name">{{__("Nom Article")}}</span>
 
+                                <div id="product_datalist" style="display: none;">
+                                    <datalist id="productnames"  >
+                                        @foreach(\App\Models\Product::all() as $product)
+                                            <option value="{{$product->name}}" label="" data-value="{{$product->id}}">{{$product->name}}</option>
+                                        @endforeach
+                                    </datalist>
+                                </div>
+
                                 {{--<div class="input-group-btn" style="text-align: right;">
                                     <button class="btn btn-link" type="button"  > <span class="glyphicon glyphicon-plus" style="font-size: large;">Ajouter</span> </button>
                                 </div>--}}
@@ -160,7 +179,7 @@
                                         <script type="text/javascript">
                                             function setClientId(nameAndTel){
                                                 //var regExp = /([A-Z]|[a-z]|[0-9])+(\s([A-Z]|[a-z]|[0-9])+)*(\s+\(Tel\:\s[0-9]{9,15}\))/g;
-                                                var regExp2 = /[0-9]{8,15}/g;
+                                                var regExp2 = /\+[0-9]{8,20}/g;
                                                 var clientid = document.getElementById("clientid");
                                                 //var test = "Nguetsop Ngoufack Edwige Laure (Tel: 691179154)";
                                                 var matches = nameAndTel.match(regExp2);
@@ -173,6 +192,19 @@
                                                 }
 
                                             }
+
+                                            /*function resetForm(){
+                                                document.getElementById("client_id").setAttribute('value', '');
+                                            }
+                                            resetForm();*/
+
+                                            //setClientId(document.getElementById("client_id").value);
+
+                                            function setReceiptNumber(receiptNumberValue){
+                                                var receiptnumber = document.getElementById("receiptnumber");
+                                                receiptnumber.setAttribute('value', receiptNumberValue);
+                                            }
+                                            //setReceiptNumber(document.getElementById("receipt_number").value);
 
                                             //addProduct_fields();
                                             function addProduct_fields() {
@@ -189,7 +221,9 @@
                                                     '<div class="row" id="product' + index + '" style="margin-bottom: 7px;">' +
                                                         '<div class="col-sm-3 nopadding">' +
                                                             '<div class="form-group">' +
-                                                                '<input type="text" class="form-control" name="productname' + index + '" value="" placeholder="' + document.getElementById("label_item_name").innerHTML + '" onblur="filterProducts(this);">' +
+                                                                '<input type="hidden" name="productname' + index + '" value="" id="productname' + index + '" />'+
+                                                                '<input list="productnames" class="form-control" id="product_name' + index + '" name="product_name' + index + '" value="" placeholder="' + document.getElementById("label_item_name").innerHTML + '" onblur="filterProducts(this);">' +
+                                                                document.getElementById("product_datalist").innerHTML +
                                                             '</div>' +
                                                         '</div>' +
                                                         '<div class="col-sm-3 nopadding">' +
@@ -205,9 +239,9 @@
                                                         '<div class="col-sm-3 nopadding">' +
                                                             '<div class="form-group">' +
                                                                 '<div class="input-group" >' +
-                                                                    '<input type="number" class="form-control col-sm-9"  name="total' + index + '" value="" placeholder="0" disabled > &nbsp;' +
+                                                                    '<input type="number" class="form-control col-sm-9" id="total' + index + '" name="total' + index + '" value="" placeholder="0" disabled > &nbsp;' +
                                                                     '<div class="input-group-btn col-sm-3">' +
-                                                                        '<a href="#"  title="' + rowid + '" onclick="removeProductLine(this.title);" style="text-decoration: none; font-size: x-large; color: red;"> <span class="glyphicon glyphicon-plus">-</span> </a>' +
+                                                                        '<a href="#"  title="' + index + '" onclick="removeProductLine(this.title);" style="text-decoration: none; font-size: inherit; color: red; padding-top: 5px;"> <span class="glyphicon glyphicon-plus" style="">&nbsp;&nbsp;<img src="{{asset('images/icons8-remove-24.png')}}" alt="" style="margin-top: 7px;"/></span> </a>' +
                                                                     '</div>' +
                                                                 '</div>' +
                                                             '</div>' +
@@ -225,42 +259,54 @@
                                             }
 
                                             function filterProducts(inputNamei){
-                                                var index = inputNamei.name.substring("productname".length);
+                                                //onchange="setReceiptNumber(this.value);"
+                                                var index = inputNamei.name.substring("product_name".length);
+                                                //console.log("INDEX: " + index);
+                                                var productnameid = "productname" + index;
+                                                //console.log("productnameid: " + productnameid);
+                                                var inputProductName = document.getElementById(productnameid);
+                                                var pname = inputNamei.value;
+                                                //console.log('pname: ' + pname);
+                                                inputProductName.setAttribute('value', pname);
+
                                                 var inputPriceId = "unitprice" + index;
                                                 var inputPrice = document.getElementById(inputPriceId);
                                                 var productsJsonString = document.getElementById('produits').innerHTML;
                                                 var produits =  JSON.parse(productsJsonString);
                                                 var nomProduit = inputNamei.value;
-                                                console.log(produits);
-                                                console.log(inputPriceId);
-                                                console.log(nomProduit);
+                                                //console.log(produits);
+                                                //console.log(inputPriceId);
+                                                //console.log(nomProduit);
                                                 for(var i = 0; i < produits.length; i++){
                                                     if(nomProduit.toUpperCase() === produits[i].name.toUpperCase()){
                                                         console.log(produits[i].price);
                                                         inputPrice.setAttribute("value", produits[i].price);
+                                                        /*var event = new Event('change');
+                                                        element.dispatchEvent(event);*/
                                                         break;
                                                     }
                                                 }
                                             }
 
-                                            function removeProductLine(product) {
-                                                console.log(product);
-                                                //product
-                                                var indexStr = product.substring("product".length);
+                                            function removeProductLine(indexStr) {
+                                                //console.log(product);
+                                                //var indexStr = product.substring("product".length);
                                                 console.log(indexStr);
                                                 var index = parseInt(indexStr);
 
                                                 //index = index - 1;
                                                 var numItem = parseInt(document.getElementById('numitem').value);
-                                                if(!(numItem - 1 === index)) {
+                                                /*if(!(numItem - 1 === index)) {
                                                     index = numItem - 1;
-                                                }
+                                                }*/
 
-                                                console.log(index);
-                                                document.getElementById(product).remove();
+                                                //console.log(index);
+                                                document.getElementById("product" + indexStr).remove();
+                                                var newNumItem = numItem - 1;
 
-                                                document.getElementById('numitem').setAttribute("value", "" + index);
+                                                document.getElementById('numitem').setAttribute("value", "" + newNumItem);
                                                 console.log("new num item: " + document.getElementById('numitem').value);
+
 
                                                var  productElem = document.getElementById('products');
                                                var rows = productElem.getElementsByClassName('row');
@@ -268,17 +314,45 @@
                                                 var general_total = document.getElementById('general_total');
                                                 var generaltotal = 0;
                                                 for (var i = 0; i < rows.length; i++) {
+                                                    var idxStr = rows[i].id.substring("product".length)
+                                                    var indice = parseInt(idxStr);
+                                                    console.log("indice: " + indice);
+                                                    console.log("(" + i + ", " + index + ")");
                                                     var inputs = rows[i].getElementsByTagName('input');
-                                                    inputs[0].setAttribute("name", 'productname' + i);
-                                                    inputs[1].setAttribute("name", 'unitprice' + i);
-                                                    inputs[2].setAttribute("name", 'quantity' + i);
-                                                    inputs[3].setAttribute("name", 'total' + i);
-                                                    var unitprice = parseFloat(inputs[1].value);
-                                                    var quantity = parseFloat(inputs[2].value);
-                                                    if(!Number.isNaN(unitprice) && !Number.isNaN(quantity)) {
-                                                        inputs[3].setAttribute("value", unitprice * quantity);
-                                                        generaltotal += unitprice * quantity;
+                                                    if(i < index){
+                                                        console.log("(" + inputs[0].value + ", " + inputs[1].value + ", " + inputs[2].value
+                                                            + ", " + inputs[3].value + ", " + inputs[4].value + ", " + i + ")");
+                                                        var unitprice1 = parseFloat(inputs[2].value);
+                                                        var quantity1 = parseFloat(inputs[3].value);
+                                                        if(!Number.isNaN(unitprice1) && !Number.isNaN(quantity1)) {
+                                                            inputs[4].setAttribute("value", unitprice1 * quantity1);
+                                                            generaltotal += unitprice1 * quantity1;
+                                                        }
+                                                    }else{
+
+                                                        inputs[0].setAttribute("name", 'productname' + i);
+                                                        inputs[0].setAttribute("id", 'productname' + i);
+                                                        inputs[1].setAttribute("name", 'product_name' + i);
+                                                        inputs[1].setAttribute("id", 'product_name' + i);
+                                                        inputs[2].setAttribute("name", 'unitprice' + i);
+                                                        inputs[2].setAttribute("id", 'unitprice' + i);
+                                                        inputs[3].setAttribute("name", 'quantity' + i);
+                                                        inputs[3].setAttribute("id", '' + i);
+                                                        inputs[4].setAttribute("name", 'total' + i);
+                                                        inputs[4].setAttribute("id", 'total' + i);
+                                                        console.log("(" + inputs[0].value + ", " + inputs[1].value + ", " + inputs[2].value
+                                                            + ", " + inputs[3].value + ", " + inputs[4].value + ", " + i + ")");
+                                                        var unitprice = parseFloat(inputs[2].value);
+                                                        var quantity = parseFloat(inputs[3].value);
+                                                        if(!Number.isNaN(unitprice) && !Number.isNaN(quantity)) {
+                                                            inputs[4].setAttribute("value", unitprice * quantity);
+                                                            generaltotal += unitprice * quantity;
+                                                        }
+                                                        var as = rows[i].getElementsByTagName('a');
+                                                        as[0].setAttribute('title', "" + i);
+                                                        rows[i].setAttribute('id', "product" + i);
                                                     }
+
                                                 }
                                                 general_total.innerHTML = "<i id='total_general' title='" +  generaltotal + "'>Total: " + generaltotal + "</i>";
                                                 var montant = document.getElementById('montant');
@@ -295,10 +369,10 @@
                                                 for (var i = 0; i < rows.length; i++) {
                                                     var inputs = rows[i].getElementsByTagName('input');
 
-                                                    var unitprice = parseFloat(inputs[1].value);
-                                                    var quantity = parseFloat(inputs[2].value);
+                                                    var unitprice = parseFloat(inputs[2].value);
+                                                    var quantity = parseFloat(inputs[3].value);
                                                     if(!Number.isNaN(unitprice) && !Number.isNaN(quantity)) {
-                                                        inputs[3].setAttribute("value", unitprice * quantity);
+                                                        inputs[4].setAttribute("value", unitprice * quantity);
                                                         generaltotal += unitprice * quantity;
                                                     }
                                                 }
@@ -419,18 +493,28 @@
                                             }
 
                                             function loadModal(){
-                                                //clientids
                                                 var clientid = document.getElementById('clientid');
+                                                var receiptnumber = document.getElementById('receiptnumber');
+
                                                 var client_id = document.getElementById('client_id');
+                                                var receipt_number = document.getElementById('receipt_number');
+
                                                 var telephone = clientid.value;
                                                 var nameTel = client_id.value;
+
+                                                var numRec = receipt_number.value;
+
                                                 var datalist = document.getElementById('clientids');
                                                 var datalistOptions = datalist.options;
                                                 var selectedOption = null;
 
+                                                var datalistNumRecu = document.getElementById('receiptnumbers');
+                                                var datalistOptionsNumRecu = datalistNumRecu.options;
+                                                var selectedOptionNumRecu = null;
+
                                                 for(var i = 0; i < datalistOptions.length; i++){
                                                     //console.log(datalistOptions[i]);
-                                                    var regExp2 = /[0-9]{8,15}/g;
+                                                    var regExp2 = /\+[0-9]{8,20}/g;
                                                     var matches = datalistOptions[i].value.match(regExp2);
                                                     //if(matches !== null){
                                                     console.log(datalistOptions[i].value + ' ?= ' + nameTel);
@@ -439,6 +523,27 @@
                                                     }
                                                     //}
                                                 }
+
+                                                for(var j = 0; j < datalistOptionsNumRecu.length; j++){
+
+                                                    if(datalistOptionsNumRecu[j].value === numRec){
+                                                        selectedOptionNumRecu = datalistOptionsNumRecu[j];
+                                                    }
+                                                    //}
+                                                }
+
+                                                if(selectedOption === null){
+                                                    console.log("Selected option is null");
+                                                }else{
+
+                                                    clientid.setAttribute('value', selectedOption.innerHTML);
+                                                    telephone = clientid.getAttribute('value');
+
+                                                    console.log("Selected option: " + selectedOption.getAttribute('data-value'));
+                                                    console.log("Selected option.html: " + selectedOption.innerHTML);
+                                                    console.log("Selected option.value: " + selectedOption.getAttribute('value'));
+
+                                                }
                                                 var name = '';
                                                 if(selectedOption == null){
                                                     name = '';
@@ -446,16 +551,22 @@
                                                     name = selectedOption.getAttribute('data-value');
                                                 }
 
+                                                if(selectedOptionNumRecu === null){
+                                                    console.log("Selected option selectedOptionNumRecu is null");
+                                                }else{
+                                                    receiptnumber.setAttribute('value', selectedOptionNumRecu.getAttribute('value'));
+                                                }
+
                                                 var amount = document.getElementById('amount').value;
-                                                var receiptnumber = document.getElementById('receiptnumber').value;
+                                                var receiptnumberVal = document.getElementById('receiptnumber').value;
                                                 document.getElementById('name-displayer').innerHTML =
                                                     '<h5>Client: ' + name + '</h5>';
                                                 document.getElementById('telephone-displayer').innerHTML =
-                                                    '<h5>Telephone: ' + telephone + '</h5>';
+                                                    '<h5>{{__("Téléphone")}}: ' + telephone + '</h5>';
                                                 document.getElementById('amount-displayer').innerHTML =
-                                                    '<h5>Montant: ' + amount + '</h5>';
+                                                    '<h5>{{__("Montant")}}: ' + amount + '</h5>';
                                                 document.getElementById('receiptnumber-displayer').innerHTML =
-                                                    '<h5>No. Recu: ' + receiptnumber + '</h5>';
+                                                    '<h5>{{__("Numéro Ticket / Reçu")}}: ' + receiptnumberVal + '</h5>';
 
                                                 /*console.log('datalistOptions.length: ' + datalistOptions.length);
                                                 console.log('Name: ' + name + ', Telephone: ' + telephone + ', Amount: ' + amount
@@ -465,16 +576,10 @@
                                     </div>
                                 </div>
 
-
                             </form>
-
                     </div>
                 </div>
             </div>
         </div>
     </div>
 @endsection
-
-
-{{--
---}}

@@ -12,7 +12,7 @@
 
             <div class="col-md-9">
                 <div class="card">
-                    <div class="card-header">{{ 'Parametrage' }}</div>
+                    <div class="card-header"><h5>{{ __("Parametrage") }}</h5></div>
                     <div class="card-body">
                         <?php
                         //$conversion = ConversionAmountPoint::where('active', true)->where('is_applicable', true)->first();
@@ -79,6 +79,7 @@
                                             <input id="telephone" type="tel"
                                                    class="form-control @error('telephone') is-invalid @enderror"
                                                    name="telephone" value="{{ $client->telephone }}"
+                                                   onkeyup="removeNonNumericCharaters(this);"
                                                    required autocomplete="telephone">
                                             @error('telephone')
                                             <span class="invalid-feedback" role="alert">
@@ -338,8 +339,7 @@
                                     </div>
 
                                     <div class="row mb-3">
-                                        <label for="gender"
-                                               class="col-md-4 col-form-label text-md-end">{{__('Civilité')}}</label>
+                                        <label for="gender" class="col-md-4 col-form-label text-md-end">{{__('Sexe')}}</label>
 
                                         <div class="col-md-6">
                                             <select id="gender"
@@ -347,17 +347,17 @@
                                                     name="gender">
                                                 <option value="">-- {{__("Sélectionnez ici")}} --</option>
                                                 <option
-                                                    value="MONSIEUR" {{$client->gender === 'MONSIEUR' ? 'selected' : ''}}>
-                                                    {{__("Monsieur")}}
+                                                    value="M" {{$client->gender === 'M' ? 'selected' : ''}}>
+                                                    {{__("Masculin")}}
                                                 </option>
                                                 <option
-                                                    value="MADAME" {{$client->gender === 'MADAME' ? 'selected' : ''}}>
-                                                    {{__("Madame")}}
+                                                    value="F" {{$client->gender === 'F' ? 'selected' : ''}}>
+                                                    {{__("Féminin")}}
                                                 </option>
-                                                <option
+                                                {{--<option
                                                     value="MADEMOISELLE" {{$client->gender === 'MADEMOISELLE' ? 'selected' : ''}}>
                                                     {{__("Mademoiselle")}}
-                                                </option>
+                                                </option>--}}
                                             </select>
 
                                             @error('gender')
@@ -425,6 +425,10 @@
                                             return false;
                                         }
                                         return true;
+                                    }
+
+                                    function removeNonNumericCharaters(theInput){
+                                        theInput.value = "+" + theInput.value.replace(/\D/g, '');
                                     }
                                 </script>
                             </form>

@@ -109,6 +109,48 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                        <button class="btn btn-link" style="text-decoration: none;"
+                                                data-bs-toggle="modal" data-bs-target="#confirm-delete-reward">
+                                            <img src="{{asset('images/icons8-remove-24.png')}}" alt="OK">
+                                        </button>
+
+                                        <div class="modal fade" id="confirm-delete-reward" data-bs-backdrop="static"
+                                             data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+                                             aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h1 class="modal-title fs-5" id="staticBackdropLabel">
+                                                            {{__("Confirmez la suppression de la récompense")}} </h1>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                                aria-label="Close"></button>
+                                                    </div>
+                                                    <form method="POST" action="{{route('rewards.delete', $reward->id)}}" id="delete_reward">
+                                                        <div class="modal-body">
+                                                            <input type="hidden" name="error" id="error"
+                                                                   class="form-control @error('error') is-invalid @enderror">
+                                                            @error('error')
+                                                            <span class="invalid-feedback" role="alert"
+                                                                  style="position: relative; width: 100%; text-align: center;">
+                                                                    <strong>{{ $message }}</strong>
+                                                                </span> <br/>
+                                                            @enderror
+                                                            @csrf
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-danger"
+                                                                    data-bs-dismiss="modal">{{__("Annuler")}}
+                                                            </button>
+                                                            <button type="submit" class="btn btn-success">
+                                                                {{__("Supprimer")}}
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                     @else
                                         <span><img src="{{asset('images/icons8-checkmark-25.png')}}" alt="OK"> Active</span>
                                     @endif
@@ -191,6 +233,47 @@
                                                         </a>
                                                     </div>
                                                     {{--</form>--}}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button class="btn btn-link" style="text-decoration: none;"
+                                                data-bs-toggle="modal" data-bs-target="#confirm-delete-reward">
+                                            <img src="{{asset('images/icons8-remove-24.png')}}" alt="OK">
+                                        </button>
+
+                                        <div class="modal fade" id="confirm-delete-reward" data-bs-backdrop="static"
+                                             data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+                                             aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h1 class="modal-title fs-5" id="staticBackdropLabel">
+                                                            {{__("Confirmez la suppression de la récompense")}}</h1>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                                aria-label="Close"></button>
+                                                    </div>
+                                                    <form method="POST" action="{{route('rewards.delete', $reward->id)}}" id="delete_reward">
+                                                        <div class="modal-body">
+                                                            <input type="hidden" name="error" id="error"
+                                                                   class="form-control @error('error') is-invalid @enderror">
+                                                            @error('error')
+                                                            <span class="invalid-feedback" role="alert"
+                                                                  style="position: relative; width: 100%; text-align: center;">
+                                                                    <strong>{{ $message }}</strong>
+                                                                </span> <br/>
+                                                            @enderror
+                                                            @csrf
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-danger"
+                                                                    data-bs-dismiss="modal">{{__("Annuler")}}
+                                                            </button>
+                                                            <button type="submit" class="btn btn-success">
+                                                                {{__("Supprimer")}}
+                                                            </button>
+                                                        </div>
+                                                    </form>
                                                 </div>
                                             </div>
                                         </div>

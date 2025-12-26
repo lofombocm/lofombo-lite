@@ -40,7 +40,7 @@
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header">
-                        <h3>{{ __('Madame') . '/' . __('Monsieur'). ' ' . __("vous avez été enregistré à la plateforme de fidélité de") . ' ' .  $data['name'] . ',  ' . $data['enterprise'] }} <br></h3>
+                        <h3>{{ __('Madame') . '/' . __('Monsieur'). ' ' . __("vous avez été enregistré à la plateforme de fidélité de") . ' '  . $data['enterprise'] }} <br></h3>
                     </div>
 
                     <div class="card-body">
@@ -51,7 +51,7 @@
                             {{ __("Au premier accès, vous utiliserez les identifiants suivants pour accéder à la plateforme.") }}
                             <ul>
                                 <li>
-                                    {{ __("Nom d'utilisateur") }}: {{$data['email']}}
+                                    {{ __("Pseudo") }}: {{$data['pseudo']}}
                                 </li>
                                 <li>
                                     {{ __("Mot de passe") }}: {{'12345678'}}

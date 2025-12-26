@@ -37,7 +37,7 @@
                         <div class="col-md-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h4 style="display: inline; float: left;">{{ __('Clients') }} </h4>
+                                    <h4 style="display: inline; float: left; ">{{ __('Clients') }} </h4>
                                     <h5 style="display: inline; float: right;">
                                         @if(count(Config::where('is_applicable', true)->get()) > 0)
                                             <a href="{{ route('clients.index')}}"

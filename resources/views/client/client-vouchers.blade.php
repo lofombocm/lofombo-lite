@@ -307,11 +307,12 @@
                                                                                 </label>
 
                                                                                 <div class="col-md-8">
-                                                                                    <input id="code" type="text"
+                                                                                    <input id="code" type="tel"
                                                                                            class="form-control @error('code') is-invalid @enderror"
                                                                                            name="code"
                                                                                            value="{{ old('code') }}"
                                                                                            required autocomplete="code"
+                                                                                           onkeyup="contolInputCharaters(this);"
                                                                                            autofocus>
 
                                                                                     @error('code')
@@ -511,6 +512,17 @@
                                                                             </button>
                                                                         </div>
                                                                         <script type="text/javascript">
+                                                                            function contolInputCharaters(theInput){
+                                                                                if(theInput.value.length <= 4){
+                                                                                    theInput.value = theInput.value.replace(/\D/g, '');
+                                                                                }
+                                                                                if(theInput.value.length === 5){
+                                                                                    theInput.value = theInput.value.substring(0, 4).replace(/\D/g, '') + "-";
+                                                                                }
+                                                                                if(theInput.value.length > 5){
+                                                                                    theInput.value = theInput.value.substring(0, 4).replace(/\D/g, '') + "-" + theInput.value.substring(5, 9).replace(/\D/g, '') ;
+                                                                                }
+                                                                            }
                                                                             function validateCode() {
                                                                                 var codeElem = document.getElementById('code');
                                                                                 var code = codeElem.value;
@@ -618,6 +630,7 @@
                                                                                     });
 
                                                                             }
+
                                                                         </script>
                                                                     </form>
                                                                 </div>

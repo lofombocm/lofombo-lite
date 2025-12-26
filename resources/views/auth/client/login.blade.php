@@ -30,7 +30,12 @@
                         <div class="row mb-3">
                             <label for="telephone" class="col-md-4 col-form-label text-md-end">{{ __('Numéro Mobile') }}</label>
                             <div class="col-md-6">
-                                <input id="telephone" type="tel" class="form-control @error('telephone') is-invalid @enderror" name="telephone" value="{{ old('telephone') }}" required autocomplete="telephone" autofocus>
+                                <input id="telephone" type="tel"
+                                       class="form-control @error('telephone') is-invalid @enderror" name="telephone"
+                                       value="{{ old('telephone') }}" required autocomplete="telephone"
+                                       placeholder="{{__("Exemple: ")}} +237691179154"
+                                       onkeyup="removeNonNumericCharaters(this);"
+                                       autofocus>
 
                                 @error('telephone')
                                     <span class="invalid-feedback" role="alert">
@@ -69,6 +74,11 @@
                             </div>
                         </div>
                     </form>
+                    <script type="text/javascript">
+                        function removeNonNumericCharaters(theInput){
+                            theInput.value = "+" + theInput.value.replace(/\D/g, '');
+                        }
+                    </script>
                 </div>
             </div>
         </div>

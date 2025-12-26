@@ -40,13 +40,13 @@
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header">
-                        <h3>{{ 'Bon genere' }} <br></h3>
+                        <h3>{{ __("Bon généré") }} <br></h3>
                     </div>
 
                     <div class="card-body">
                         <h4>{{$data['msg'][0]}}</h4>
                         @if(isset($data['code']))
-                            <h4>{{ __("Votre nom d'utilisateur est") }}: {{$data['code']}}</h4>
+                            <h4>{{ __("Votre code d'utilisation") }}: {{$data['code']}}</h4>
                         @endif
                         @php $i = 0; @endphp
                         <ul>
@@ -58,12 +58,16 @@
                             @endforeach
                         </ul>
 
-                        <p>
-                            {{ __("Pour voir le bon, cliquez sur le lien") }}:
-                            <a href="{{$data['clientLoginUrl']}}" class="btn btn-primary" >{{'Cliquez ici pour voir le bon.'}}</a>
-                        </p>
+                        @if(isset($data['code']))
+                            <p>
+                                {{ __("Pour voir le bon, cliquez sur le lien") }}:
+                                <a href="{{$data['clientLoginUrl']}}" class="btn btn-primary" >{{'Cliquez ici pour voir le bon.'}}</a>
+                            </p>
+                        @endif
 
-                        <h5>{{ __("Merci pour votre Fidélité.") }}</h5>
+                        @if(isset($data['code']))
+                            <h5>{{ __("Merci pour votre Fidélité.") }}</h5>
+                        @endif
                     </div>
                 </div>
             </div>

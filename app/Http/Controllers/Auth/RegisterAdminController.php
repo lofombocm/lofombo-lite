@@ -188,13 +188,14 @@ class RegisterAdminController extends Controller
             'name' => 'required|string|max:255|min:2',
             'email' => 'required|string|email|max:255|unique:super_admins',
             'username' => 'required|string|max:255|unique:super_admins',
-            'telephone' => 'required|string|max:255|min:8',
+            'telephone' => 'required|phone',
         ],[
             'name.required' => __('Le nom est obligatoire.'),
             'email.required' => __('L\'adresse E-Mail est obligatoire.'),
             'email.email' => __('L\'adresse E-Mail n\'est pas valide'),
             'username.required' => __('Le nom d\'utilisateur est obligatoire.'),
-            'telephone.required' => __('Le numéro de téléphone est obligatoire')
+            'telephone.required' => __('Le numéro de téléphone est obligatoire'),
+            'telephone.phone' => __("Le numéro de téléphone est invalide"),
         ]);
 
         if($validator->fails()){

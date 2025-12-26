@@ -184,7 +184,7 @@
                             </div>
 
                             <div class="row mb-3">
-                                <label for="gender" class="col-md-4 col-form-label text-md-end">{{__('Civilité')}}</label>
+                                <label for="gender" class="col-md-4 col-form-label text-md-end">{{__('Sexe')}}</label>
 
                                 <div class="col-md-6">
                                     <select id="gender" class="form-control form-select form-select-lg @error('gender') is-invalid @enderror" name="gender" >

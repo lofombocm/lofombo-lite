@@ -22,14 +22,6 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(SetLocale::class);
-        //$middleware->append(EnsureLicenseIsActive::class);
-        //$middleware->append(Localization::class);
-        //$middleware->append(EnsureUserIsActivated::class);
-        //$middleware->append(EnsureClientIsActivated::class);
-        //$middleware->append(EnsureApiUserIsAdministrator::class);
-        //$middleware->append(EnsureUserIsAdministrator::class);
-        //$middleware->append(EnsureUserIsSuperAdministrator::class);
-        //$middleware->append(EnsureUserOrClientAreConnected::class);
         $middleware->alias([
             'user-is-activated' => EnsureUserIsActivated::class,
             'client-is-activated' => EnsureClientIsActivated::class,

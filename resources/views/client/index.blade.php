@@ -7,7 +7,7 @@
             @include('layouts.menu')
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header">{{ __('Enregistrer un client') }}</div>
+                    <div class="card-header"><h5>{{ __('Enregistrer un client') }}</h5></div>
 
                     <div class="card-body">
                         <form method="POST" action="{{ route('clients.index.post') }}" onsubmit="return verifyBirthDate();">
@@ -63,7 +63,13 @@
                                 </label>
 
                                 <div class="col-md-6">
-                                    <input id="telephone" type="tel" class="form-control @error('telephone') is-invalid @enderror" name="telephone" value="{{ old('telephone') }}" required autocomplete="telephone">
+                                    <input id="telephone" type="tel"
+                                           class="form-control @error('telephone') is-invalid @enderror"
+                                           name="telephone" value="{{ old('telephone') }}"
+                                           required autocomplete="telephone"
+                                           placeholder="{{__("Exemple: ")}} +237691179154"
+                                           onkeyup="removeNonNumericCharaters(this);"
+                                    >
 
                                     @error('telephone')
                                     <span class="invalid-feedback" role="alert">
@@ -177,14 +183,13 @@
                             </div>
 
                             <div class="row mb-3">
-                                <label for="gender" class="col-md-4 col-form-label text-md-end">{{__('Civilité')}}</label>
+                                <label for="gender" class="col-md-4 col-form-label text-md-end">{{__('Sexe')}}</label>
 
                                 <div class="col-md-6">
                                     <select id="gender" class="form-control form-select form-select-lg @error('gender') is-invalid @enderror" name="gender" >
                                         <option value="">-- {{__("Sélectionnez ici")}} --</option>
-                                        <option value="MONSIEUR">{{__("Monsieur")}}</option>
-                                        <option value="MADAME">{{__("Madame")}}</option>
-                                        <option value="MADEMOISELLE">{{__("Mademoiselle")}}</option>
+                                        <option value="M">{{__("Masculin")}}</option>
+                                        <option value="F">{{__("Féminin")}}</option>
                                     </select>
 
                                     @error('gender')
@@ -242,6 +247,9 @@
                                         return false;
                                     }
                                     return true;
+                                }
+                                function removeNonNumericCharaters(theInput){
+                                    theInput.value = "+" + theInput.value.replace(/\D/g, '');
                                 }
                             </script>
                         </form>

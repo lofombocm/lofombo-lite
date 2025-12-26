@@ -301,7 +301,9 @@
                                                                                            name="code"
                                                                                            value="{{ old('code') }}"
                                                                                            required autocomplete="code"
-                                                                                           autofocus>
+                                                                                           autofocus
+                                                                                           onkeyup="contolInputCharaters(this);"
+                                                                                    >
 
                                                                                     @error('code')
                                                                                     <span class="invalid-feedback"
@@ -500,6 +502,19 @@
                                                                             </button>
                                                                         </div>
                                                                         <script type="text/javascript">
+
+                                                                            function contolInputCharaters(theInput){
+                                                                                if(theInput.value.length <= 4){
+                                                                                    theInput.value = theInput.value.replace(/\D/g, '');
+                                                                                }
+                                                                                if(theInput.value.length === 5){
+                                                                                    theInput.value = theInput.value.substring(0, 4).replace(/\D/g, '') + "-";
+                                                                                }
+                                                                                if(theInput.value.length > 5){
+                                                                                    theInput.value = theInput.value.substring(0, 4).replace(/\D/g, '') + "-" + theInput.value.substring(5, 9).replace(/\D/g, '') ;
+                                                                                }
+                                                                            }
+
                                                                             function validateCode() {
                                                                                 var codeElem = document.getElementById('code');
                                                                                 var code = codeElem.value;

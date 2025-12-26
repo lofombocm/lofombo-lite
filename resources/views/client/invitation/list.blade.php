@@ -27,7 +27,16 @@
                         <div class="col-md-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h4 style="display: inline; float: left;">{{ __('Invitations') }} </h4>
+                                    <h5 style="display: inline; float: left;">{{ __('Invitations') }} </h5>
+
+                                    <h5 style="display: inline; float: right;">
+                                        <a href="{{ route('client.friend-invitations.index', Auth::guard('client')->user()->id) }}"
+                                           style="text-decoration: none; font-size: large; color: green;"
+                                           title="{{__('Inviter un ami')}}">
+                                            {{--<strong><span class="glyphicon glyphicon-plus">+</span></strong>--}}
+                                            <img src="{{asset('images/icons8-share-25.png')}}" alt=""> &nbsp;{{ __('Inviter un ami') }}
+                                        </a>
+                                    </h5>
                                 </div>
                                 <div class="card-body">
                                     @if(count($friendInvitations)) @endif
@@ -76,12 +85,12 @@
                                                                 {{"En attente d'acceptation"}}
                                                             @else
                                                                 @if($invitation->state === \App\Models\FriendInvitatin::REFUSED)
-                                                                    {{"Votre invité a réfusé l'invitation"}}
+                                                                    {{"INVITATION REFUSEE"}}
                                                                 @else
                                                                     @if($invitation->state === \App\Models\FriendInvitatin::ACCEPTED)
-                                                                        {{"Invitation acceptée"}}
+                                                                        {{__("INVITATION ACCEPTEE")}}
                                                                     @else
-                                                                        {{"Invitation confirmée"}}
+                                                                        {{__("INVITATION CONFIRMEE")}}
                                                                     @endif
                                                                 @endif
                                                             @endif
@@ -108,12 +117,12 @@
                                                                 {{ __("En attente d'acceptation") }}
                                                             @else
                                                                 @if($invitation->state === \App\Models\FriendInvitatin::REFUSED)
-                                                                    {{__("Invitation réfusée")}}
+                                                                    {{__("INVITATION REFUSEE")}}
                                                                 @else
                                                                     @if($invitation->state === \App\Models\FriendInvitatin::ACCEPTED)
-                                                                        {{__("Invitation acceptée")}}
+                                                                        {{__("INVITATION ACCEPTEE")}}
                                                                     @else
-                                                                        {{__("Invitation confirmée")}}
+                                                                        {{__("INVITATION CONFIRMEE")}}
                                                                     @endif
                                                                 @endif
                                                             @endif

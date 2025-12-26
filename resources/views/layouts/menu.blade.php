@@ -1,22 +1,39 @@
 @php
     use App\Models\Client;
-    use App\Models\FriendInvitatin;use Illuminate\Support\Facades\Auth;
+    use App\Models\FriendInvitatin;
+    use App\Models\UserFirstTimeConnection;
+    use Illuminate\Support\Facades\Auth;
     use App\Models\Config;
+    use App\Models\Notification;
+
+    if (Auth::check()) {
+        $notifications = Notification::where('sender_address', Auth::user()->email)->where('read', false)->orWhere('recipient_address', Auth::user()->email)->get();
+        $unreadMsgNum = count($notifications);
+        $userFirstTimeConnection = UserFirstTimeConnection::where('id', Auth::user()->id)->first();
+    }
 @endphp
 
 <div class="col-md-3">
     <div class="card">
-        <div class="card-header">
-            <h5>
+        <div class="" style="
+                                text-align: center;
+                                width: 100%;
+                                font-size: 3em;
+                                color: #164fa9;
+                                font-weight: bold;
+                                margin-top: 15px;
+                                margin-bottom: 0;
+                                ">
+            <h5 >
                 {{ __('Menu principal') }}
-                <img src="{{asset('images/icons8-triangle-arrow-24.png')}}" alt="" height="15" width="15"/>
+                {{--<img src="{{asset('images/icons8-triangle-arrow-24.png')}}" alt="" height="15" width="15"/>--}}
             </h5>
         </div>
         <div class="card-body">
             <div class="list-group list-group-flush">
 
                 <a class="list-group-item list-group-item-action btn btn-link"
-                   href="{{ (Auth::check() && Auth::user()->is_admin) ? route('reports.menu') : route('home.purchases.index')}}">
+                   href="{{ (Auth::check() && Auth::user()->is_admin) ? route('bi.menu') : route('home.purchases.index')}}">
                     <h6><img src="{{asset('images/icons8-home-25.png')}}" alt=""> &nbsp;{{ __('Accueil') }}</h6>
                 </a>
                 @if(count(Config::where('is_applicable', true)->get()) > 0)
@@ -27,7 +44,8 @@
                 @endif
 
                 @if(count(Client::all()) > 0)
-                    <a class="list-group-item list-group-item-action btn btn-link" href="{{ route('home.purchases.index')}}">
+                    <a class="list-group-item list-group-item-action btn btn-link"
+                       href="{{ route('home.purchases.index')}}">
                         <h6><img src="{{asset('images/icons8-purchase-order-25.png')}}" alt="">
                             &nbsp;{{ __('Enregistrer un Achat') }}</h6>
                     </a>
@@ -645,10 +663,18 @@
                         </h6>
                     </a>
 
-                    <a class="list-group-item list-group-item-action btn btn-link" href="{{ route('reports.menu')}}">
-                        <h6><img src="{{asset('images/icons8-report-file-25.png')}}" alt=""> &nbsp;{{ __('Rapports') }}
+                    {{--<a class="list-group-item list-group-item-action btn btn-link" href="{{ route('bi.menu')}}">
+                        <h6><img src="{{asset('images/icons8-report-file-25.png')}}" alt=""> &nbsp;{{ __('BI') }}
                         </h6>
-                    </a>
+                    </a>--}}
+                    @if(Auth::check() && Auth::user()->is_admin)
+                        <a class="list-group-item list-group-item-action btn btn-link"
+                           href="{{route('home.reports')}}">
+                            <h6><img src="{{asset('images/icons8-report-25.png')}}" alt="">
+                                &nbsp;{{ __('Rapports') }}
+                            </h6>
+                        </a>
+                    @endif
 
                     <a class="list-group-item list-group-item-action btn btn-link"
                        href="{{ route('send-bulk-message.admin')}}">
@@ -661,7 +687,8 @@
                         $friendInvitationAccepteds = FriendInvitatin::where('state', FriendInvitatin::ACCEPTED)->get();
                         ?>
                     @if(count($friendInvitationAccepteds) > 0)
-                        <a class="list-group-item list-group-item-action btn btn-link" href="{{route('client.invitations.accepted.index')}}">
+                        <a class="list-group-item list-group-item-action btn btn-link"
+                           href="{{route('client.invitations.accepted.index')}}">
                             <h6><img src="{{asset('images/icons8-join-25.png')}}" alt="">
                                 &nbsp;{{ __('Invitations') . ' ' .__('accepté') }}
                                 <span class="badge bg-primary position-absolute top|start-*"
@@ -765,6 +792,15 @@
                               style="position: relative; right: 0; padding-top: 7px;">{{''}}</span>
                     </h6>
                 </a>
+
+                @if(Auth::check())
+                    <a class="list-group-item list-group-item-action btn btn-link" href="{{route('notifs.index', Auth::user()->id)}}">
+                        <h6><img src="{{asset('images/icons8-notification-25.png')}}" alt="">
+                            &nbsp;{{ __('Notifications') }}
+                            <span class="badge bg-primary position-absolute top|start-*"
+                                  style="position: relative; right: 0; padding-top: 7px;">{{$unreadMsgNum}}</span></h6>
+                    </a>
+                @endif
                 {{--<a class="list-group-item list-group-item-action btn btn-link"  href="#">
                     <h6>
                         <img src="{{asset('images/icons8-transaction-25.png')}}" alt=""> &nbsp;{{ 'Transactions' }}

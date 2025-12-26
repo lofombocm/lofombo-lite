@@ -1,5 +1,5 @@
-@import url("https://pro.fontawesome.com/releases/v6.0.0-beta1/css/all.css");
-@import url("https://fonts.googleapis.com/css2?family=Jura:wght@500;600;900&display=swap");
+@import url("./all.css");
+@import url("./fonts.css");
 
 *,
 *::before,
@@ -41,7 +41,8 @@ ul.product-plans {
 ul.product-plans li.product-plan:nth-child(1) { --accent-color: #164fa9
 }
 ul.product-plans li.product-plan:nth-child(2) { --accent-color: #164fa9 }
-ul.product-plans li.product-plan:nth-child(3) { --accent-color: #1a9b8b }
+ul.product-plans li.product-plan:nth-child(3) { --accent-color: #164fa9
+}
 
 ul.product-plans li.product-plan {
     --overlap-size: 1.5rem;

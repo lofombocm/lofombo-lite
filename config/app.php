@@ -86,7 +86,7 @@ return [
     'available_locales' => [
         'French' => 'fr',
         'English' => 'en',
-        'Spanish' => 'es',
+        //'Spanish' => 'es',
         //'Arabic' => 'ar',
         //'Italian' => 'it',
         //'Russian' => 'ru',

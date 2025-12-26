@@ -5,17 +5,11 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\GuestController;
 use App\Jobs\ProcessSendEMailVoucherGeneratedJob;
-use App\Jobs\ProcessSendSMSVoucherUsageCodeJob;
 use App\Models\Client;
 use App\Models\Config;
-use App\Models\Conversion;
-use App\Models\ConversionPointReward;
 use App\Models\Loyaltyaccount;
 use App\Models\Loyaltytransaction;
 use App\Models\Notification;
-use App\Models\Reward;
-use App\Models\Threshold;
-use App\Models\Transactiontype;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Models\VoucherUsageCode;
@@ -29,11 +23,32 @@ use Illuminate\Support\Str;
 class VoucherControler extends Controller
 {
 
+    public function __construct()
+    {
+        //$this->middleware('auth:client');
+    }
+
+
     public function getVoucherView(){
+        if (!Auth::guard('client')->check()) {
+            return redirect()->route('authentification.client')->with('error',__("Access Denied"));
+        }
         return view('client.voucher.index');
     }
 
+    public function getVouchers(){
+        if (!Auth::guard('client')->check()) {
+            return redirect()->route('authentification.client')->with('error',__("Access Denied"));
+        }
+        return view('client.voucher.list');
+    }
+
+
     public function postGenVoucher(Request $request){
+
+        if (!Auth::check() && !Auth::guard('client')->check()) {
+            return redirect()->route('authentification.client')->with('error',__("Access Denied"));
+        }
 
         /*$thresholds = Threshold::all();
         if (count($thresholds) === 0) {
@@ -135,7 +150,7 @@ class VoucherControler extends Controller
                 '\'. Niveau: ' . $niveau . ' Nombre de points: ' . $points . ', Montant: ' . $amount .
                 '. Pour le client: ' . $client->name . '.';*/
 
-            $transactionDetails = __("Génération d'un Bon de Fidélité") . __("identifié par") .' : \'' . $voucherid . '\'' . __("Numéro de série") . ': ' . $serialnumber.
+            $transactionDetails = __("Génération d'un Bon de Fidélité") . ' ' . __("identifié par") .' : \'' . $voucherid . '\'' . __("Numéro de série") . ': ' . $serialnumber.
                 '\'. '. __("Type de bon") . ': ' . $niveau . ' Points: ' . $points . '. ' . __("Pour le client") . ': ' . $client->name . '.';
 
             $transactionid = Str::uuid()->toString();
@@ -173,14 +188,98 @@ class VoucherControler extends Controller
 
             $link = url('/'.GuestController::getApplicationLocal().'/client/'. $clientid . '/vouchers');
 
-            $smsData = [
+            /*$smsData = [
                 'to' => '237' . $client->telephone,
                 'message' => __("Le numéro de série du bon généré est") . ': ' . $serialnumber . ' ' . __("et le code d'utilisation est") . ': ' . decrypt($voucherUsageCode->code),
             ];
-            ProcessSendSMSVoucherUsageCodeJob::dispatch($smsData);
+            ProcessSendSMSVoucherUsageCodeJob::dispatch($smsData);*/
 
+            if($config->trusted_email !== null && $config->trusted_email !== ""){
+              $trusted_email = $config->trusted_email;
+                $message = [__("Le client") . ' ' .  $client->name . ' ' . __("a généré") . ' '  . __("un bon de type") . ' '. $voucher->level . '. ' . __("Le code d'utilisation est").': ' . decrypt($voucherUsageCode->code)];
+                $emaildata = ['email' =>$trusted_email, 'name' =>  $client->name, 'clientLoginUrl' => $link, 'level' => $voucher->level, 'msg' => $message];
+                ProcessSendEMailVoucherGeneratedJob::dispatch($emaildata);
+            }
+
+            if ($client->email != null) {
+                if (!Auth::check()) {
+                    $user = User::where('id',$client->registered_by)->first();
+                }else{
+                    $user = Auth::user();
+                }
+                $message = [($client->gender === 'M' ? __("Monsieur") : __("Madame"))  . ' ' . $client->name . ', ' . __("un bon de type") . ' ' . $voucher->level . ' ' . __("a été généré à votre compte") . '.'];
+                $emaildata = ['email' =>$client->email, 'name' => $client->name, 'clientLoginUrl' => $link, 'level' => $voucher->level, 'msg' => $message,
+                    'code' => decrypt($voucherUsageCode->code)];
+                //dd($emaildata);
+                ProcessSendEMailVoucherGeneratedJob::dispatch($emaildata);
+
+                $notifid = Str::uuid()->toString();
+                $notifgenerator = $user->id ;
+                $notifsubject = __("Génération d'un Bon de Fidélité");
+                $notifsentat = Carbon::now();
+                $notifbody = json_encode($message);
+                $notifdata = json_encode($emaildata);
+                $notifsender = $user->name;
+                $notifrecipient = $client->name;
+                $notifsenderaddress = $user->email;
+                $notifrecipientaddress = $client->email;
+                //$notifread = false;
+
+                //dd($notifdata);
+                Notification::create(
+                    [
+                        'id' => $notifid,
+                        'generator' => $notifgenerator,
+                        'subject' => $notifsubject,
+                        'sent_at' => $notifsentat,
+                        'body' => $notifbody,
+                        'data' => $notifdata,
+                        'sender' => $notifsender,
+                        'recipient' => $notifrecipient,
+                        'sender_address' => $notifsenderaddress,
+                        'recipient_address' => $notifrecipientaddress,
+                        'read' => false,
+                    ]
+                );
+            }
+            $admins = User::where('is_admin', true)->get();
+            foreach ($admins as $admin) {
+                $message = ['Mme/M. ' . ' ' .  $admin->name . ', le client ' .  $client->name . ' ' . __("a généré") . ' '  . __("un bon de type") . ' '. $voucher->level . '.'];
+                $emaildata = ['email' =>$admin->email, 'name' =>  $admin->name, 'clientLoginUrl' => $link, 'level' => $voucher->level, 'msg' => $message];
+                //dd($emaildata);
+                ProcessSendEMailVoucherGeneratedJob::dispatch($emaildata);
+
+                $notifid = Str::uuid()->toString();
+                $notifgenerator =$client->id;
+                $notifsubject = __("Génération d'un Bon de Fidélité");
+                $notifsentat = Carbon::now();
+                $notifbody = json_encode($message);
+                $notifdata = json_encode($emaildata);
+                $notifsender = $client->name;
+                $notifrecipient = $admin->name;
+                $notifsenderaddress = $client->email == null ? Auth::user()->email : $client->email;
+                $notifrecipientaddress = $admin->email;
+                $notifread = false;
+
+                //dd($notifdata);
+                Notification::create(
+                    [
+                        'id' => $notifid,
+                        'generator' => $notifgenerator,
+                        'subject' => $notifsubject,
+                        'sent_at' => $notifsentat,
+                        'body' => $notifbody,
+                        'data' => $notifdata,
+                        'sender' => $notifsender,
+                        'recipient' => $notifrecipient,
+                        'sender_address' => $notifsenderaddress,
+                        'recipient_address' => $notifrecipientaddress,
+                        'read' => $notifread,
+                    ]
+                );
+            }
             //dd(Auth::check());
-            if (Auth::check()) {
+            /*if (Auth::check()) {
                 if ($client->email != null) {
                     $message = [$client->gender . ' ' . $client->name . ', ' . __("un bon de type") . ' ' . $voucher->level . ' ' . __("a été généré à votre compte") . '.'];
                     $emaildata = ['email' =>$client->email, 'name' => $client->name, 'clientLoginUrl' => $link, 'level' => $voucher->level, 'msg' => $message,
@@ -329,7 +428,7 @@ class VoucherControler extends Controller
                     );
                 }
 
-            }
+            }*/
 
 
         }catch (\Exception $exception){
